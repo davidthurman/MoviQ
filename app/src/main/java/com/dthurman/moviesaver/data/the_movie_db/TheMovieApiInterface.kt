@@ -1,0 +1,22 @@
+package com.dthurman.moviesaver.data.the_movie_db
+
+import retrofit2.Response
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+interface TheMovieApiInterface {
+
+    @GET("movie/popular")
+    suspend fun getPopularMovies(
+        @Query("page") page: Int = 1,
+        @Query("language") language: String = "en-US"
+    ): Response<MovieListDto>
+
+    @GET("search/movie")
+    suspend fun searchMovies(
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+        @Query("language") language: String = "en-US"
+    ): Response<MovieListDto>
+
+}
