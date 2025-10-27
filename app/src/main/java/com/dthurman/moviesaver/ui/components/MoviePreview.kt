@@ -1,17 +1,14 @@
 package com.dthurman.moviesaver.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -24,33 +21,71 @@ fun MoviePreview(
     movie: Movie,
     previewState: MoviePreviewState,
     modifier: Modifier = Modifier,
+    onMovieClick: (Movie) -> Unit = {},
     onAddMovieClicked: (Movie) -> Unit = {},
     onRemoveMovieClicked: (Movie) -> Unit = {}
 ) {
-    Box(modifier = modifier) {
-        val imagePosterUrl = "https://image.tmdb.org/t/p/w500" + movie.posterUrl
-        AsyncImage(
-            model = imagePosterUrl,
-            placeholder = painterResource(R.drawable.ic_launcher_foreground),
-            error = painterResource(R.drawable.ic_launcher_background),
-            contentDescription = movie.title,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxWidth(),
-            onError = { e ->
-                print(e)
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        onClick = { onMovieClick(movie) }
+    ) {
+        Column {
+            Box {
+                val imagePosterUrl = "https://image.tmdb.org/t/p/w500" + movie.posterUrl
+                AsyncImage(
+                    model = imagePosterUrl,
+                    placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                    error = painterResource(R.drawable.ic_launcher_background),
+                    contentDescription = movie.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(2f / 3f),
+                    onError = { e ->
+                        print(e)
+                    }
+                )
+//                if (previewState == MoviePreviewState.DISCOVER) {
+//                    FloatingActionButton(
+//                        onClick = { onAddMovieClicked(movie) },
+//                        modifier = Modifier
+//                            .align(Alignment.TopEnd)
+//                            .padding(8.dp),
+//                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+//                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp)
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Default.Add,
+//                            contentDescription = "Add Movie to Seen",
+//                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+//                        )
+//                    }
+//                }
             }
-        )
-        Text(
-            movie.title,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .shadow(10.dp, RectangleShape)
-                .fillMaxWidth()
-        )
-        if (previewState == MoviePreviewState.DISCOVER) {
-            FloatingActionButton(onClick = { onAddMovieClicked(movie) }, modifier = Modifier.align(Alignment.BottomEnd)) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Movie to Seen")
-            }
+//            Column(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(80.dp)
+//                    .padding(12.dp)
+//            ) {
+//                Text(
+//                    text = movie.title,
+//                    style = MaterialTheme.typography.titleMedium,
+//                    maxLines = 2,
+//                    overflow = TextOverflow.Ellipsis,
+//                    color = MaterialTheme.colorScheme.onSurface
+//                )
+//                Text(
+//                    text = movie.releaseDate,
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    maxLines = 1,
+//                    overflow = TextOverflow.Ellipsis,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                    modifier = Modifier.padding(top = 4.dp)
+//                )
+//            }
         }
     }
 }

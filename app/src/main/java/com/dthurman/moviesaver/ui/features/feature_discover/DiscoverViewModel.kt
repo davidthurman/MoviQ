@@ -46,7 +46,7 @@ class DiscoverViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
                 val results = movieRepository.searchMovieByTitle(title)
-                _uiState.value = _uiState.value.copy(movies = results, isLoading = false)
+                _uiState.value = _uiState.value.copy(movies = results, searchHeader = "Results for \"$title\":", isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -65,6 +65,7 @@ class DiscoverViewModel @Inject constructor(
 
 data class DiscoverUiState(
     val query: String = "",
+    val searchHeader: String = "Popular:",
     val mode: Mode = Mode.Popular,
     val movies: List<Movie> = emptyList(),
     val isLoading: Boolean = false,

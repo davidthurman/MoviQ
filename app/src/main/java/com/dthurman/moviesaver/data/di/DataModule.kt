@@ -20,13 +20,13 @@ import com.dthurman.moviesaver.data.DefaultMovieRepository
 import com.dthurman.moviesaver.data.local.database.MovieEntity
 import com.dthurman.moviesaver.data.the_movie_db.toDomain
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.domain.repository.MovieRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import com.dthurman.moviesaver.domain.repository.MovieRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -60,5 +60,5 @@ class FakeMovieRepository @Inject constructor() : MovieRepository {
     }
 }
 
-val fakeMovies = listOf(MovieEntity(0, "Title", "", "", ""))
-val fakeMovie = listOf(Movie(0, "Title", "", "", ""))
+val fakeMovies = listOf(MovieEntity(0, "Title", "", "", "", ""))
+val fakeMovie = listOf(Movie(0, "Title", "", "", "", ""))

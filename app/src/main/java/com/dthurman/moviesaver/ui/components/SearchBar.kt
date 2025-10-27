@@ -3,7 +3,10 @@ package com.dthurman.moviesaver.ui.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
@@ -39,7 +42,8 @@ fun SearchBar(
                     },
                     expanded = false,
                     onExpandedChange = {},
-                    placeholder = { Text("Search for movies") }
+                    placeholder = { Text("Search for movies") },
+                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Search") }
                 )
             },
             expanded = false,

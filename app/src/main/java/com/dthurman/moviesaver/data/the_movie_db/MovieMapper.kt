@@ -9,6 +9,7 @@ fun MovieDto.toDomain(): Movie = Movie(
     id = id,
     title = title,
     posterUrl = IMAGE_BASE + poster_path,
+    backdropUrl = backdrop_path,
     releaseDate = release_date,
     overview = overview,
 )
@@ -17,6 +18,7 @@ fun MovieEntity.toDomain(): Movie = Movie(
     id = id,
     title = title,
     posterUrl = posterUrl,
+    backdropUrl = backdropUrl,
     releaseDate = releaseDate,
     overview = overview,
 )
@@ -25,6 +27,7 @@ fun Movie.toEntity(): MovieEntity = MovieEntity(
     id = id,
     title = title,
     posterUrl = posterUrl,
+    backdropUrl = backdropUrl,
     releaseDate = releaseDate,
     overview = overview,
 )
