@@ -19,6 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -36,10 +39,21 @@ fun DetailScreen(
     modifier: Modifier = Modifier,
     viewModel: DetailViewModel = hiltViewModel()
 ) {
+    // Load the movie into the ViewModel on first composition
+    LaunchedEffect(movie.id) {
+        viewModel.loadMovie(movie.id)
+    }
+    
+    // Observe the movie state from the ViewModel
+    val observedMovie by viewModel.movie.collectAsState()
+    
+    // Use the observed movie if available, otherwise use the passed movie
+    val currentMovie = observedMovie ?: movie
+    
     DetailScreen(
-        movie = movie,
-        addToSeen = { it -> viewModel.addToSeen(it) },
-        addToWatchlist = { it -> viewModel.addToWatchlist(it) },
+        movie = currentMovie,
+        toggleSeen = { viewModel.toggleSeen() },
+        toggleWatchlist = { viewModel.toggleWatchlist() },
         modifier = modifier,
     )
 }
@@ -47,8 +61,8 @@ fun DetailScreen(
 @Composable
 internal fun DetailScreen(
     movie: Movie,
-    addToSeen: (movie: Movie) -> Unit,
-    addToWatchlist: (movie: Movie) -> Unit,
+    toggleSeen: () -> Unit,
+    toggleWatchlist: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -88,28 +102,44 @@ internal fun DetailScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth().weight(1.0f),
-                onClick = { addToWatchlist(movie) },
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "Add to Watchlist"
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Watchlist")
+            if (!movie.isWatchlist) {
+                OutlinedButton(
+                    modifier = Modifier.fillMaxWidth().weight(1.0f),
+                    onClick = toggleWatchlist,
+                ) {
+                    Icon(Icons.Outlined.Add, "Add to Watchlist")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Watchlist")
+                }
+            } else {
+                Button(
+                    modifier = Modifier.fillMaxWidth().weight(1.0f),
+                    onClick = toggleWatchlist,
+                ) {
+                    Icon(Icons.Outlined.Add, "In Watchlist")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Watchlist")
+                }
             }
             Spacer(Modifier.width(16.dp))
-            Button(
-                modifier = Modifier.fillMaxWidth().weight(1.0f),
-                onClick = { addToSeen(movie) },
+            if (!movie.isSeen) {
+                OutlinedButton(
+                    modifier = Modifier.fillMaxWidth().weight(1.0f),
+                    onClick = toggleSeen,
                 ) {
-                Icon(
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "Add to Seen"
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Seen")
+                    Icon(Icons.Outlined.Add, "Add to Seen")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Seen")
+                }
+            } else {
+                Button(
+                    modifier = Modifier.fillMaxWidth().weight(1.0f),
+                    onClick = toggleSeen,
+                ) {
+                    Icon(Icons.Outlined.Add, "Marked as Seen")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Seen")
+                }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))

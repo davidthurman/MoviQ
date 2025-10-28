@@ -26,9 +26,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.ui.components.SettingsModal
 import com.dthurman.moviesaver.ui.features.feature_detail.DetailScreen
 import com.dthurman.moviesaver.ui.nav.AppNavHost
 import com.dthurman.moviesaver.ui.nav.Destination
@@ -47,11 +49,12 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val startDestination = Destination.SEEN
             var selectedIndex by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
-            
-            // Bottom sheet state
+
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var selectedMovie by rememberSaveable { mutableStateOf<Movie?>(null) }
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+            var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
 
             AppTheme(dynamicColor = false) {
                 Scaffold(
@@ -66,10 +69,20 @@ class MainActivity : ComponentActivity() {
                                         selectedIndex = index
                                     },
                                     icon = {
-                                        Icon(
-                                            destination.icon,
-                                            contentDescription = destination.contentDescription
-                                        )
+                                        when {
+                                            destination.icon != null -> {
+                                                Icon(
+                                                    imageVector = destination.icon,
+                                                    contentDescription = destination.contentDescription
+                                                )
+                                            }
+                                            destination.iconRes != null -> {
+                                                Icon(
+                                                    painter = painterResource(destination.iconRes),
+                                                    contentDescription = destination.contentDescription
+                                                )
+                                            }
+                                        }
                                     },
                                     label = { Text(destination.label) }
                                 )
@@ -98,7 +111,10 @@ class MainActivity : ComponentActivity() {
                                 selectedMovie = movie
                                 showBottomSheet = true
                             },
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
+                            onSettingsClick = {
+                                showSettingsDialog = true
+                            },
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -113,6 +129,20 @@ class MainActivity : ComponentActivity() {
                         sheetState = sheetState
                     ) {
                         DetailScreen(movie = selectedMovie!!)
+                    }
+                }
+
+                if (showSettingsDialog) {
+                    Dialog(
+                        onDismissRequest = {
+                            showSettingsDialog = false
+                        }
+                    ) {
+                        SettingsModal(
+                            onDismiss = {
+                                showSettingsDialog = false
+                            }
+                        )
                     }
                 }
             }

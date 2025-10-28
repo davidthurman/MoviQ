@@ -22,7 +22,8 @@ import androidx.compose.ui.semantics.traversalIndex
 fun SearchBar(
     textFieldState: TextFieldState,
     onSearch: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     Box(
         modifier
@@ -43,7 +44,8 @@ fun SearchBar(
                     expanded = false,
                     onExpandedChange = {},
                     placeholder = { Text("Search for movies") },
-                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Search") }
+                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Search") },
+                    trailingIcon = trailingIcon
                 )
             },
             expanded = false,

@@ -19,28 +19,54 @@ package com.dthurman.moviesaver.data.local.database
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "movie")
 data class MovieEntity(
-    val id: Int,
+    @PrimaryKey val id: Int,
     val title: String,
     val posterUrl: String,
     val backdropUrl: String,
     val releaseDate: String,
-    val overview: String
-) {
-    @PrimaryKey(autoGenerate = true)
-    var uid: Int = 0
-}
+    val overview: String,
+    val isSeen: Boolean = false,
+    val isWatchlist: Boolean = false,
+    val isFavorite: Boolean = false,
+    val addedAt: Long = System.currentTimeMillis()
+)
 
 @Dao
 interface MovieDao {
-    @Query("SELECT * FROM movie ORDER BY uid DESC LIMIT 10")
+    @Query("SELECT * FROM movie WHERE isSeen = 1 ORDER BY addedAt DESC")
     fun getSeenMovies(): Flow<List<MovieEntity>>
 
-    @Insert
-    suspend fun addMovieToSeen(item: MovieEntity)
+    @Query("SELECT * FROM movie WHERE isWatchlist = 1 ORDER BY addedAt DESC")
+    fun getWatchlistMovies(): Flow<List<MovieEntity>>
+
+    @Query("SELECT * FROM movie WHERE isFavorite = 1 ORDER BY addedAt DESC")
+    fun getFavoriteMovies(): Flow<List<MovieEntity>>
+
+    @Query("SELECT * FROM movie WHERE id IN (:movieIds)")
+    suspend fun getMoviesByIds(movieIds: List<Int>): List<MovieEntity>
+
+    @Query("SELECT * FROM movie WHERE id = :movieId")
+    suspend fun getMovieById(movieId: Int): MovieEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateMovie(movie: MovieEntity)
+
+    @Query("UPDATE movie SET isSeen = :isSeen WHERE id = :movieId")
+    suspend fun updateSeenStatus(movieId: Int, isSeen: Boolean)
+
+    @Query("UPDATE movie SET isWatchlist = :isWatchlist WHERE id = :movieId")
+    suspend fun updateWatchlistStatus(movieId: Int, isWatchlist: Boolean)
+
+    @Query("UPDATE movie SET isFavorite = :isFavorite WHERE id = :movieId")
+    suspend fun updateFavoriteStatus(movieId: Int, isFavorite: Boolean)
+
+    @Query("DELETE FROM movie WHERE id = :movieId AND isSeen = 0 AND isWatchlist = 0 AND isFavorite = 0")
+    suspend fun deleteMovieIfNotUsed(movieId: Int)
 }

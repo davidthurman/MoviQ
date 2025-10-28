@@ -1,6 +1,7 @@
 package com.dthurman.moviesaver.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -23,7 +24,8 @@ fun MovieList(
         modifier = modifier.fillMaxWidth(),
         columns = GridCells.Adaptive(minSize = 128.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(bottom = 12.dp)
     ) {
         items(movies) { movie ->
             MoviePreview(

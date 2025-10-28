@@ -43,12 +43,41 @@ interface DataModule {
 
 class FakeMovieRepository @Inject constructor() : MovieRepository {
 
-    override fun seenMovies(): Flow<List<Movie>> {
+    override fun getSeenMovies(): Flow<List<Movie>> {
         return flowOf(fakeMovie)
     }
 
-    override suspend fun addMovieToSeen(movie: Movie) {
-        throw NotImplementedError()
+    override fun getWatchlistMovies(): Flow<List<Movie>> {
+        return flowOf(fakeMovie)
+    }
+
+    override fun getFavoriteMovies(): Flow<List<Movie>> {
+        return flowOf(fakeMovie)
+    }
+
+    override suspend fun getMovieById(movieId: Int): Movie? {
+        return fakeMovie.firstOrNull()
+    }
+
+    override suspend fun updateSeenStatus(
+        movie: Movie,
+        isSeen: Boolean
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateWatchlistStatus(
+        movie: Movie,
+        isWatchlist: Boolean
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateFavoriteStatus(
+        movie: Movie,
+        isFavorite: Boolean
+    ) {
+        TODO("Not yet implemented")
     }
 
     override suspend fun getPopularMovies(): List<Movie> {

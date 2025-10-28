@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.features.feature_watchlist
+package com.dthurman.moviesaver.ui.features.feature_favorites
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,18 +16,19 @@ import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.components.MovieList
 import com.dthurman.moviesaver.ui.components.MoviePreviewState
 import com.dthurman.moviesaver.ui.components.TopBar
+import com.dthurman.moviesaver.ui.features.feature_seen.FavoritesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WatchlistScreen(
+fun FavoritesScreen(
     modifier: Modifier = Modifier,
     onMovieClick: (Movie) -> Unit = {},
     onSettingsClick: () -> Unit = {},
-    viewModel: WatchlistViewModel = hiltViewModel()
+    viewModel: FavoritesViewModel = hiltViewModel()
 ) {
     val movies by viewModel.movies.collectAsStateWithLifecycle()
     Column(modifier = modifier) {
-        TopBar(title = "Watchlist", onSettingsClick = onSettingsClick)
+        TopBar(title = "Seen", onSettingsClick = onSettingsClick)
         if (movies.isNotEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(top = 16.dp)) {
                 MovieList(

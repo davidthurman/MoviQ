@@ -1,5 +1,6 @@
 package com.dthurman.moviesaver.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -29,9 +31,10 @@ fun MoviePreview(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        onClick = { onMovieClick(movie) }
+        onClick = { onMovieClick(movie) },
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Column {
+        Column(modifier) {
             Box {
                 val imagePosterUrl = "https://image.tmdb.org/t/p/w500" + movie.posterUrl
                 AsyncImage(

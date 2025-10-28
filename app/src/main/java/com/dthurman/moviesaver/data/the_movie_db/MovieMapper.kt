@@ -12,6 +12,9 @@ fun MovieDto.toDomain(): Movie = Movie(
     backdropUrl = backdrop_path,
     releaseDate = release_date,
     overview = overview,
+    isSeen = false,
+    isWatchlist = false,
+    isFavorite = false
 )
 
 fun MovieEntity.toDomain(): Movie = Movie(
@@ -21,6 +24,9 @@ fun MovieEntity.toDomain(): Movie = Movie(
     backdropUrl = backdropUrl,
     releaseDate = releaseDate,
     overview = overview,
+    isSeen = isSeen,
+    isWatchlist = isWatchlist,
+    isFavorite = isFavorite
 )
 
 fun Movie.toEntity(): MovieEntity = MovieEntity(
@@ -30,4 +36,7 @@ fun Movie.toEntity(): MovieEntity = MovieEntity(
     backdropUrl = backdropUrl,
     releaseDate = releaseDate,
     overview = overview,
+    isSeen = isSeen,
+    isWatchlist = isWatchlist,
+    isFavorite = isFavorite
 )

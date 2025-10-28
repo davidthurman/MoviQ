@@ -1,6 +1,5 @@
 package com.dthurman.moviesaver.data
 
-import com.dthurman.moviesaver.data.local.database.MovieEntity
 import com.dthurman.moviesaver.data.local.database.MovieDao
 import com.dthurman.moviesaver.data.the_movie_db.TheMovieApi.theMovieApi
 import com.dthurman.moviesaver.data.the_movie_db.toDomain
@@ -15,18 +14,54 @@ class DefaultMovieRepository @Inject constructor(
     private val movieDao: MovieDao,
 ) : MovieRepository {
 
-    override fun seenMovies(): Flow<List<Movie>> {
+    override fun getSeenMovies(): Flow<List<Movie>> {
         return movieDao.getSeenMovies().map { items -> items.map { it.toDomain() } }
     }
 
-    override suspend fun addMovieToSeen(movie: Movie) {
-        movieDao.addMovieToSeen( movie.toEntity())
+    override fun getWatchlistMovies(): Flow<List<Movie>> {
+        return movieDao.getWatchlistMovies().map { items -> items.map { it.toDomain() } }
+    }
+
+    override fun getFavoriteMovies(): Flow<List<Movie>> {
+        return movieDao.getFavoriteMovies().map { items -> items.map { it.toDomain() } }
+    }
+
+    override suspend fun getMovieById(movieId: Int): Movie? {
+        return movieDao.getMovieById(movieId)?.toDomain()
+    }
+
+    override suspend fun updateSeenStatus(movie: Movie, isSeen: Boolean) {
+        val existingMovie = movieDao.getMovieById(movie.id)
+        if (existingMovie != null) {
+            movieDao.updateSeenStatus(movie.id, isSeen)
+        } else {
+            movieDao.insertOrUpdateMovie(movie.copy(isSeen = isSeen).toEntity())
+        }
+    }
+
+    override suspend fun updateWatchlistStatus(movie: Movie, isWatchlist: Boolean) {
+        val existingMovie = movieDao.getMovieById(movie.id)
+        if (existingMovie != null) {
+            movieDao.updateWatchlistStatus(movie.id, isWatchlist)
+        } else {
+            movieDao.insertOrUpdateMovie(movie.copy(isWatchlist = isWatchlist).toEntity())
+        }
+    }
+
+    override suspend fun updateFavoriteStatus(movie: Movie, isFavorite: Boolean) {
+        val existingMovie = movieDao.getMovieById(movie.id)
+        if (existingMovie != null) {
+            movieDao.updateFavoriteStatus(movie.id, isFavorite)
+        } else {
+            movieDao.insertOrUpdateMovie(movie.copy(isFavorite = isFavorite).toEntity())
+        }
     }
 
     override suspend fun getPopularMovies(): List<Movie> {
         val response = theMovieApi.getPopularMovies()
         if (response.isSuccessful) {
-            return response.body()?.results?.map { it.toDomain() } ?: emptyList()
+            val apiMovies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
+            return enrichMoviesWithLocalStatus(apiMovies)
         } else {
             throw Exception("Failed to fetch movies: ${response.code()} ${response.message()}")
         }
@@ -35,9 +70,31 @@ class DefaultMovieRepository @Inject constructor(
     override suspend fun searchMovieByTitle(title: String): List<Movie> {
         val response = theMovieApi.searchMovies(query = title)
         if (response.isSuccessful) {
-            return response.body()?.results?.map { it.toDomain() } ?: emptyList()
+            val apiMovies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
+            return enrichMoviesWithLocalStatus(apiMovies)
         } else {
             throw Exception("Failed to search movies: ${response.code()} ${response.message()}")
+        }
+    }
+
+    private suspend fun enrichMoviesWithLocalStatus(apiMovies: List<Movie>): List<Movie> {
+        if (apiMovies.isEmpty()) return emptyList()
+        
+        val movieIds = apiMovies.map { it.id }
+        val localMovies = movieDao.getMoviesByIds(movieIds)
+        val localMovieMap = localMovies.associateBy { it.id }
+        
+        return apiMovies.map { apiMovie ->
+            val localMovie = localMovieMap[apiMovie.id]
+            if (localMovie != null) {
+                apiMovie.copy(
+                    isSeen = localMovie.isSeen,
+                    isWatchlist = localMovie.isWatchlist,
+                    isFavorite = localMovie.isFavorite
+                )
+            } else {
+                apiMovie
+            }
         }
     }
 }

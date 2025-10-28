@@ -6,5 +6,8 @@ data class Movie(
     val posterUrl: String,
     val backdropUrl: String,
     val releaseDate: String,
-    val overview: String
+    val overview: String,
+    val isSeen: Boolean = false,
+    val isWatchlist: Boolean = false,
+    val isFavorite: Boolean = false
 )

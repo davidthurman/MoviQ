@@ -58,7 +58,7 @@ class DiscoverViewModel @Inject constructor(
 
     fun addMovieToSeen(movie: Movie) {
         viewModelScope.launch {
-            movieRepository.addMovieToSeen(movie)
+            movieRepository.updateSeenStatus(movie, true)
         }
     }
 }
