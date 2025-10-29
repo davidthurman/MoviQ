@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.data.the_movie_db
+package com.dthurman.moviesaver.data.remote
 
 import retrofit2.Response
 import retrofit2.http.GET

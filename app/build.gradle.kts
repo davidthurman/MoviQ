@@ -70,7 +70,8 @@ dependencies {
 
     implementation(libs.androidx.paging.common)
 
-    implementation(platform(libs.androidx.compose.bom)) // Compose Bill of Materials (makes sure all Compose dependencies are compatible
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation) // Compose Bill of Materials (makes sure all Compose dependencies are compatible
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
     // Core Android dependencies

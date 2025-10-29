@@ -1,5 +1,6 @@
 package com.dthurman.moviesaver.ui.features.feature_detail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,8 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.ui.components.FloatingFavoriteButton
 
 @Composable
 fun DetailScreen(
@@ -39,20 +45,17 @@ fun DetailScreen(
     modifier: Modifier = Modifier,
     viewModel: DetailViewModel = hiltViewModel()
 ) {
-    // Load the movie into the ViewModel on first composition
     LaunchedEffect(movie.id) {
-        viewModel.loadMovie(movie.id)
+        viewModel.loadMovie(movie)
     }
-    
-    // Observe the movie state from the ViewModel
+
     val observedMovie by viewModel.movie.collectAsState()
-    
-    // Use the observed movie if available, otherwise use the passed movie
     val currentMovie = observedMovie ?: movie
     
     DetailScreen(
         movie = currentMovie,
         toggleSeen = { viewModel.toggleSeen() },
+        toggleFavorite = { viewModel.toggleFavorite() },
         toggleWatchlist = { viewModel.toggleWatchlist() },
         modifier = modifier,
     )
@@ -63,6 +66,7 @@ internal fun DetailScreen(
     movie: Movie,
     toggleSeen: () -> Unit,
     toggleWatchlist: () -> Unit,
+    toggleFavorite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -84,8 +88,28 @@ internal fun DetailScreen(
                 error = painterResource(R.drawable.ic_launcher_background),
                 contentDescription = movie.title,
                 contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(80.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.9f)
+                            )
+                        )
+                    )
+            )
+            FloatingFavoriteButton(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = 4.dp, top = 4.dp),
+                isFavorite = movie.isFavorite,
+                onClick = toggleFavorite,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -116,7 +140,7 @@ internal fun DetailScreen(
                     modifier = Modifier.fillMaxWidth().weight(1.0f),
                     onClick = toggleWatchlist,
                 ) {
-                    Icon(Icons.Outlined.Add, "In Watchlist")
+                    Icon(Icons.Outlined.Check, "In Watchlist")
                     Spacer(Modifier.width(8.dp))
                     Text("Watchlist")
                 }
@@ -127,7 +151,7 @@ internal fun DetailScreen(
                     modifier = Modifier.fillMaxWidth().weight(1.0f),
                     onClick = toggleSeen,
                 ) {
-                    Icon(Icons.Outlined.Add, "Add to Seen")
+                    Icon(painter = painterResource(R.drawable.outline_visibility_24), "Add to Seen")
                     Spacer(Modifier.width(8.dp))
                     Text("Seen")
                 }
@@ -136,7 +160,7 @@ internal fun DetailScreen(
                     modifier = Modifier.fillMaxWidth().weight(1.0f),
                     onClick = toggleSeen,
                 ) {
-                    Icon(Icons.Outlined.Add, "Marked as Seen")
+                    Icon(Icons.Outlined.Check, "In Seen")
                     Spacer(Modifier.width(8.dp))
                     Text("Seen")
                 }

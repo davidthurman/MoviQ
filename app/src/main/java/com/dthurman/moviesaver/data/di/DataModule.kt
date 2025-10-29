@@ -18,7 +18,7 @@ package com.dthurman.moviesaver.data.di
 
 import com.dthurman.moviesaver.data.DefaultMovieRepository
 import com.dthurman.moviesaver.data.local.database.MovieEntity
-import com.dthurman.moviesaver.data.the_movie_db.toDomain
+import com.dthurman.moviesaver.data.remote.toDomain
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import dagger.Binds

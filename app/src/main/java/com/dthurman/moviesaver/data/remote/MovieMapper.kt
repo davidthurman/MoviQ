@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.data.the_movie_db
+package com.dthurman.moviesaver.data.remote
 
 import com.dthurman.moviesaver.data.local.database.MovieEntity
 import com.dthurman.moviesaver.domain.model.Movie
@@ -8,8 +8,8 @@ private const val IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 fun MovieDto.toDomain(): Movie = Movie(
     id = id,
     title = title,
-    posterUrl = IMAGE_BASE + poster_path,
-    backdropUrl = backdrop_path,
+    posterUrl = poster_path?.let { IMAGE_BASE + it } ?: "",
+    backdropUrl = backdrop_path?.let { IMAGE_BASE + it } ?: "",
     releaseDate = release_date,
     overview = overview,
     isSeen = false,

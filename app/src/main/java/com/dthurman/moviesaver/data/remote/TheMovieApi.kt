@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.data.the_movie_db
+package com.dthurman.moviesaver.data.remote
 
 import com.dthurman.moviesaver.BuildConfig
 import okhttp3.Interceptor

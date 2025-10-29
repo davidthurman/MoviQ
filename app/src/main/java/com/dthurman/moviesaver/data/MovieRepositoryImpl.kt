@@ -1,9 +1,9 @@
 package com.dthurman.moviesaver.data
 
 import com.dthurman.moviesaver.data.local.database.MovieDao
-import com.dthurman.moviesaver.data.the_movie_db.TheMovieApi.theMovieApi
-import com.dthurman.moviesaver.data.the_movie_db.toDomain
-import com.dthurman.moviesaver.data.the_movie_db.toEntity
+import com.dthurman.moviesaver.data.remote.TheMovieApi.theMovieApi
+import com.dthurman.moviesaver.data.remote.toDomain
+import com.dthurman.moviesaver.data.remote.toEntity
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +34,7 @@ class DefaultMovieRepository @Inject constructor(
         val existingMovie = movieDao.getMovieById(movie.id)
         if (existingMovie != null) {
             movieDao.updateSeenStatus(movie.id, isSeen)
+            movieDao.updateWatchlistStatus(movie.id, false)
         } else {
             movieDao.insertOrUpdateMovie(movie.copy(isSeen = isSeen).toEntity())
         }

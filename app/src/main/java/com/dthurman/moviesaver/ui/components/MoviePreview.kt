@@ -1,16 +1,25 @@
 package com.dthurman.moviesaver.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -21,11 +30,8 @@ import com.dthurman.moviesaver.domain.model.Movie
 @Composable
 fun MoviePreview(
     movie: Movie,
-    previewState: MoviePreviewState,
     modifier: Modifier = Modifier,
     onMovieClick: (Movie) -> Unit = {},
-    onAddMovieClicked: (Movie) -> Unit = {},
-    onRemoveMovieClicked: (Movie) -> Unit = {}
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -43,57 +49,29 @@ fun MoviePreview(
                     error = painterResource(R.drawable.ic_launcher_background),
                     contentDescription = movie.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(2f / 3f),
-                    onError = { e ->
-                        print(e)
-                    }
+                    modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f),
+                    onError = { e -> print(e) }
                 )
-//                if (previewState == MoviePreviewState.DISCOVER) {
-//                    FloatingActionButton(
-//                        onClick = { onAddMovieClicked(movie) },
-//                        modifier = Modifier
-//                            .align(Alignment.TopEnd)
-//                            .padding(8.dp),
-//                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-//                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp)
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Default.Add,
-//                            contentDescription = "Add Movie to Seen",
-//                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-//                        )
-//                    }
-//                }
+                if (movie.isFavorite) {
+                    Box(modifier = Modifier
+                        .padding(top = 12.dp)
+                        .padding(end = 12.dp)
+                        .clip(shape = CircleShape)
+                        .align(Alignment.TopEnd)
+                        .background(color = MaterialTheme.colorScheme.primaryContainer),
+
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .padding(6.dp)
+                                .size(24.dp),
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = "Hearted",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
             }
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(80.dp)
-//                    .padding(12.dp)
-//            ) {
-//                Text(
-//                    text = movie.title,
-//                    style = MaterialTheme.typography.titleMedium,
-//                    maxLines = 2,
-//                    overflow = TextOverflow.Ellipsis,
-//                    color = MaterialTheme.colorScheme.onSurface
-//                )
-//                Text(
-//                    text = movie.releaseDate,
-//                    style = MaterialTheme.typography.bodyMedium,
-//                    maxLines = 1,
-//                    overflow = TextOverflow.Ellipsis,
-//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                    modifier = Modifier.padding(top = 4.dp)
-//                )
-//            }
         }
     }
-}
-
-enum class MoviePreviewState {
-    DISCOVER,
-    SEEN
 }

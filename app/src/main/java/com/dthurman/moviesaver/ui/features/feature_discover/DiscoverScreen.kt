@@ -1,16 +1,14 @@
 package com.dthurman.moviesaver.ui.features.feature_discover
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -20,7 +18,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.components.MovieList
-import com.dthurman.moviesaver.ui.components.MoviePreviewState
 import com.dthurman.moviesaver.ui.components.SearchBar
 import com.dthurman.moviesaver.ui.theme.AppTheme
 
@@ -36,7 +33,7 @@ fun DiscoverScreen(
         modifier = modifier,
         movies = uiState.movies,
         searchHeader = uiState.searchHeader,
-        onSearch = { title -> viewModel.searchForMovies(title)},
+        onSearch = { title -> viewModel.searchForMovies(title) },
         onMovieClick = onMovieClick,
         onSettingsClick = onSettingsClick,
         onAddMovie = { movie -> viewModel.addMovieToSeen(movie)},
@@ -58,29 +55,25 @@ internal fun DiscoverScreen(
     isLoading: Boolean = false,
     error: String? = null
 ) {
-    val textFieldState = rememberTextFieldState()
-
-    Column(modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        SearchBar(
-            textFieldState = textFieldState,
-            onSearch = { query -> onSearch(query) },
-            modifier = Modifier.padding(vertical = 20.dp),
-            trailingIcon = {
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings"
-                    )
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SearchBar(
+                onSearch = { query -> onSearch(query) },
+                modifier = Modifier.padding(vertical = 20.dp),
+                trailingIcon = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
                 }
-            }
-        )
-        Text(searchHeader)
-        Spacer(Modifier.padding(4.dp))
+            )
+        }
         MovieList(
             movies = movies,
-            previewState = MoviePreviewState.DISCOVER,
             onMovieClick = onMovieClick,
-            onAddMovieClicked = onAddMovie
+            searchHeader = searchHeader
         )
     }
 }
