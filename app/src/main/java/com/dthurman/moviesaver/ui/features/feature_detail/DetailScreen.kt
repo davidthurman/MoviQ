@@ -1,6 +1,7 @@
 package com.dthurman.moviesaver.ui.features.feature_detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,11 +16,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,6 +41,8 @@ import coil.compose.AsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.components.FloatingFavoriteButton
+import com.dthurman.moviesaver.ui.components.RatingDialog
+import com.dthurman.moviesaver.ui.components.StarRatingDisplay
 
 @Composable
 fun DetailScreen(
@@ -51,14 +56,63 @@ fun DetailScreen(
 
     val observedMovie by viewModel.movie.collectAsState()
     val currentMovie = observedMovie ?: movie
+    val showRatingDialog by viewModel.showRatingDialog.collectAsState()
+    val showUnseenConfirmDialog by viewModel.showUnseenConfirmDialog.collectAsState()
     
     DetailScreen(
         movie = currentMovie,
         toggleSeen = { viewModel.toggleSeen() },
         toggleFavorite = { viewModel.toggleFavorite() },
         toggleWatchlist = { viewModel.toggleWatchlist() },
+        onRatingClick = { viewModel.openRatingDialog() },
         modifier = modifier,
     )
+
+    if (showRatingDialog) {
+        RatingDialog(
+            movieTitle = currentMovie.title,
+            currentRating = currentMovie.rating,
+            onDismiss = { viewModel.dismissRatingDialog() },
+            onRatingSelected = { rating -> viewModel.confirmSeenWithRating(rating) }
+        )
+    }
+
+    if (showUnseenConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissUnseenDialog() },
+            title = {
+                Text(
+                    text = "Remove from Seen?",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                val message = if (currentMovie.isFavorite) {
+                    "This will remove \"${currentMovie.title}\" from your seen movies and favorites, and clear its rating."
+                } else {
+                    "This will remove \"${currentMovie.title}\" from your seen movies and clear its rating."
+                }
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.confirmUnseen() }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.dismissUnseenDialog() }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -67,6 +121,7 @@ internal fun DetailScreen(
     toggleSeen: () -> Unit,
     toggleWatchlist: () -> Unit,
     toggleFavorite: () -> Unit,
+    onRatingClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -104,13 +159,15 @@ internal fun DetailScreen(
                         )
                     )
             )
-            FloatingFavoriteButton(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(end = 4.dp, top = 4.dp),
-                isFavorite = movie.isFavorite,
-                onClick = toggleFavorite,
-            )
+            if (movie.isSeen) {
+                FloatingFavoriteButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 8.dp, top = 8.dp),
+                    isFavorite = movie.isFavorite,
+                    onClick = toggleFavorite,
+                )
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -119,11 +176,25 @@ internal fun DetailScreen(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Text(
-            text = movie.releaseDate,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = movie.releaseDate,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (movie.isSeen) {
+                StarRatingDisplay(
+                    rating = movie.rating,
+                    starSize = 20.dp,
+                    spacing = 4.dp,
+                    onClick = { onRatingClick() }
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
             if (!movie.isWatchlist) {

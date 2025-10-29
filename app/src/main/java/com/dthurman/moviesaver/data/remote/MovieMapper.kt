@@ -14,7 +14,8 @@ fun MovieDto.toDomain(): Movie = Movie(
     overview = overview,
     isSeen = false,
     isWatchlist = false,
-    isFavorite = false
+    isFavorite = false,
+    rating = null
 )
 
 fun MovieEntity.toDomain(): Movie = Movie(
@@ -26,7 +27,8 @@ fun MovieEntity.toDomain(): Movie = Movie(
     overview = overview,
     isSeen = isSeen,
     isWatchlist = isWatchlist,
-    isFavorite = isFavorite
+    isFavorite = isFavorite,
+    rating = rating
 )
 
 fun Movie.toEntity(): MovieEntity = MovieEntity(
@@ -38,5 +40,6 @@ fun Movie.toEntity(): MovieEntity = MovieEntity(
     overview = overview,
     isSeen = isSeen,
     isWatchlist = isWatchlist,
-    isFavorite = isFavorite
+    isFavorite = isFavorite,
+    rating = rating
 )

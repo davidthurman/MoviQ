@@ -19,6 +19,12 @@ class DetailViewModel @Inject constructor(
     private val _movie = MutableStateFlow<Movie?>(null)
     val movie: StateFlow<Movie?> = _movie.asStateFlow()
 
+    private val _showRatingDialog = MutableStateFlow(false)
+    val showRatingDialog: StateFlow<Boolean> = _showRatingDialog.asStateFlow()
+
+    private val _showUnseenConfirmDialog = MutableStateFlow(false)
+    val showUnseenConfirmDialog: StateFlow<Boolean> = _showUnseenConfirmDialog.asStateFlow()
+
     fun loadMovie(movie: Movie) {
         viewModelScope.launch {
             val dbMovie = movieRepository.getMovieById(movie.id)
@@ -29,14 +35,55 @@ class DetailViewModel @Inject constructor(
     fun toggleSeen() {
         val currentMovie = _movie.value ?: return
         val newSeenStatus = !currentMovie.isSeen
-        viewModelScope.launch {
-            movieRepository.updateSeenStatus(currentMovie, newSeenStatus)
-            var watchlistStatus = currentMovie.isWatchlist
-            if (newSeenStatus) {
-                watchlistStatus = false
-            }
-            _movie.value = currentMovie.copy(isSeen = newSeenStatus, isWatchlist = watchlistStatus)
+        
+        if (newSeenStatus) {
+            // Show rating dialog when marking as seen
+            _showRatingDialog.value = true
+        } else {
+            // Show confirmation dialog when unmarking as seen
+            _showUnseenConfirmDialog.value = true
         }
+    }
+
+    fun confirmUnseen() {
+        val currentMovie = _movie.value ?: return
+        // Remove seen status, clear rating, and remove from favorites
+        viewModelScope.launch {
+            movieRepository.updateSeenStatus(currentMovie, false)
+            movieRepository.updateRating(currentMovie, null)
+            movieRepository.updateFavoriteStatus(currentMovie, false)
+            _movie.value = currentMovie.copy(isSeen = false, rating = null, isFavorite = false)
+        }
+        _showUnseenConfirmDialog.value = false
+    }
+
+    fun dismissUnseenDialog() {
+        _showUnseenConfirmDialog.value = false
+    }
+
+    fun confirmSeenWithRating(rating: Float?) {
+        val currentMovie = _movie.value ?: return
+        viewModelScope.launch {
+            if (!currentMovie.isSeen) {
+                // If not yet marked as seen, mark it as seen and remove from watchlist
+                movieRepository.updateSeenStatus(currentMovie, true)
+                var watchlistStatus = false
+                _movie.value = currentMovie.copy(isSeen = true, isWatchlist = watchlistStatus, rating = rating)
+            } else {
+                // If already seen, just update the rating
+                _movie.value = currentMovie.copy(rating = rating)
+            }
+            movieRepository.updateRating(currentMovie, rating)
+        }
+        _showRatingDialog.value = false
+    }
+
+    fun dismissRatingDialog() {
+        _showRatingDialog.value = false
+    }
+
+    fun openRatingDialog() {
+        _showRatingDialog.value = true
     }
 
     fun toggleWatchlist() {

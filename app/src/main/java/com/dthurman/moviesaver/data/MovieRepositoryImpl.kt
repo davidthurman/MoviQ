@@ -58,6 +58,15 @@ class DefaultMovieRepository @Inject constructor(
         }
     }
 
+    override suspend fun updateRating(movie: Movie, rating: Float?) {
+        val existingMovie = movieDao.getMovieById(movie.id)
+        if (existingMovie != null) {
+            movieDao.updateRating(movie.id, rating)
+        } else {
+            movieDao.insertOrUpdateMovie(movie.copy(rating = rating).toEntity())
+        }
+    }
+
     override suspend fun getPopularMovies(): List<Movie> {
         val response = theMovieApi.getPopularMovies()
         if (response.isSuccessful) {
@@ -91,7 +100,8 @@ class DefaultMovieRepository @Inject constructor(
                 apiMovie.copy(
                     isSeen = localMovie.isSeen,
                     isWatchlist = localMovie.isWatchlist,
-                    isFavorite = localMovie.isFavorite
+                    isFavorite = localMovie.isFavorite,
+                    rating = localMovie.rating
                 )
             } else {
                 apiMovie

@@ -28,6 +28,7 @@ interface MovieRepository {
     suspend fun updateSeenStatus(movie: Movie, isSeen: Boolean)
     suspend fun updateWatchlistStatus(movie: Movie, isWatchlist: Boolean)
     suspend fun updateFavoriteStatus(movie: Movie, isFavorite: Boolean)
+    suspend fun updateRating(movie: Movie, rating: Float?)
     suspend fun getPopularMovies(): List<Movie>
     suspend fun searchMovieByTitle(title: String): List<Movie>
 }

@@ -9,5 +9,6 @@ data class Movie(
     val overview: String,
     val isSeen: Boolean = false,
     val isWatchlist: Boolean = false,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val rating: Float? = null
 )

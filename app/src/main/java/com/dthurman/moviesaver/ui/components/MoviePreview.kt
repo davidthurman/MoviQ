@@ -71,6 +71,24 @@ fun MoviePreview(
                         )
                     }
                 }
+                if (movie.rating != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 8.dp, bottom = 8.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                    ) {
+                        StarRatingDisplay(
+                            rating = movie.rating,
+                            starSize = 12.dp,
+                            spacing = 2.dp
+                        )
+                    }
+                }
             }
         }
     }

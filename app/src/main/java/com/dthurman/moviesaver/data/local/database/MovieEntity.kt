@@ -35,7 +35,8 @@ data class MovieEntity(
     val isSeen: Boolean = false,
     val isWatchlist: Boolean = false,
     val isFavorite: Boolean = false,
-    val addedAt: Long = System.currentTimeMillis()
+    val addedAt: Long = System.currentTimeMillis(),
+    val rating: Float? = null
 )
 
 @Dao
@@ -66,6 +67,9 @@ interface MovieDao {
 
     @Query("UPDATE movie SET isFavorite = :isFavorite WHERE id = :movieId")
     suspend fun updateFavoriteStatus(movieId: Int, isFavorite: Boolean)
+
+    @Query("UPDATE movie SET rating = :rating WHERE id = :movieId")
+    suspend fun updateRating(movieId: Int, rating: Float?)
 
     @Query("DELETE FROM movie WHERE id = :movieId AND isSeen = 0 AND isWatchlist = 0 AND isFavorite = 0")
     suspend fun deleteMovieIfNotUsed(movieId: Int)

@@ -80,6 +80,13 @@ class FakeMovieRepository @Inject constructor() : MovieRepository {
         TODO("Not yet implemented")
     }
 
+    override suspend fun updateRating(
+        movie: Movie,
+        rating: Float?
+    ) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getPopularMovies(): List<Movie> {
         return fakeMovies.map { it.toDomain() }
     }

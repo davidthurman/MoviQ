@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.ui.components.EmptyState
 import com.dthurman.moviesaver.ui.components.MovieList
 import com.dthurman.moviesaver.ui.components.TopBar
 
@@ -123,13 +124,7 @@ fun SeenScreen(
                     onMovieClick = onMovieClick
                 )
             } else {
-                Text(
-                    modifier = Modifier.padding(16.dp),
-                    text = when (selectedFilter) {
-                        MovieFilter.SEEN -> "You haven't marked any movies as seen yet! Use the discover screen to find some."
-                        MovieFilter.WATCHLIST -> "You haven't added any movies to your watchlist yet! Use the discover screen to find some."
-                    }
-                )
+                EmptyState(modifier = Modifier.fillMaxSize())
             }
         }
     }
