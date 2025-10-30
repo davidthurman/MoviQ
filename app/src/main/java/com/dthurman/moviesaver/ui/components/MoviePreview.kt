@@ -42,11 +42,10 @@ fun MoviePreview(
     ) {
         Column(modifier) {
             Box {
-                val imagePosterUrl = "https://image.tmdb.org/t/p/w500" + movie.posterUrl
                 AsyncImage(
-                    model = imagePosterUrl,
-                    placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                    error = painterResource(R.drawable.ic_launcher_background),
+                    model = movie.posterUrl,
+                    placeholder = painterResource(R.drawable.poster_placeholder),
+                    error = painterResource(R.drawable.poster_placeholder),
                     contentDescription = movie.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f),

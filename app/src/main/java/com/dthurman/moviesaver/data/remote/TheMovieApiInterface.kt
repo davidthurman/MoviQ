@@ -15,6 +15,7 @@ interface TheMovieApiInterface {
     @GET("search/movie")
     suspend fun searchMovies(
         @Query("query") query: String,
+        @Query("year") year: Int? = null,
         @Query("page") page: Int = 1,
         @Query("language") language: String = "en-US"
     ): Response<MovieListDto>

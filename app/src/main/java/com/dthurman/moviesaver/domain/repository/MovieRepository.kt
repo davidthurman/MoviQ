@@ -20,7 +20,6 @@ import com.dthurman.moviesaver.domain.model.Movie
 import kotlinx.coroutines.flow.Flow
 
 interface MovieRepository {
-    // Get movies by status
     fun getSeenMovies(): Flow<List<Movie>>
     fun getWatchlistMovies(): Flow<List<Movie>>
     fun getFavoriteMovies(): Flow<List<Movie>>

@@ -105,14 +105,11 @@ fun SeenScreen(
                     selected = showFavoritesOnly,
                     onClick = { viewModel.onToggleFavoritesOnly() },
                     label = {
-//                        Row {
-//                            Text("Favorites")
-                            Icon(
-                                modifier = Modifier.size(18.dp),
-                                imageVector = if (showFavoritesOnly) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                contentDescription = "Show favorites only"
-                            )
-//                        }
+                        Icon(
+                            modifier = Modifier.size(18.dp),
+                            imageVector = if (showFavoritesOnly) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = "Show favorites only"
+                        )
                     },
                 )
             }

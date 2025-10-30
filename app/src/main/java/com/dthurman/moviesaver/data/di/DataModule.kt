@@ -17,9 +17,11 @@
 package com.dthurman.moviesaver.data.di
 
 import com.dthurman.moviesaver.data.DefaultMovieRepository
+import com.dthurman.moviesaver.data.ai.AiRepositoryImpl
 import com.dthurman.moviesaver.data.local.database.MovieEntity
 import com.dthurman.moviesaver.data.remote.toDomain
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.domain.repository.AiRepository
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import dagger.Binds
 import dagger.Module
@@ -39,6 +41,12 @@ interface DataModule {
     fun bindsMovieRepository(
         movieRepository: DefaultMovieRepository
     ): MovieRepository
+
+    @Singleton
+    @Binds
+    fun bindsAiRepository(
+        aiRepository: AiRepositoryImpl
+    ): AiRepository
 }
 
 class FakeMovieRepository @Inject constructor() : MovieRepository {

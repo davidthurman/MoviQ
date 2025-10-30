@@ -34,7 +34,7 @@
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.MovieSaverApplication">
+            android:theme="@style/Theme.MovieSaver.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

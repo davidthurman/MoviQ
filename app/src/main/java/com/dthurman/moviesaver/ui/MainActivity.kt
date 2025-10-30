@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Dialog
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.components.SettingsModal
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -119,7 +121,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 
-                // Modal Bottom Sheet for movie details
                 if (showBottomSheet && selectedMovie != null) {
                     ModalBottomSheet(
                         onDismissRequest = {

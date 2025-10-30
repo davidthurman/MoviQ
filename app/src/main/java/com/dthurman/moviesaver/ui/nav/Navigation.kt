@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.features.feature_discover.DiscoverScreen
+import com.dthurman.moviesaver.ui.features.feature_recommendations.RecommendationsScreen
 import com.dthurman.moviesaver.ui.features.feature_seen.SeenScreen
 
 @Composable
@@ -34,6 +35,10 @@ fun AppNavHost(
                         onMovieClick = onMovieClick,
                         onSettingsClick = onSettingsClick
                     )
+                    Destination.RECOMMENDATIONS -> RecommendationsScreen(
+                        onMovieClick = onMovieClick,
+                        onSettingsClick = onSettingsClick
+                    )
                     Destination.DISCOVER -> DiscoverScreen(
                         onMovieClick = onMovieClick,
                         onSettingsClick = onSettingsClick
@@ -52,7 +57,6 @@ enum class Destination(
     val contentDescription: String
 ) {
     SEEN("seen", "Movies", iconRes = R.drawable.outline_visibility_24, contentDescription = "Movies"),
-//    FAVORITES("favorites", "Favorites", icon = Icons.Default.Favorite, contentDescription = "Favorite"),
-//    WATCHLIST("watchlist", "Watchlist", icon = Icons.Default.Add, contentDescription = "Watchlist"),
+    RECOMMENDATIONS("recommendations", "Recommendations", iconRes = R.drawable.outline_wand_stars_24, contentDescription = "Recommendations"),
     DISCOVER("discover", "Search", icon = Icons.Default.Search, contentDescription = "Search"),
 }

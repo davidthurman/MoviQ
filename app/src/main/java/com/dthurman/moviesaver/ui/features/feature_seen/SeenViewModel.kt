@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ enum class SortOrder(val displayName: String) {
     RELEASE_DATE_DESC("Release Date (Newest)")
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SeenViewModel @Inject constructor(
     private val movieRepository: MovieRepository
