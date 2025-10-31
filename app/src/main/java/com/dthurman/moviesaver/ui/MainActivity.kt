@@ -20,21 +20,21 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Dialog
-import android.util.Log
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.domain.repository.MovieRepository
 import com.dthurman.moviesaver.ui.components.SettingsModal
 import com.dthurman.moviesaver.ui.features.feature_detail.DetailScreen
 import com.dthurman.moviesaver.ui.features.feature_login.LoginScreen
@@ -43,26 +43,24 @@ import com.dthurman.moviesaver.ui.nav.AppNavHost
 import com.dthurman.moviesaver.ui.nav.Destination
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val loginViewModel: LoginViewModel by viewModels()
 
+    @Inject
+    lateinit var movieRepository: MovieRepository
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d("TESTING123", "MainActivity: onCreate called")
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Log.d("TESTING123", "MainActivity: About to call setContent")
         setContent {
-
-            Log.d("TESTING123", "MainActivity: setContent called, creating composition")
-            
             val currentUser by loginViewModel.currentUser.collectAsStateWithLifecycle()
-            
-            Log.d("TESTING123", "MainActivity: currentUser state in composition = ${currentUser?.email ?: "null"}")
             
             val appNavController = rememberNavController()
             val startDestination = Destination.SEEN
@@ -74,27 +72,18 @@ class MainActivity : ComponentActivity() {
 
             var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
 
-            // Log currentUser changes
             LaunchedEffect(currentUser) {
-                Log.d("TESTING123", "MainActivity: LaunchedEffect triggered - currentUser changed to ${currentUser?.email ?: "null"}")
+                if (currentUser != null) {
+                    launch {
+                        movieRepository.syncFromFirestore()
+                    }
+                }
             }
 
             AppTheme(dynamicColor = false) {
-                Log.d("TESTING123", "MainActivity: Rendering UI - currentUser is ${if (currentUser == null) "NULL - showing LoginScreen" else "NOT NULL (${currentUser?.email}) - showing main app"}")
-                
                 if (currentUser == null) {
-                    Log.d("TESTING123", "MainActivity: Composing LoginScreen")
-                    // Show login screen
-                    LoginScreen(
-                        onLoginSuccess = {
-                            Log.d("TESTING123", "MainActivity: onLoginSuccess callback fired!")
-                            // Navigation handled by currentUser state change
-                            // No action needed here - the Flow will update automatically
-                        }
-                    )
+                    LoginScreen()
                 } else {
-                    Log.d("TESTING123", "MainActivity: Composing main app with user ${currentUser?.email}")
-                    // Show main app
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {

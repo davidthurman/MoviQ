@@ -102,6 +102,10 @@ class FakeMovieRepository @Inject constructor() : MovieRepository {
     override suspend fun searchMovieByTitle(title: String): List<Movie> {
         return fakeMovies.map { it.toDomain() }
     }
+
+    override suspend fun syncFromFirestore() {
+        TODO("Not yet implemented")
+    }
 }
 
 val fakeMovies = listOf(MovieEntity(0, "Title", "", "", "", ""))

@@ -1,18 +1,29 @@
 package com.dthurman.moviesaver.data
 
+import android.util.Log
 import com.dthurman.moviesaver.data.local.database.MovieDao
 import com.dthurman.moviesaver.data.remote.TheMovieApi.theMovieApi
+import com.dthurman.moviesaver.data.remote.firestore.FirestoreSyncService
 import com.dthurman.moviesaver.data.remote.toDomain
 import com.dthurman.moviesaver.data.remote.toEntity
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.domain.repository.AuthRepository
 import com.dthurman.moviesaver.domain.repository.MovieRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class DefaultMovieRepository @Inject constructor(
     private val movieDao: MovieDao,
+    private val firestoreSyncService: FirestoreSyncService,
+    private val authRepository: AuthRepository,
 ) : MovieRepository {
+    
+    private val TAG = "MovieRepository"
+    private val syncScope = CoroutineScope(Dispatchers.IO)
 
     override fun getSeenMovies(): Flow<List<Movie>> {
         return movieDao.getSeenMovies().map { items -> items.map { it.toDomain() } }
@@ -38,6 +49,7 @@ class DefaultMovieRepository @Inject constructor(
         } else {
             movieDao.insertOrUpdateMovie(movie.copy(isSeen = isSeen).toEntity())
         }
+        syncToFirestore(movie.id)
     }
 
     override suspend fun updateWatchlistStatus(movie: Movie, isWatchlist: Boolean) {
@@ -47,6 +59,7 @@ class DefaultMovieRepository @Inject constructor(
         } else {
             movieDao.insertOrUpdateMovie(movie.copy(isWatchlist = isWatchlist).toEntity())
         }
+        syncToFirestore(movie.id)
     }
 
     override suspend fun updateFavoriteStatus(movie: Movie, isFavorite: Boolean) {
@@ -56,6 +69,7 @@ class DefaultMovieRepository @Inject constructor(
         } else {
             movieDao.insertOrUpdateMovie(movie.copy(isFavorite = isFavorite).toEntity())
         }
+        syncToFirestore(movie.id)
     }
 
     override suspend fun updateRating(movie: Movie, rating: Float?) {
@@ -65,6 +79,7 @@ class DefaultMovieRepository @Inject constructor(
         } else {
             movieDao.insertOrUpdateMovie(movie.copy(rating = rating).toEntity())
         }
+        syncToFirestore(movie.id)
     }
 
     override suspend fun getPopularMovies(): List<Movie> {
@@ -106,6 +121,45 @@ class DefaultMovieRepository @Inject constructor(
             } else {
                 apiMovie
             }
+        }
+    }
+    
+    private fun syncToFirestore(movieId: Int) {
+        syncScope.launch {
+            try {
+                val userId = authRepository.getCurrentUser()?.id
+                if (userId != null) {
+                    val movieEntity = movieDao.getMovieById(movieId)
+                    if (movieEntity != null) {
+                        firestoreSyncService.syncMovie(movieEntity, userId)
+                    }
+                } else {
+                    Log.w(TAG, "Cannot sync to Firestore: user not logged in")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error syncing movie to Firestore: ${e.message}", e)
+            }
+        }
+    }
+    
+    override suspend fun syncFromFirestore() {
+        try {
+            val userId = authRepository.getCurrentUser()?.id
+            if (userId != null) {
+                Log.d(TAG, "Syncing from Firestore for user: $userId")
+                val result = firestoreSyncService.fetchUserMovies(userId)
+                if (result.isSuccess) {
+                    val movies = result.getOrNull() ?: emptyList()
+                    movies.forEach { movieEntity ->
+                        movieDao.insertOrUpdateMovie(movieEntity)
+                    }
+                    Log.d(TAG, "Successfully synced ${movies.size} movies from Firestore")
+                } else {
+                    Log.e(TAG, "Failed to fetch movies from Firestore: ${result.exceptionOrNull()?.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error syncing from Firestore: ${e.message}", e)
         }
     }
 }
