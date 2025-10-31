@@ -9,9 +9,6 @@ import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
 import javax.inject.Inject
 
-/**
- * Service for interacting with Firebase Vertex AI to generate movie recommendations
- */
 class FirebaseAiService @Inject constructor(
     private val generativeModel: GenerativeModel,
     private val gson: Gson
@@ -36,73 +33,6 @@ class FirebaseAiService @Inject constructor(
             throw AiException("Invalid JSON format in AI response: ${e.message}", e)
         } catch (e: Exception) {
             throw AiException("Failed to generate recommendations: ${e.message}", e)
-        }
-    }
-
-    /**
-     * Get AI-powered movie insights (analysis, themes, recommendations)
-     * @param movie The movie to analyze
-     * @return AI-generated insights about the movie
-     */
-    suspend fun getMovieInsights(movie: Movie): String {
-        val prompt = """
-            Analyze the movie "${movie.title}" (${movie.releaseDate.take(4)}).
-            
-            Overview: ${movie.overview}
-            
-            Provide:
-            1. Key themes and storytelling elements
-            2. Why someone might enjoy this movie
-            3. 3 similar movies they might like
-            
-            Keep it concise and engaging (max 200 words).
-        """.trimIndent()
-        
-        return try {
-            val response = generativeModel.generateContent(
-                content {
-                    text(prompt)
-                }
-            )
-            response.text ?: "Unable to generate insights for this movie."
-        } catch (e: Exception) {
-            throw AiException("Failed to generate movie insights: ${e.message}", e)
-        }
-    }
-
-    /**
-     * Generate movie recommendations based on a query or mood
-     * @param query User's query or mood (e.g., "I want something funny" or "dark thriller")
-     * @param seenMovies Movies the user has already seen (to avoid recommending them)
-     * @return AI-generated recommendation text
-     */
-    suspend fun generateQueryBasedRecommendations(
-        query: String,
-        seenMovies: List<Movie> = emptyList()
-    ): String {
-        val seenTitles = seenMovies.joinToString(", ") { it.title }
-        
-        val prompt = """
-            User query: "$query"
-            
-            ${if (seenMovies.isNotEmpty()) "Movies they've already seen: $seenTitles\n\n" else ""}
-            
-            Recommend 5 movies that match their request. For each movie:
-            - Title and year
-            - Brief reason why it fits their request (1-2 sentences)
-            
-            Format as a numbered list. Be specific and helpful.
-        """.trimIndent()
-        
-        return try {
-            val response = generativeModel.generateContent(
-                content {
-                    text(prompt)
-                }
-            )
-            response.text ?: "Unable to generate recommendations."
-        } catch (e: Exception) {
-            throw AiException("Failed to generate query-based recommendations: ${e.message}", e)
         }
     }
 
@@ -166,14 +96,12 @@ class FirebaseAiService @Inject constructor(
     }
 
     private fun extractJson(text: String): String {
-        // Remove markdown code blocks if present
         val codeBlockRegex = "```(?:json)?\\s*([\\s\\S]*?)```".toRegex()
         val match = codeBlockRegex.find(text)
         
         return if (match != null) {
             match.groupValues[1].trim()
         } else {
-            // Try to find JSON array in the text
             val jsonArrayRegex = "\\[\\s*\\{[\\s\\S]*}\\s*]".toRegex()
             jsonArrayRegex.find(text)?.value?.trim() ?: text.trim()
         }

@@ -13,9 +13,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-/**
- * Implementation of AiRepository that uses Firebase AI and TMDB API
- */
 class AiRepositoryImpl @Inject constructor(
     private val firebaseAiService: FirebaseAiService,
     private val movieRepository: MovieRepository,
@@ -25,34 +22,27 @@ class AiRepositoryImpl @Inject constructor(
     override suspend fun generatePersonalizedRecommendations(): List<MovieRecommendation> {
         val seenMovies = movieRepository.getSeenMovies().first()
         val aiRecommendations = firebaseAiService.generateRecommendations(seenMovies)
-        Log.d("AiRepository", "AI returned ${aiRecommendations.size} recommendations")
         val movieRecommendations = mutableListOf<MovieRecommendation>()
         
         for (aiRec in aiRecommendations) {
             try {
-                Log.d("AiRepository", "Searching for: ${aiRec.title} (${aiRec.year})")
                 var response = theMovieApi.searchMovies(query = aiRec.title, year = aiRec.year)
                 
                 if (response.isSuccessful) {
                     var movies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
-                    Log.d("AiRepository", "TMDB returned ${movies.size} results for '${aiRec.title}' year=${aiRec.year}")
                     if (movies.isEmpty()) {
-                        Log.d("AiRepository", "No results with year filter, trying without year")
                         response = theMovieApi.searchMovies(query = aiRec.title, year = null)
                         if (response.isSuccessful) {
                             movies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
-                            Log.d("AiRepository", "TMDB returned ${movies.size} results for '${aiRec.title}' (no year filter)")
                             movies = movies.filter { movie ->
                                 val movieYear = movie.releaseDate.takeIf { it.length >= 4 }?.take(4)?.toIntOrNull() ?: 0
                                 val yearDiff = kotlin.math.abs(movieYear - aiRec.year)
                                 yearDiff <= 2
                             }
-                            Log.d("AiRepository", "After year filtering (±2 years): ${movies.size} results")
                         }
                     }
                     val movie = movies.firstOrNull()
                     if (movie != null) {
-                        Log.d("AiRepository", "✓ Found match: ${movie.title} (${movie.releaseDate.take(4)})")
                         val existingMovie = movieRepository.getMovieById(movie.id)
                         val movieWithStatus = existingMovie ?: movie
                         
@@ -75,8 +65,7 @@ class AiRepositoryImpl @Inject constructor(
         }
         
         Log.d("AiRepository", "Final result: ${movieRecommendations.size} movies with TMDB data")
-        
-        // Save recommendations to database
+
         saveRecommendations(movieRecommendations)
         
         return movieRecommendations
@@ -97,10 +86,7 @@ class AiRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveRecommendations(recommendations: List<MovieRecommendation>) {
-        // Clear old recommendations first
         recommendationDao.clearAllRecommendations()
-        
-        // Save new recommendations
         val entities = recommendations.mapIndexed { index, rec ->
             RecommendationEntity(
                 movieId = rec.movie.id,
@@ -109,12 +95,10 @@ class AiRepositoryImpl @Inject constructor(
             )
         }
         recommendationDao.insertRecommendations(entities)
-        Log.d("AiRepository", "Saved ${entities.size} recommendations to database")
     }
 
     override suspend fun clearRecommendations() {
         recommendationDao.clearAllRecommendations()
-        Log.d("AiRepository", "Cleared all recommendations from database")
     }
 }
 

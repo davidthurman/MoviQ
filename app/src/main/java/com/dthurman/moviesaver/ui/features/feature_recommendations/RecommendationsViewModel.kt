@@ -28,11 +28,21 @@ class RecommendationsViewModel @Inject constructor(
     private val _showRatingDialog = MutableStateFlow(false)
     val showRatingDialog: StateFlow<Boolean> = _showRatingDialog
 
+    private val _showMinimumMoviesDialog = MutableStateFlow(false)
+    val showMinimumMoviesDialog: StateFlow<Boolean> = _showMinimumMoviesDialog
+
+    private val _seenMoviesCount = MutableStateFlow(0)
+    val seenMoviesCount: StateFlow<Int> = _seenMoviesCount
+
     init {
-        // Restore current index from saved state
+        // Track seen movies count
+        viewModelScope.launch {
+            movieRepository.getSeenMovies().collect { seenMovies ->
+                _seenMoviesCount.value = seenMovies.size
+            }
+        }
         val savedIndex = savedStateHandle.get<Int>(KEY_CURRENT_INDEX) ?: 0
         
-        // Load saved recommendations from database
         viewModelScope.launch {
             aiRepository.getSavedRecommendations().collect { savedRecommendations ->
                 if (savedRecommendations.isNotEmpty() && _uiState.value.recommendations.isEmpty()) {
@@ -47,10 +57,13 @@ class RecommendationsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Generate AI-powered personalized recommendations based on user's saved movies
-     */
     fun generateAiRecommendations() {
+        // Check if user has at least 5 seen movies
+        if (_seenMoviesCount.value < 5) {
+            _showMinimumMoviesDialog.value = true
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             
@@ -74,19 +87,18 @@ class RecommendationsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Skip to the next recommendation
-     */
+    fun dismissMinimumMoviesDialog() {
+        _showMinimumMoviesDialog.value = false
+    }
+
     fun skipToNext() {
         viewModelScope.launch {
             _uiState.update { state ->
                 val nextIndex = state.currentIndex + 1
                 if (nextIndex < state.recommendations.size) {
-                    // Save current index
                     savedStateHandle[KEY_CURRENT_INDEX] = nextIndex
                     state.copy(currentIndex = nextIndex)
                 } else {
-                    // No more recommendations, clear from database
                     aiRepository.clearRecommendations()
                     savedStateHandle[KEY_CURRENT_INDEX] = 0
                     state.copy(recommendations = emptyList(), currentIndex = 0)
@@ -95,9 +107,6 @@ class RecommendationsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Add current movie to watchlist and skip to next
-     */
     fun addToWatchlist() {
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
@@ -108,23 +117,14 @@ class RecommendationsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Show rating dialog before marking as seen
-     */
     fun showRatingDialog() {
         _showRatingDialog.value = true
     }
 
-    /**
-     * Dismiss rating dialog
-     */
     fun dismissRatingDialog() {
         _showRatingDialog.value = false
     }
 
-    /**
-     * Mark current movie as seen with optional rating, then skip to next
-     */
     fun markAsSeenWithRating(rating: Float?) {
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
@@ -151,8 +151,4 @@ data class RecommendationsUiState(
     }
     
     fun hasRecommendations(): Boolean = recommendations.isNotEmpty()
-    
-    fun isLastRecommendation(): Boolean {
-        return currentIndex == recommendations.size - 1
-    }
 }

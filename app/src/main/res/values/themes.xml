@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <resources>
-
     <style name="Theme.MovieSaver.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="windowSplashScreenBackground">#1E201A</item>
+        <item name="windowSplashScreenAnimationDuration">2500</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_anim</item>
         <item name="postSplashScreenTheme">@style/Theme.MovieSaverApplication</item>
     </style>
 

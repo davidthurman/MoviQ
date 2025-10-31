@@ -16,11 +16,13 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AiModule {
 
+    private const val AI_MODEL = "gemini-2.0-flash-exp"
+
     @Provides
     @Singleton
     fun provideGenerativeModel(): GenerativeModel {
         return Firebase.vertexAI.generativeModel(
-            modelName = "gemini-2.0-flash-exp",
+            modelName = AI_MODEL,
             generationConfig = generationConfig {
                 temperature = 0.7f
                 topK = 40

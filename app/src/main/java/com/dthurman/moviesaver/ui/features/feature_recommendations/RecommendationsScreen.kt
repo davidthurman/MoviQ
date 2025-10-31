@@ -3,20 +3,13 @@ package com.dthurman.moviesaver.ui.features.feature_recommendations
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,8 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.domain.model.Movie
-import com.dthurman.moviesaver.domain.model.MovieRecommendation
-import com.dthurman.moviesaver.ui.components.MoviePreview
+import com.dthurman.moviesaver.ui.components.MinimumMoviesDialog
+import com.dthurman.moviesaver.ui.components.MovieRecommendationCard
 import com.dthurman.moviesaver.ui.components.RatingDialog
 import com.dthurman.moviesaver.ui.components.TopBar
 
@@ -41,6 +34,8 @@ fun RecommendationsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showRatingDialog by viewModel.showRatingDialog.collectAsStateWithLifecycle()
+    val showMinimumMoviesDialog by viewModel.showMinimumMoviesDialog.collectAsStateWithLifecycle()
+    val seenMoviesCount by viewModel.seenMoviesCount.collectAsStateWithLifecycle()
 
     Column(modifier = modifier.fillMaxSize()) {
         TopBar(
@@ -76,7 +71,6 @@ fun RecommendationsScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
-                        // All recommendations have been reviewed
                         AllDoneState(
                             onGenerateMore = { viewModel.generateAiRecommendations() },
                             modifier = Modifier.align(Alignment.Center)
@@ -93,7 +87,6 @@ fun RecommendationsScreen(
         }
     }
 
-    // Rating Dialog
     if (showRatingDialog) {
         val currentRec = uiState.getCurrentRecommendation()
         if (currentRec != null) {
@@ -107,79 +100,12 @@ fun RecommendationsScreen(
             )
         }
     }
-}
 
-@Composable
-private fun MovieRecommendationCard(
-    recommendation: MovieRecommendation,
-    onMovieClick: (Movie) -> Unit,
-    onSkip: () -> Unit,
-    onAddToWatchlist: () -> Unit,
-    onMarkAsSeen: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            MoviePreview(
-                movie = recommendation.movie,
-                onMovieClick = onMovieClick,
-                modifier = Modifier.width(280.dp)
-            )
-        }
-
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-        ) {
-            Text(
-                text = recommendation.aiReason,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-        
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(
-                onClick = onSkip,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Skip")
-            }
-            
-            Button(
-                onClick = onAddToWatchlist,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                Text("Watchlist")
-            }
-            
-            Button(
-                onClick = onMarkAsSeen,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Seen")
-            }
-        }
+    if (showMinimumMoviesDialog) {
+        MinimumMoviesDialog(
+            currentCount = seenMoviesCount,
+            onDismiss = { viewModel.dismissMinimumMoviesDialog() }
+        )
     }
 }
 

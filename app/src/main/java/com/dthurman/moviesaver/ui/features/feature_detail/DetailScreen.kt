@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,7 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.components.FloatingFavoriteButton
@@ -137,13 +138,27 @@ internal fun DetailScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
         ) {
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = movie.backdropUrl,
-                placeholder = painterResource(R.drawable.background_placeholder),
-                error = painterResource(R.drawable.background_placeholder),
                 contentDescription = movie.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
+                loading = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                },
+                error = {
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(R.drawable.background_placeholder),
+                        contentDescription = movie.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                    )
+                }
             )
             Box(
                 modifier = Modifier

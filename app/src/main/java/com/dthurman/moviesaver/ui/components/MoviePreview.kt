@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -23,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
 
@@ -42,13 +43,27 @@ fun MoviePreview(
     ) {
         Column(modifier) {
             Box {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = movie.posterUrl,
-                    placeholder = painterResource(R.drawable.poster_placeholder),
-                    error = painterResource(R.drawable.poster_placeholder),
                     contentDescription = movie.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f),
+                    loading = {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    },
+                    error = {
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(R.drawable.poster_placeholder),
+                            contentDescription = movie.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)
+                        )
+                    },
                     onError = { e -> print(e) }
                 )
                 if (movie.isFavorite) {
