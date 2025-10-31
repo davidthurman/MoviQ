@@ -1,9 +1,6 @@
 package com.dthurman.moviesaver.ui.features.feature_login
 
-import android.app.Activity
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,12 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -51,29 +51,11 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    
+    val credentialManager = CredentialManager.create(context)
+    val webClientId = context.getString(R.string.default_web_client_id)
 
-    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken(context.getString(R.string.default_web_client_id))
-        .requestEmail()
-        .build()
-
-    val googleSignInClient = GoogleSignIn.getClient(context, gso)
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                account.idToken?.let { idToken ->
-                    viewModel.signInWithGoogle(idToken)
-                }
-            } catch (e: ApiException) {
-                Log.e("MovieSaver", "LoginScreen: ApiException - statusCode=${e.statusCode}, message=${e.message}", e)
-            }
-        }
-    }
 
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
@@ -121,8 +103,46 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(40.dp))
                 Button(
                     onClick = {
-                        val signInIntent = googleSignInClient.signInIntent
-                        launcher.launch(signInIntent)
+                        coroutineScope.launch {
+                            try {
+                                val googleIdOption = GetGoogleIdOption.Builder()
+                                    .setFilterByAuthorizedAccounts(false)
+                                    .setServerClientId(webClientId)
+                                    .build()
+
+                                val request = GetCredentialRequest.Builder()
+                                    .addCredentialOption(googleIdOption)
+                                    .build()
+
+                                val result = credentialManager.getCredential(
+                                    request = request,
+                                    context = context,
+                                )
+
+                                val credential = result.credential
+
+                                when (credential) {
+                                    is androidx.credentials.CustomCredential -> {
+                                        if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                            try {
+                                                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                                val idToken = googleIdTokenCredential.idToken
+                                                viewModel.signInWithGoogle(idToken)
+                                            } catch (e: Exception) {
+                                                Log.e("GoogleAuth", "LoginScreen: Error parsing Google ID token", e)
+                                            }
+                                        } else {
+                                            Log.e("GoogleAuth", "LoginScreen: Unexpected credential type: ${credential.type}")
+                                        }
+                                    }
+                                    else -> {
+                                        Log.e("GoogleAuth", "LoginScreen: Unexpected credential class")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.e("GoogleAuth", "LoginScreen: Sign-in exception - ${e.message}", e)
+                            }
+                        }
                     },
                     modifier = Modifier
                         .widthIn(max = 300.dp)
