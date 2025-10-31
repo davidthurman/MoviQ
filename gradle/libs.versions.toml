@@ -22,6 +22,9 @@ foundation = "1.9.4"
 firebaseBom = "33.12.0"
 googleServices = "4.4.2"
 splashscreen = "1.2.0-alpha02"
+playServicesAuth = "21.3.0"
+credentialsPlayServices = "1.5.0"
+googleid = "1.1.1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -64,6 +67,11 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-vertexai = { group = "com.google.firebase", name = "firebase-vertexai" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+
+# Google Sign-In
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServices" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

@@ -119,4 +119,9 @@ dependencies {
     implementation(libs.firebase.vertexai)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+
+    // Google Sign-In
+    implementation(libs.play.services.auth)
+    implementation(libs.credentials.play.services)
+    implementation(libs.googleid)
 }

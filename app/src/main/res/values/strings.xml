@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MovieSaverApplication</string>
+    <string name="default_web_client_id">343250730319-k2ttj33cqgme9f47mlflomkdkjbi71sh.apps.googleusercontent.com</string>
 </resources>
