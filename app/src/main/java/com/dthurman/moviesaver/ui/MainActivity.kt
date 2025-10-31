@@ -53,6 +53,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var movieRepository: MovieRepository
+    
+    @Inject
+    lateinit var aiRepository: com.dthurman.moviesaver.domain.repository.AiRepository
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +79,7 @@ class MainActivity : ComponentActivity() {
                 if (currentUser != null) {
                     launch {
                         movieRepository.syncFromFirestore()
+                        aiRepository.syncRecommendationsFromFirestore()
                     }
                 }
             }

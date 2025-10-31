@@ -14,9 +14,12 @@ class FirebaseAiService @Inject constructor(
     private val gson: Gson
 ) {
     suspend fun generateRecommendations(
-        seenMovies: List<Movie>
+        seenMovies: List<Movie>,
+        watchlistMovies: List<Movie> = emptyList(),
+        notInterestedMovies: List<Movie> = emptyList(),
+        count: Int = 5
     ): List<AiMovieRecommendation> {
-        val prompt = buildPrompt(seenMovies)
+        val prompt = buildPrompt(seenMovies, watchlistMovies, notInterestedMovies, count)
         
         try {
             val response = generativeModel.generateContent(
@@ -36,7 +39,12 @@ class FirebaseAiService @Inject constructor(
         }
     }
 
-    private fun buildPrompt(seenMovies: List<Movie>): String {
+    private fun buildPrompt(
+        seenMovies: List<Movie>,
+        watchlistMovies: List<Movie>,
+        notInterestedMovies: List<Movie>,
+        count: Int
+    ): String {
         val moviesList = seenMovies.take(50).joinToString("\n") { movie ->
             buildString {
                 append("- ${movie.title} (${movie.releaseDate.take(4)})")
@@ -48,35 +56,66 @@ class FirebaseAiService @Inject constructor(
                 }
             }
         }
+        
+        val watchlistList = watchlistMovies.joinToString("\n") { movie ->
+            "- ${movie.title} (${movie.releaseDate.take(4)})"
+        }
+        
+        val notInterestedList = notInterestedMovies.joinToString("\n") { movie ->
+            "- ${movie.title} (${movie.releaseDate.take(4)})"
+        }
 
         return if (moviesList.isNotEmpty()) {
-            """
-                You are a movie recommendation expert. Based on the user's viewing history, suggest 5 personalized movie recommendations.
+            buildString {
+                append("""
+                    You are a movie recommendation expert. Based on the user's viewing history, suggest $count personalized movie recommendations.
+                    
+                    User's watched movies (with their ratings and favorites marked):
+                    $moviesList
+                """.trimIndent())
                 
-                User's watched movies (with their ratings and favorites marked):
-                $moviesList
+                if (watchlistList.isNotEmpty()) {
+                    append("\n\n")
+                    append("""
+                        Movies already in their watchlist (DO NOT recommend these):
+                        $watchlistList
+                    """.trimIndent())
+                }
                 
-                Return ONLY a valid JSON array with exactly 5 movie recommendations. Each object must have:
-                - "title": The exact movie title (string)
-                - "year": The release year (integer)
-                - "reason": Why they'll enjoy it based on their history (1-2 sentences, string)
+                if (notInterestedList.isNotEmpty()) {
+                    append("\n\n")
+                    append("""
+                        Movies the user is NOT interested in (DO NOT recommend these):
+                        $notInterestedList
+                    """.trimIndent())
+                }
                 
-                Example format:
-                [
-                  {
-                    "title": "The Shawshank Redemption",
-                    "year": 1994,
-                    "reason": "Given your love for character-driven dramas like The Green Mile, this redemptive story will resonate with you."
-                  }
-                ]
-                
-                Return ONLY the JSON array, no other text or markdown formatting.
-            """.trimIndent()
+                append("\n\n")
+                append("""
+                    Return ONLY a valid JSON array with exactly $count movie recommendations. Each object must have:
+                    - "title": The exact movie title (string)
+                    - "year": The release year (integer)
+                    - "reason": Why they'll enjoy it based on their history (1-2 sentences, string)
+                    
+                    IMPORTANT: Do NOT recommend any movies from their watched list, watchlist, or movies they're not interested in!
+                    
+                    Example format:
+                    [
+                      {
+                        "title": "The Shawshank Redemption",
+                        "year": 1994,
+                        "reason": "Given your love for character-driven dramas like The Green Mile, this redemptive story will resonate with you."
+                      }
+                    ]
+                    
+                    Return ONLY the JSON array, no other text or markdown formatting.
+                """.trimIndent())
+            }
         } else {
             """
-                The user hasn't watched any movies yet. Recommend 5 popular, highly-rated movies across different genres.
+                The user hasn't watched any movies yet. Recommend $count popular, highly-rated movies across different genres.
                 
-                Return ONLY a valid JSON array with exactly 5 movie recommendations. Each object must have:
+                Return ONLY a valid JSON array with exactly $count movie recommendations. Each object must have:
                 - "title": The exact movie title (string)
                 - "year": The release year (integer)
                 - "reason": Why it's worth watching (1-2 sentences, string)

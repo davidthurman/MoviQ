@@ -20,7 +20,6 @@ import android.content.Context
 import androidx.room.Room
 import com.dthurman.moviesaver.data.local.database.AppDatabase
 import com.dthurman.moviesaver.data.local.database.MovieDao
-import com.dthurman.moviesaver.data.local.database.RecommendationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,11 +34,6 @@ class DatabaseModule {
     @Provides
     fun provideMovieDao(appDatabase: AppDatabase): MovieDao {
         return appDatabase.movieDao()
-    }
-
-    @Provides
-    fun provideRecommendationDao(appDatabase: AppDatabase): RecommendationDao {
-        return appDatabase.recommendationDao()
     }
 
     @Provides

@@ -41,5 +41,6 @@ fun Movie.toEntity(): MovieEntity = MovieEntity(
     isSeen = isSeen,
     isWatchlist = isWatchlist,
     isFavorite = isFavorite,
-    rating = rating
+    rating = rating,
+    lastModified = System.currentTimeMillis()
 )

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class MovieFilter {
@@ -47,7 +48,10 @@ class SeenViewModel @Inject constructor(
     private val _showFavoritesOnly = MutableStateFlow(false)
     val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly.asStateFlow()
 
-    val movies: StateFlow<List<Movie>> = _selectedFilter
+    private val _isInitialLoad = MutableStateFlow(true)
+    val isInitialLoad: StateFlow<Boolean> = _isInitialLoad.asStateFlow()
+
+    val movies: StateFlow<List<Movie>?> = _selectedFilter
         .flatMapLatest { filter ->
             when (filter) {
                 MovieFilter.SEEN -> movieRepository.getSeenMovies()
@@ -64,7 +68,17 @@ class SeenViewModel @Inject constructor(
                 movies
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    init {
+        viewModelScope.launch {
+            movies.collect { movieList ->
+                if (movieList != null && _isInitialLoad.value) {
+                    _isInitialLoad.value = false
+                }
+            }
+        }
+    }
 
     private fun sortMovies(movies: List<Movie>, sortOrder: SortOrder): List<Movie> {
         return when (sortOrder) {

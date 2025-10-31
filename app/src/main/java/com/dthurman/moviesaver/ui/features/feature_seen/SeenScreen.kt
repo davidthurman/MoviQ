@@ -31,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.components.EmptyState
+import com.dthurman.moviesaver.ui.components.GenericLoadingScreen
 import com.dthurman.moviesaver.ui.components.MovieList
 import com.dthurman.moviesaver.ui.components.TopBar
 
@@ -47,6 +48,7 @@ fun SeenScreen(
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
     val showSortMenu by viewModel.showSortMenu.collectAsStateWithLifecycle()
     val showFavoritesOnly by viewModel.showFavoritesOnly.collectAsStateWithLifecycle()
+    val isInitialLoad by viewModel.isInitialLoad.collectAsStateWithLifecycle()
 
     Column(modifier = modifier) {
         TopBar(title = "My Movies", onSettingsClick = onSettingsClick)
@@ -114,14 +116,20 @@ fun SeenScreen(
                 )
             }
             
-            if (movies.isNotEmpty()) {
-                MovieList(
-                    modifier = modifier.fillMaxSize(),
-                    movies = movies,
-                    onMovieClick = onMovieClick
-                )
-            } else {
-                EmptyState(modifier = Modifier.fillMaxSize())
+            when {
+                isInitialLoad -> {
+                    GenericLoadingScreen()
+                }
+                movies != null && movies!!.isNotEmpty() -> {
+                    MovieList(
+                        modifier = modifier.fillMaxSize(),
+                        movies = movies!!,
+                        onMovieClick = onMovieClick
+                    )
+                }
+                else -> {
+                    EmptyState(modifier = Modifier.fillMaxSize())
+                }
             }
         }
     }

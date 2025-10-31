@@ -1,8 +1,8 @@
 package com.dthurman.moviesaver.data.remote.firestore
 
 import com.dthurman.moviesaver.data.local.database.MovieEntity
-import com.dthurman.moviesaver.data.local.database.RecommendationEntity
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.PropertyName
 
 data class FirestoreMovie(
     @DocumentId val id: String = "",
@@ -12,29 +12,19 @@ data class FirestoreMovie(
     val backdropUrl: String = "",
     val releaseDate: String = "",
     val overview: String = "",
-    val isSeen: Boolean = false,
-    val isWatchlist: Boolean = false,
-    val isFavorite: Boolean = false,
+    @get:PropertyName("isSeen") @set:PropertyName("isSeen") var isSeen: Boolean = false,
+    @get:PropertyName("isWatchlist") @set:PropertyName("isWatchlist") var isWatchlist: Boolean = false,
+    @get:PropertyName("isFavorite") @set:PropertyName("isFavorite") var isFavorite: Boolean = false,
     val addedAt: Long = System.currentTimeMillis(),
     val rating: Float? = null,
-    val userId: String = "",
-    val lastModified: Long = System.currentTimeMillis()
+    val lastModified: Long = System.currentTimeMillis(),
+    val aiReason: String? = null,
+    @get:PropertyName("notInterested") @set:PropertyName("notInterested") var notInterested: Boolean = false
 )
 
-data class FirestoreRecommendation(
-    @DocumentId val id: String = "",
-    val movieId: Int = 0,
-    val aiReason: String = "",
-    val orderIndex: Int = 0,
-    val createdAt: Long = System.currentTimeMillis(),
-    val userId: String = "",
-    val lastModified: Long = System.currentTimeMillis()
-)
-
-// Extension functions for conversion
-fun MovieEntity.toFirestore(userId: String): FirestoreMovie {
+fun MovieEntity.toFirestore(): FirestoreMovie {
     return FirestoreMovie(
-        id = "${userId}_${this.id}",
+        id = this.id.toString(),
         movieId = this.id,
         title = this.title,
         posterUrl = this.posterUrl,
@@ -46,8 +36,9 @@ fun MovieEntity.toFirestore(userId: String): FirestoreMovie {
         isFavorite = this.isFavorite,
         addedAt = this.addedAt,
         rating = this.rating,
-        userId = userId,
-        lastModified = System.currentTimeMillis()
+        lastModified = System.currentTimeMillis(),
+        aiReason = this.aiReason,
+        notInterested = this.notInterested
     )
 }
 
@@ -63,29 +54,11 @@ fun FirestoreMovie.toEntity(): MovieEntity {
         isWatchlist = this.isWatchlist,
         isFavorite = this.isFavorite,
         addedAt = this.addedAt,
-        rating = this.rating
+        rating = this.rating,
+        lastModified = this.lastModified,
+        aiReason = this.aiReason,
+        notInterested = this.notInterested
     )
 }
 
-fun RecommendationEntity.toFirestore(userId: String): FirestoreRecommendation {
-    return FirestoreRecommendation(
-        id = "${userId}_${this.id}",
-        movieId = this.movieId,
-        aiReason = this.aiReason,
-        orderIndex = this.orderIndex,
-        createdAt = this.createdAt,
-        userId = userId,
-        lastModified = System.currentTimeMillis()
-    )
-}
-
-fun FirestoreRecommendation.toEntity(): RecommendationEntity {
-    return RecommendationEntity(
-        id = 0,
-        movieId = this.movieId,
-        aiReason = this.aiReason,
-        orderIndex = this.orderIndex,
-        createdAt = this.createdAt
-    )
-}
 

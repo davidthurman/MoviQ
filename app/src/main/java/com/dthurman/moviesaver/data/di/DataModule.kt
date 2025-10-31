@@ -106,6 +106,29 @@ class FakeMovieRepository @Inject constructor() : MovieRepository {
     override suspend fun syncFromFirestore() {
         TODO("Not yet implemented")
     }
+
+    override suspend fun deleteRecommendation(movieId: Int) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun clearAiReasonAndUpdateWatchlist(movie: Movie) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun clearAiReasonAndMarkSeen(
+        movie: Movie,
+        rating: Float?
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun markAsNotInterested(movieId: Int) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getNotInterestedMovies(): List<Movie> {
+        TODO("Not yet implemented")
+    }
 }
 
 val fakeMovies = listOf(MovieEntity(0, "Title", "", "", "", ""))

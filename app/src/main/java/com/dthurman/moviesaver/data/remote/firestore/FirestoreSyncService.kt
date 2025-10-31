@@ -2,7 +2,6 @@ package com.dthurman.moviesaver.data.remote.firestore
 
 import android.util.Log
 import com.dthurman.moviesaver.data.local.database.MovieEntity
-import com.dthurman.moviesaver.data.local.database.RecommendationEntity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.awaitClose
@@ -18,15 +17,17 @@ class FirestoreSyncService @Inject constructor(
 ) {
     
     companion object {
+        private const val USERS_COLLECTION = "users"
         private const val MOVIES_COLLECTION = "movies"
-        private const val RECOMMENDATIONS_COLLECTION = "recommendations"
         private const val TAG = "FirestoreSync"
     }
 
     suspend fun syncMovie(movie: MovieEntity, userId: String): Result<Unit> {
         return try {
-            val firestoreMovie = movie.toFirestore(userId)
-            firestore.collection(MOVIES_COLLECTION)
+            val firestoreMovie = movie.toFirestore()
+            firestore.collection(USERS_COLLECTION)
+                .document(userId)
+                .collection(MOVIES_COLLECTION)
                 .document(firestoreMovie.id)
                 .set(firestoreMovie)
                 .await()
@@ -40,8 +41,9 @@ class FirestoreSyncService @Inject constructor(
 
     suspend fun fetchUserMovies(userId: String): Result<List<MovieEntity>> {
         return try {
-            val snapshot = firestore.collection(MOVIES_COLLECTION)
-                .whereEqualTo("userId", userId)
+            val snapshot = firestore.collection(USERS_COLLECTION)
+                .document(userId)
+                .collection(MOVIES_COLLECTION)
                 .get()
                 .await()
             
@@ -66,8 +68,9 @@ class FirestoreSyncService @Inject constructor(
         var listenerRegistration: ListenerRegistration? = null
         
         try {
-            listenerRegistration = firestore.collection(MOVIES_COLLECTION)
-                .whereEqualTo("userId", userId)
+            listenerRegistration = firestore.collection(USERS_COLLECTION)
+                .document(userId)
+                .collection(MOVIES_COLLECTION)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         Log.e(TAG, "Error listening to movies: ${error.message}", error)
@@ -94,51 +97,12 @@ class FirestoreSyncService @Inject constructor(
         }
     }
 
-    suspend fun syncRecommendation(recommendation: RecommendationEntity, userId: String): Result<Unit> {
-        return try {
-            val firestoreRec = recommendation.toFirestore(userId)
-            firestore.collection(RECOMMENDATIONS_COLLECTION)
-                .document(firestoreRec.id)
-                .set(firestoreRec)
-                .await()
-            Log.d(TAG, "Recommendation synced to Firestore")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to sync recommendation: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
-
-    suspend fun fetchUserRecommendations(userId: String): Result<List<RecommendationEntity>> {
-        return try {
-            val snapshot = firestore.collection(RECOMMENDATIONS_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .orderBy("orderIndex")
-                .get()
-                .await()
-            
-            val recommendations = snapshot.documents.mapNotNull { doc ->
-                try {
-                    doc.toObject(FirestoreRecommendation::class.java)?.toEntity()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing recommendation: ${e.message}")
-                    null
-                }
-            }
-            
-            Log.d(TAG, "Fetched ${recommendations.size} recommendations from Firestore")
-            Result.success(recommendations)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch recommendations: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
-
     suspend fun deleteMovie(movieId: Int, userId: String): Result<Unit> {
         return try {
-            val docId = "${userId}_${movieId}"
-            firestore.collection(MOVIES_COLLECTION)
-                .document(docId)
+            firestore.collection(USERS_COLLECTION)
+                .document(userId)
+                .collection(MOVIES_COLLECTION)
+                .document(movieId.toString())
                 .delete()
                 .await()
             Log.d(TAG, "Movie deleted from Firestore: $movieId")
@@ -149,23 +113,5 @@ class FirestoreSyncService @Inject constructor(
         }
     }
 
-    suspend fun clearAllRecommendations(userId: String): Result<Unit> {
-        return try {
-            val snapshot = firestore.collection(RECOMMENDATIONS_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-            
-            snapshot.documents.forEach { doc ->
-                doc.reference.delete().await()
-            }
-            
-            Log.d(TAG, "Cleared all recommendations from Firestore")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear recommendations: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
 }
 

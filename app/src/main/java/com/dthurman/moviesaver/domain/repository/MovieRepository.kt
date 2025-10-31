@@ -31,6 +31,11 @@ interface MovieRepository {
     suspend fun getPopularMovies(): List<Movie>
     suspend fun searchMovieByTitle(title: String): List<Movie>
     suspend fun syncFromFirestore()
+    suspend fun deleteRecommendation(movieId: Int)
+    suspend fun clearAiReasonAndUpdateWatchlist(movie: Movie)
+    suspend fun clearAiReasonAndMarkSeen(movie: Movie, rating: Float?)
+    suspend fun markAsNotInterested(movieId: Int)
+    suspend fun getNotInterestedMovies(): List<Movie>
 }
 
 

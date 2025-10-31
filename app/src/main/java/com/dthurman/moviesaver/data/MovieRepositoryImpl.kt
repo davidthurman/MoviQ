@@ -24,6 +24,8 @@ class DefaultMovieRepository @Inject constructor(
     
     private val TAG = "MovieRepository"
     private val syncScope = CoroutineScope(Dispatchers.IO)
+    @Volatile
+    private var isSyncingFromCloud = false
 
     override fun getSeenMovies(): Flow<List<Movie>> {
         return movieDao.getSeenMovies().map { items -> items.map { it.toDomain() } }
@@ -125,6 +127,11 @@ class DefaultMovieRepository @Inject constructor(
     }
     
     private fun syncToFirestore(movieId: Int) {
+        if (isSyncingFromCloud) {
+            Log.d(TAG, "Skipping sync for movie $movieId - currently syncing from cloud")
+            return
+        }
+        
         syncScope.launch {
             try {
                 val userId = authRepository.getCurrentUser()?.id
@@ -147,19 +154,73 @@ class DefaultMovieRepository @Inject constructor(
             val userId = authRepository.getCurrentUser()?.id
             if (userId != null) {
                 Log.d(TAG, "Syncing from Firestore for user: $userId")
-                val result = firestoreSyncService.fetchUserMovies(userId)
-                if (result.isSuccess) {
-                    val movies = result.getOrNull() ?: emptyList()
-                    movies.forEach { movieEntity ->
-                        movieDao.insertOrUpdateMovie(movieEntity)
+                
+                isSyncingFromCloud = true
+                
+                try {
+                    val downloadResult = firestoreSyncService.fetchUserMovies(userId)
+                    if (downloadResult.isSuccess) {
+                        val cloudMovies = downloadResult.getOrNull() ?: emptyList()
+                        var updated = 0
+                        var skipped = 0
+                        
+                        cloudMovies.forEach { cloudMovie ->
+                            val localMovie = movieDao.getMovieById(cloudMovie.id)
+                            
+                            if (localMovie == null) {
+                                movieDao.insertOrUpdateMovie(cloudMovie)
+                                updated++
+                            } else {
+                                if (cloudMovie.lastModified > localMovie.lastModified) {
+                                    movieDao.insertOrUpdateMovie(cloudMovie)
+                                    updated++
+                                } else {
+                                    skipped++
+                                }
+                            }
+                        }
+                        
+                        Log.d(TAG, "Sync complete: $updated updated, $skipped skipped (local newer)")
+                    } else {
+                        Log.e(TAG, "Failed to download from Firestore: ${downloadResult.exceptionOrNull()?.message}")
                     }
-                    Log.d(TAG, "Successfully synced ${movies.size} movies from Firestore")
-                } else {
-                    Log.e(TAG, "Failed to fetch movies from Firestore: ${result.exceptionOrNull()?.message}")
+                } finally {
+                    isSyncingFromCloud = false
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error syncing from Firestore: ${e.message}", e)
+            isSyncingFromCloud = false
+            Log.e(TAG, "Error during sync: ${e.message}", e)
         }
+    }
+    
+    override suspend fun deleteRecommendation(movieId: Int) {
+        movieDao.deleteRecommendation(movieId)
+        val userId = authRepository.getCurrentUser()?.id
+        if (userId != null) {
+            firestoreSyncService.deleteMovie(movieId, userId)
+        }
+    }
+    
+    override suspend fun clearAiReasonAndUpdateWatchlist(movie: Movie) {
+        movieDao.clearAiReason(movie.id)
+        updateWatchlistStatus(movie, true)
+    }
+    
+    override suspend fun clearAiReasonAndMarkSeen(movie: Movie, rating: Float?) {
+        movieDao.clearAiReason(movie.id)
+        updateSeenStatus(movie, true)
+        if (rating != null) {
+            updateRating(movie, rating)
+        }
+    }
+    
+    override suspend fun markAsNotInterested(movieId: Int) {
+        movieDao.updateNotInterested(movieId, true)
+        syncToFirestore(movieId)
+    }
+    
+    override suspend fun getNotInterestedMovies(): List<Movie> {
+        return movieDao.getNotInterestedMovies().map { it.toDomain() }
     }
 }

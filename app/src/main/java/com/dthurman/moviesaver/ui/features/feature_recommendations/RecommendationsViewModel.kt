@@ -45,13 +45,15 @@ class RecommendationsViewModel @Inject constructor(
         
         viewModelScope.launch {
             aiRepository.getSavedRecommendations().collect { savedRecommendations ->
-                if (savedRecommendations.isNotEmpty() && _uiState.value.recommendations.isEmpty()) {
-                    _uiState.update { 
-                        it.copy(
-                            recommendations = savedRecommendations,
-                            currentIndex = savedIndex.coerceIn(0, savedRecommendations.size - 1)
-                        )
-                    }
+                _uiState.update { 
+                    it.copy(
+                        recommendations = savedRecommendations,
+                        currentIndex = if (savedRecommendations.isNotEmpty()) {
+                            savedIndex.coerceIn(0, savedRecommendations.size - 1)
+                        } else {
+                            0
+                        }
+                    )
                 }
             }
         }
@@ -92,16 +94,13 @@ class RecommendationsViewModel @Inject constructor(
     }
 
     fun skipToNext() {
-        viewModelScope.launch {
-            _uiState.update { state ->
-                val nextIndex = state.currentIndex + 1
-                if (nextIndex < state.recommendations.size) {
-                    savedStateHandle[KEY_CURRENT_INDEX] = nextIndex
-                    state.copy(currentIndex = nextIndex)
-                } else {
-                    aiRepository.clearRecommendations()
-                    savedStateHandle[KEY_CURRENT_INDEX] = 0
-                    state.copy(recommendations = emptyList(), currentIndex = 0)
+        val currentRecommendation = _uiState.value.getCurrentRecommendation()
+        if (currentRecommendation != null) {
+            viewModelScope.launch {
+                // Mark movie as not interested and clear aiReason
+                movieRepository.markAsNotInterested(currentRecommendation.movie.id)
+                _uiState.update { state ->
+                    state.copy(currentIndex = 0)
                 }
             }
         }
@@ -111,8 +110,10 @@ class RecommendationsViewModel @Inject constructor(
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                movieRepository.updateWatchlistStatus(currentRecommendation.movie, true)
-                skipToNext()
+                movieRepository.clearAiReasonAndUpdateWatchlist(currentRecommendation.movie)
+                _uiState.update { state ->
+                    state.copy(currentIndex = 0)
+                }
             }
         }
     }
@@ -129,12 +130,11 @@ class RecommendationsViewModel @Inject constructor(
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                movieRepository.updateSeenStatus(currentRecommendation.movie, true)
-                if (rating != null) {
-                    movieRepository.updateRating(currentRecommendation.movie, rating)
-                }
+                movieRepository.clearAiReasonAndMarkSeen(currentRecommendation.movie, rating)
                 dismissRatingDialog()
-                skipToNext()
+                _uiState.update { state ->
+                    state.copy(currentIndex = 0)
+                }
             }
         }
     }
