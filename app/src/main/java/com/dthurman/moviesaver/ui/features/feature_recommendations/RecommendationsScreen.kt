@@ -28,12 +28,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
-import com.dthurman.moviesaver.ui.components.MovieRecommendationCard
-import com.dthurman.moviesaver.ui.components.TopBar
-import com.dthurman.moviesaver.ui.components.dialogs.MinimumMoviesDialog
-import com.dthurman.moviesaver.ui.components.dialogs.NoCreditsDialog
-import com.dthurman.moviesaver.ui.components.dialogs.PurchaseSuccessDialog
-import com.dthurman.moviesaver.ui.components.dialogs.RatingDialog
+import com.dthurman.moviesaver.ui.reusable_components.TopBar
+import com.dthurman.moviesaver.ui.features.feature_recommendations.components.MinimumMoviesDialog
+import com.dthurman.moviesaver.ui.features.feature_recommendations.components.NoCreditsDialog
+import com.dthurman.moviesaver.ui.features.feature_recommendations.components.PurchaseSuccessDialog
+import com.dthurman.moviesaver.ui.reusable_components.dialogs.RatingDialog
+import com.dthurman.moviesaver.ui.features.feature_recommendations.components.MovieRecommendationCard
 
 @Composable
 fun RecommendationsScreen(

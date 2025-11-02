@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components.dialogs
+package com.dthurman.moviesaver.ui.features.feature_recommendations.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

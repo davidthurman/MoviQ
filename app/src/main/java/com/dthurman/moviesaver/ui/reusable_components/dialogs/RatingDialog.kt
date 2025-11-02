@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components.dialogs
+package com.dthurman.moviesaver.ui.reusable_components.dialogs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,7 +34,7 @@ fun RatingDialog(
     onRatingSelected: (Float?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedRating by remember { mutableStateOf(currentRating ?: 0f) }
+    var selectedRating by remember { mutableFloatStateOf(currentRating ?: 0f) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

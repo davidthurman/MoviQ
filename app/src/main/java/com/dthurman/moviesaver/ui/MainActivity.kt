@@ -38,7 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
-import com.dthurman.moviesaver.ui.components.dialogs.SettingsModal
+import com.dthurman.moviesaver.ui.reusable_components.dialogs.SettingsModal
 import com.dthurman.moviesaver.ui.features.feature_detail.DetailScreen
 import com.dthurman.moviesaver.ui.features.feature_login.LoginScreen
 import com.dthurman.moviesaver.ui.features.feature_login.LoginViewModel

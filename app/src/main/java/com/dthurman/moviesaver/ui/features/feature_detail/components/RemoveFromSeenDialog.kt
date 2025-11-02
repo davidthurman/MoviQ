@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components.dialogs
+package com.dthurman.moviesaver.ui.features.feature_detail.components
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme

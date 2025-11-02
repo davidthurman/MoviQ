@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components.dialogs
+package com.dthurman.moviesaver.ui.reusable_components.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

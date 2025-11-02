@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components.dialogs
+package com.dthurman.moviesaver.ui.features.feature_recommendations.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,9 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.dthurman.moviesaver.R
 
 @Composable
-fun NoCreditsDialog(
+fun PurchaseSuccessDialog(
     onDismiss: () -> Unit,
-    onPurchaseClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     AlertDialog(
@@ -32,12 +30,12 @@ fun NoCreditsDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "⚠️",
+                    text = "🎉",
                     style = MaterialTheme.typography.displaySmall
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = stringResource(R.string.no_credits_remaining),
+                    text = stringResource(R.string.purchase_successful),
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center
                 )
@@ -49,13 +47,13 @@ fun NoCreditsDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = stringResource(R.string.no_credits_message),
+                    text = stringResource(R.string.credits_added_message),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = stringResource(R.string.purchase_credits_prompt),
+                    text = stringResource(R.string.can_generate_more),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -63,13 +61,8 @@ fun NoCreditsDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onPurchaseClick) {
-                Text(stringResource(R.string.buy_credits_button))
-            }
-        },
-        dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.maybe_later))
+                Text(stringResource(R.string.great))
             }
         },
         modifier = modifier

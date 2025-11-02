@@ -32,10 +32,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.dthurman.moviesaver.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.domain.model.Movie
-import com.dthurman.moviesaver.ui.components.EmptyState
-import com.dthurman.moviesaver.ui.components.GenericLoadingScreen
-import com.dthurman.moviesaver.ui.components.MovieList
-import com.dthurman.moviesaver.ui.components.TopBar
+import com.dthurman.moviesaver.ui.reusable_components.EmptyState
+import com.dthurman.moviesaver.ui.reusable_components.GenericLoadingScreen
+import com.dthurman.moviesaver.ui.reusable_components.MovieList
+import com.dthurman.moviesaver.ui.reusable_components.TopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

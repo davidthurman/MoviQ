@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components
+package com.dthurman.moviesaver.ui.reusable_components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
-import com.dthurman.moviesaver.ui.components.dialogs.StarRatingDisplay
+import com.dthurman.moviesaver.ui.reusable_components.dialogs.StarRatingDisplay
 
 @Composable
 fun MoviePreview(

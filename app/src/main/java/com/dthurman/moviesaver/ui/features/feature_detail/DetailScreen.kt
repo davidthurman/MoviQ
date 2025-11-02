@@ -39,11 +39,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
-import com.dthurman.moviesaver.ui.components.buttons.FloatingFavoriteButton
-import com.dthurman.moviesaver.ui.components.buttons.PrimaryButton
-import com.dthurman.moviesaver.ui.components.dialogs.RatingDialog
-import com.dthurman.moviesaver.ui.components.dialogs.RemoveFromSeenDialog
-import com.dthurman.moviesaver.ui.components.dialogs.StarRatingDisplay
+import com.dthurman.moviesaver.ui.features.feature_detail.components.FloatingFavoriteButton
+import com.dthurman.moviesaver.ui.features.feature_detail.components.PrimaryButton
+import com.dthurman.moviesaver.ui.reusable_components.dialogs.RatingDialog
+import com.dthurman.moviesaver.ui.features.feature_detail.components.RemoveFromSeenDialog
+import com.dthurman.moviesaver.ui.reusable_components.dialogs.StarRatingDisplay
 
 @Composable
 fun DetailScreen(

@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.domain.model.Movie
-import com.dthurman.moviesaver.ui.components.MovieList
-import com.dthurman.moviesaver.ui.components.SearchBar
+import com.dthurman.moviesaver.ui.reusable_components.MovieList
+import com.dthurman.moviesaver.ui.reusable_components.SearchBar
 import com.dthurman.moviesaver.ui.theme.AppTheme
 
 @Composable

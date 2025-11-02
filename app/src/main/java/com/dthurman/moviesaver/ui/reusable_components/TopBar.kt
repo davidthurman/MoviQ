@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components
+package com.dthurman.moviesaver.ui.reusable_components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings

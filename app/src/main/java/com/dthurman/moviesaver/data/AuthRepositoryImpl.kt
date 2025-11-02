@@ -1,11 +1,12 @@
 package com.dthurman.moviesaver.data
 
 import android.app.Activity
-import android.util.Log
 import com.android.billingclient.api.ProductDetails
 import com.dthurman.moviesaver.data.remote.billing.BillingConnectionState
 import com.dthurman.moviesaver.data.remote.billing.BillingManager
 import com.dthurman.moviesaver.data.remote.billing.PurchaseState
+import com.dthurman.moviesaver.data.remote.firebase.analytics.AnalyticsService
+import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import com.dthurman.moviesaver.data.remote.firebase.firestore.FirestoreSyncService
 import com.dthurman.moviesaver.data.sync.SyncManager
 import com.dthurman.moviesaver.domain.model.User
@@ -33,11 +34,12 @@ class AuthRepositoryImpl @Inject constructor(
     private val firestoreSyncService: FirestoreSyncService,
     private val movieRepositoryProvider: Provider<MovieRepository>,
     private val billingManager: BillingManager,
-    private val syncManager: SyncManager
+    private val syncManager: SyncManager,
+    private val analyticsService: AnalyticsService,
+    private val crashlyticsService: CrashlyticsService
 ) : AuthRepository {
 
     companion object {
-        private const val TAG = "AuthRepository"
         private const val CREDITS_FOR_PURCHASE = 50
         private const val MAX_RETRY_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 1000L
@@ -53,10 +55,17 @@ class AuthRepositoryImpl @Inject constructor(
             val firebaseUser = auth.currentUser
             if (firebaseUser != null) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    val result = firestoreSyncService.fetchUserProfile(firebaseUser.uid)
-                    val user = result.getOrNull() ?: firebaseUser.toUser()
-                    _currentUserCache.value = user
-                    val sendResult = trySend(user)
+                    try {
+                        val result = firestoreSyncService.fetchUserProfile(firebaseUser.uid)
+                        val user = result.getOrNull() ?: firebaseUser.toUser()
+                        _currentUserCache.value = user
+                        val sendResult = trySend(user)
+                    } catch (e: Exception) {
+                        crashlyticsService.logAuthError(e)
+                        val user = firebaseUser.toUser()
+                        _currentUserCache.value = user
+                        val sendResult = trySend(user)
+                    }
                 }
             } else {
                 _currentUserCache.value = null
@@ -68,10 +77,17 @@ class AuthRepositoryImpl @Inject constructor(
         val firebaseUser = firebaseAuth.currentUser
         if (firebaseUser != null) {
             CoroutineScope(Dispatchers.IO).launch {
-                val result = firestoreSyncService.fetchUserProfile(firebaseUser.uid)
-                val user = result.getOrNull() ?: firebaseUser.toUser()
-                _currentUserCache.value = user
-                val sendResult = trySend(user)
+                try {
+                    val result = firestoreSyncService.fetchUserProfile(firebaseUser.uid)
+                    val user = result.getOrNull() ?: firebaseUser.toUser()
+                    _currentUserCache.value = user
+                    val sendResult = trySend(user)
+                } catch (e: Exception) {
+                    crashlyticsService.logAuthError(e)
+                    val user = firebaseUser.toUser()
+                    _currentUserCache.value = user
+                    val sendResult = trySend(user)
+                }
             }
         } else {
             val sendResult = trySend(null)
@@ -99,49 +115,45 @@ class AuthRepositoryImpl @Inject constructor(
                     val newUser = firebaseUser.toUser(credits = 10)
                     firestoreSyncService.createOrUpdateUserProfile(newUser)
                     _currentUserCache.value = newUser
-                    
-                    // Start periodic sync for new user
+                    analyticsService.setUserId(newUser.id)
+                    crashlyticsService.setUserId(newUser.id)
                     syncManager.startPeriodicSync()
-                    Log.d(TAG, "Started periodic sync for new user")
-                    
                     Result.success(newUser)
                 } else {
                     val userResult = firestoreSyncService.fetchUserProfile(firebaseUser.uid)
                     val user = userResult.getOrNull() ?: firebaseUser.toUser()
                     firestoreSyncService.createOrUpdateUserProfile(user)
                     _currentUserCache.value = user
-                    
-                    // Download existing movies from Firestore for returning user
-                    Log.d(TAG, "Syncing movies from Firestore for returning user")
+                    analyticsService.setUserId(user.id)
+                    crashlyticsService.setUserId(user.id)
                     movieRepository.syncFromFirestore()
-                    
-                    // Start periodic sync for returning user
                     syncManager.startPeriodicSync()
-                    Log.d(TAG, "Started periodic sync for returning user")
-                    
                     Result.success(user)
                 }
             } else {
-                Result.failure(Exception("Failed to get user information"))
+                val error = Exception("Failed to get user information")
+                crashlyticsService.logAuthError(error)
+                Result.failure(error)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Sign in failed: ${e.message}", e)
+            crashlyticsService.logAuthError(e)
             Result.failure(e)
         }
     }
 
     override suspend fun signOut() {
         try {
-            // Stop periodic sync before clearing data
             syncManager.stopPeriodicSync()
-            Log.d(TAG, "Stopped periodic sync on sign out")
-            
             clearLocalCache()
             _currentUserCache.value = null
+            analyticsService.setUserId(null)
+            crashlyticsService.clearUserId()
             firebaseAuth.signOut()
         } catch (e: Exception) {
-            Log.e(TAG, "Error during sign out: ${e.message}", e)
+            crashlyticsService.logAuthError(e)
             syncManager.stopPeriodicSync()
+            analyticsService.setUserId(null)
+            crashlyticsService.clearUserId()
             firebaseAuth.signOut()
         }
     }
@@ -151,6 +163,7 @@ class AuthRepositoryImpl @Inject constructor(
             movieRepository.clearAllLocalData()
             _currentUserCache.value = null
         } catch (e: Exception) {
+            crashlyticsService.logDatabaseError("clearLocalCache", e)
             throw e
         }
     }
@@ -167,9 +180,6 @@ class AuthRepositoryImpl @Inject constructor(
             try {
                 val result = operation()
                 if (result.isSuccess) {
-                    if (attempt > 0) {
-                        Log.d(TAG, "Operation succeeded on attempt ${attempt + 1}")
-                    }
                     return result
                 }
                 lastException = result.exceptionOrNull() as? Exception
@@ -178,7 +188,6 @@ class AuthRepositoryImpl @Inject constructor(
             }
 
             if (attempt < maxAttempts - 1) {
-                Log.w(TAG, "Attempt ${attempt + 1} failed, retrying in ${currentDelay}ms...")
                 delay(currentDelay)
                 currentDelay *= 2
             }
@@ -212,12 +221,10 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun deductCredit(): Boolean {
         val user = _currentUserCache.value
         if (user == null) {
-            Log.w(TAG, "Cannot deduct credit: user not logged in")
             return false
         }
 
         if (user.credits <= 0) {
-            Log.w(TAG, "No credits available to deduct")
             return false
         }
 
@@ -229,10 +236,9 @@ class AuthRepositoryImpl @Inject constructor(
 
         return if (result.isSuccess) {
             _currentUserCache.value = user.copy(credits = newCredits)
-            Log.d(TAG, "Credit deducted successfully. Remaining: $newCredits")
+            analyticsService.logCreditsUsed(1)
             true
         } else {
-            Log.e(TAG, "Failed to deduct credit after ${MAX_RETRY_ATTEMPTS} attempts: ${result.exceptionOrNull()?.message}")
             false
         }
     }
@@ -240,7 +246,6 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun addCredits(credits: Int): Boolean {
         val user = _currentUserCache.value
         if (user == null) {
-            Log.w(TAG, "Cannot add credits: user not logged in")
             return false
         }
 
@@ -252,10 +257,8 @@ class AuthRepositoryImpl @Inject constructor(
 
         return if (result.isSuccess) {
             _currentUserCache.value = user.copy(credits = newCredits)
-            Log.d(TAG, "Added $credits credits. New total: $newCredits")
             true
         } else {
-            Log.e(TAG, "Failed to add credits after ${MAX_RETRY_ATTEMPTS} attempts: ${result.exceptionOrNull()?.message}")
             false
         }
     }
@@ -283,20 +286,19 @@ class AuthRepositoryImpl @Inject constructor(
 
             if (user != null) {
                 val success = addCredits(CREDITS_FOR_PURCHASE)
-
                 if (success) {
-                    Log.d(TAG, "Successfully processed purchase - added $CREDITS_FOR_PURCHASE credits")
-                    true
-                } else {
-                    Log.e(TAG, "Failed to process purchase - could not add credits")
-                    false
+                    analyticsService.logCreditsPurchased(
+                        sku = BillingManager.PRODUCT_ID_50_CREDITS,
+                        amount = CREDITS_FOR_PURCHASE
+                    )
                 }
+                success
             } else {
-                Log.e(TAG, "Cannot process purchase: user not logged in")
+                crashlyticsService.log("Purchase processing failed: User not logged in")
                 false
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error processing purchase: ${e.message}", e)
+            crashlyticsService.logBillingError(0, e)
             false
         }
     }

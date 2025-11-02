@@ -1,8 +1,9 @@
 package com.dthurman.moviesaver.data
 
-import android.util.Log
 import com.dthurman.moviesaver.data.local.MovieDao
 import com.dthurman.moviesaver.data.local.SyncState
+import com.dthurman.moviesaver.data.remote.firebase.analytics.AnalyticsService
+import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import com.dthurman.moviesaver.data.remote.firebase.firestore.FirestoreSyncService
 import com.dthurman.moviesaver.data.remote.themovieapi.TheMovieApi.theMovieApi
 import com.dthurman.moviesaver.data.sync.SyncManager
@@ -17,10 +18,11 @@ class DefaultMovieRepository @Inject constructor(
     private val movieDao: MovieDao,
     private val firestoreSyncService: FirestoreSyncService,
     private val authRepository: AuthRepository,
-    private val syncManager: SyncManager
+    private val syncManager: SyncManager,
+    private val analyticsService: AnalyticsService,
+    private val crashlyticsService: CrashlyticsService
 ) : MovieRepository {
     
-    private val TAG = "MovieRepository"
     @Volatile
     private var isSyncingFromCloud = false
 
@@ -50,6 +52,11 @@ class DefaultMovieRepository @Inject constructor(
                 movie.copy(isSeen = isSeen).toEntity().copy(syncState = SyncState.PENDING_CREATE)
             )
         }
+        
+        if (isSeen) {
+            analyticsService.logMovieSaved(movie.id, movie.title)
+        }
+        
         triggerSync()
     }
 
@@ -86,26 +93,49 @@ class DefaultMovieRepository @Inject constructor(
                 movie.copy(rating = rating).toEntity().copy(syncState = SyncState.PENDING_CREATE)
             )
         }
+        
+        if (rating != null) {
+            analyticsService.logMovieRated(movie.id, movie.title, rating)
+        }
+        
         triggerSync()
     }
 
     override suspend fun getPopularMovies(): List<Movie> {
-        val response = theMovieApi.getPopularMovies()
-        if (response.isSuccessful) {
-            val apiMovies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
-            return enrichMoviesWithLocalStatus(apiMovies)
-        } else {
-            throw Exception("Failed to fetch movies: ${response.code()} ${response.message()}")
+        return try {
+            val response = theMovieApi.getPopularMovies()
+            if (response.isSuccessful) {
+                val apiMovies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
+                enrichMoviesWithLocalStatus(apiMovies)
+            } else {
+                val error = Exception("Failed to fetch movies: ${response.code()} ${response.message()}")
+                crashlyticsService.logNetworkError("getPopularMovies", error)
+                throw error
+            }
+        } catch (e: Exception) {
+            crashlyticsService.logNetworkError("getPopularMovies", e)
+            throw e
         }
     }
 
     override suspend fun searchMovieByTitle(title: String): List<Movie> {
-        val response = theMovieApi.searchMovies(query = title)
-        if (response.isSuccessful) {
-            val apiMovies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
-            return enrichMoviesWithLocalStatus(apiMovies)
-        } else {
-            throw Exception("Failed to search movies: ${response.code()} ${response.message()}")
+        return try {
+            if (title.isNotBlank()) {
+                analyticsService.logMovieSearched(title)
+            }
+            
+            val response = theMovieApi.searchMovies(query = title)
+            if (response.isSuccessful) {
+                val apiMovies = response.body()?.results?.map { it.toDomain() } ?: emptyList()
+                enrichMoviesWithLocalStatus(apiMovies)
+            } else {
+                val error = Exception("Failed to search movies: ${response.code()} ${response.message()}")
+                crashlyticsService.logNetworkError("searchMovieByTitle", error)
+                throw error
+            }
+        } catch (e: Exception) {
+            crashlyticsService.logNetworkError("searchMovieByTitle", e)
+            throw e
         }
     }
 
@@ -133,7 +163,6 @@ class DefaultMovieRepository @Inject constructor(
 
     private fun triggerSync() {
         if (isSyncingFromCloud) {
-            Log.d(TAG, "Syncing from cloud, deferring upload sync")
             return
         }
         syncManager.triggerSync()
@@ -167,18 +196,17 @@ class DefaultMovieRepository @Inject constructor(
                                 }
                             }
                         }
-
-                        Log.d(TAG, "Sync complete: $updated updated, $skipped skipped (local newer)")
                     } else {
-                        Log.e(TAG, "Failed to download from Firestore: ${downloadResult.exceptionOrNull()?.message}")
+                        crashlyticsService.log("Failed to sync from Firestore: ${downloadResult.exceptionOrNull()?.message}")
+                        downloadResult.exceptionOrNull()?.let { crashlyticsService.recordException(it) }
                     }
                 } finally {
                     isSyncingFromCloud = false
                 }
             }
         } catch (e: Exception) {
+            crashlyticsService.logDatabaseError("syncFromFirestore", e)
             isSyncingFromCloud = false
-            Log.e(TAG, "Error during sync: ${e.message}", e)
         }
     }
     
@@ -208,7 +236,7 @@ class DefaultMovieRepository @Inject constructor(
         try {
             movieDao.clearAllMovies()
         } catch (e: Exception) {
-            Log.e(TAG, "Error clearing local movie data: ${e.message}", e)
+            crashlyticsService.logDatabaseError("clearAllLocalData", e)
         }
     }
     

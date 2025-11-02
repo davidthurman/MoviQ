@@ -14,6 +14,7 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryProductDetailsParams.Product
+import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +24,11 @@ import javax.inject.Singleton
 
 @Singleton
 class BillingManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val crashlyticsService: CrashlyticsService
 ) : PurchasesUpdatedListener {
-
     companion object {
-        private const val TAG = "BillingManager"
+        private const val TAG = "BILLING_MANAGER"
         const val PRODUCT_ID_50_CREDITS = "movie_generation_credits"
     }
 
@@ -59,18 +60,18 @@ class BillingManager @Inject constructor(
         billingClient?.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingResponseCode.OK) {
-                    Log.d(TAG, "Billing client connected")
                     _connectionState.value = BillingConnectionState.CONNECTED
                     queryProductDetails()
                 } else {
-                    Log.e(TAG, "Billing connection failed: ${billingResult.debugMessage}")
                     _connectionState.value = BillingConnectionState.FAILED
+                    val error = Exception("Billing setup failed: ${billingResult.debugMessage}")
+                    crashlyticsService.logBillingError(billingResult.responseCode, error)
                 }
             }
 
             override fun onBillingServiceDisconnected() {
-                Log.w(TAG, "Billing service disconnected")
                 _connectionState.value = BillingConnectionState.DISCONNECTED
+                crashlyticsService.log("Billing service disconnected, attempting to reconnect")
                 startConnection()
             }
         })
@@ -92,13 +93,11 @@ class BillingManager @Inject constructor(
             if (billingResult.responseCode == BillingResponseCode.OK) {
                 val details = productDetailsList.firstOrNull()
                 _productDetails.value = details
-                if (details != null) {
-                    Log.d(TAG, "Product details loaded: ${details.name}, ID: ${details.productId}")
-                } else {
-                    Log.e(TAG, "Product details query succeeded but no products found. Check if product '$PRODUCT_ID_50_CREDITS' exists in Google Play Console and is activated.")
-                }
+                Log.d(TAG, "Product details loaded: ${details?.name}")
             } else {
-                Log.e(TAG, "Failed to query product details - Response code: ${billingResult.responseCode}, Message: ${billingResult.debugMessage}")
+                Log.e(TAG, "Failed to query product details: ${billingResult.debugMessage}")
+                val error = Exception("Failed to query product details: ${billingResult.debugMessage}")
+                crashlyticsService.logBillingError(billingResult.responseCode, error)
             }
         }
     }
@@ -106,7 +105,6 @@ class BillingManager @Inject constructor(
     fun launchPurchaseFlow(activity: Activity) {
         val productDetails = _productDetails.value
         if (productDetails == null) {
-            Log.e(TAG, "Product details not available")
             _purchaseState.value = PurchaseState.Error("Product not available")
             return
         }
@@ -124,7 +122,6 @@ class BillingManager @Inject constructor(
         val billingResult = billingClient?.launchBillingFlow(activity, billingFlowParams)
         
         if (billingResult?.responseCode != BillingResponseCode.OK) {
-            Log.e(TAG, "Failed to launch billing flow: ${billingResult?.debugMessage}")
             _purchaseState.value = PurchaseState.Error("Failed to start purchase")
         } else {
             _purchaseState.value = PurchaseState.Purchasing
@@ -139,12 +136,12 @@ class BillingManager @Inject constructor(
                 }
             }
             BillingResponseCode.USER_CANCELED -> {
-                Log.d(TAG, "User canceled the purchase")
                 _purchaseState.value = PurchaseState.Canceled
             }
             else -> {
-                Log.e(TAG, "Purchase failed: ${billingResult.debugMessage}")
                 _purchaseState.value = PurchaseState.Error(billingResult.debugMessage)
+                val error = Exception("Purchase failed: ${billingResult.debugMessage}")
+                crashlyticsService.logBillingError(billingResult.responseCode, error)
             }
         }
     }
@@ -157,7 +154,6 @@ class BillingManager @Inject constructor(
             }
         } else if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
             _purchaseState.value = PurchaseState.Pending
-            Log.d(TAG, "Purchase is pending")
         }
     }
 
@@ -167,11 +163,6 @@ class BillingManager @Inject constructor(
             .build()
         
         billingClient?.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
-            if (billingResult.responseCode == BillingResponseCode.OK) {
-                Log.d(TAG, "Purchase acknowledged")
-            } else {
-                Log.e(TAG, "Failed to acknowledge purchase: ${billingResult.debugMessage}")
-            }
         }
     }
 

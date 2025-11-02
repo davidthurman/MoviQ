@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
-import com.dthurman.moviesaver.ui.components.buttons.GoogleAuthButton
+import com.dthurman.moviesaver.ui.features.feature_login.components.GoogleAuthButton
 import kotlinx.coroutines.launch
 
 @Composable

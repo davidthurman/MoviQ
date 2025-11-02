@@ -2,6 +2,7 @@ package com.dthurman.moviesaver.ui.features.feature_detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dthurman.moviesaver.data.remote.firebase.analytics.AnalyticsService
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    val movieRepository: MovieRepository
+    val movieRepository: MovieRepository,
+    private val analyticsService: AnalyticsService
 ): ViewModel() {
 
     private val _movie = MutableStateFlow<Movie?>(null)
@@ -29,6 +31,7 @@ class DetailViewModel @Inject constructor(
         viewModelScope.launch {
             val dbMovie = movieRepository.getMovieById(movie.id)
             _movie.value = dbMovie ?: movie
+            analyticsService.logMovieDetailsViewed(movie.id, movie.title)
         }
     }
 

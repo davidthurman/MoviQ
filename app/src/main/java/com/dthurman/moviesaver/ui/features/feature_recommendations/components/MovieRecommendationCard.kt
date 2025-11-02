@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components
+package com.dthurman.moviesaver.ui.features.feature_recommendations.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.ui.reusable_components.MoviePreview
 
 @Composable
 fun MovieRecommendationCard(

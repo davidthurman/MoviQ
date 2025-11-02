@@ -132,14 +132,16 @@ object AppModule {
         firestoreSyncService: FirestoreSyncService,
         movieRepositoryProvider: Provider<MovieRepository>,
         billingManager: BillingManager,
-        syncManager: SyncManager
+        syncManager: SyncManager,
+        analyticsService: AnalyticsService
     ): AuthRepository {
         return AuthRepositoryImpl(
             firebaseAuth,
             firestoreSyncService,
             movieRepositoryProvider,
             billingManager,
-            syncManager
+            syncManager,
+            analyticsService
         )
     }
 }

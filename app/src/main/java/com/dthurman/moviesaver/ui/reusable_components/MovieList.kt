@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components
+package com.dthurman.moviesaver.ui.reusable_components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

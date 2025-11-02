@@ -1,9 +1,9 @@
 package com.dthurman.moviesaver.data.remote.firebase.firestore
 
-import android.util.Log
 import com.dthurman.moviesaver.data.local.MovieDao
 import com.dthurman.moviesaver.data.local.MovieEntity
 import com.dthurman.moviesaver.data.local.SyncState
+import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import com.dthurman.moviesaver.domain.model.User
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -14,14 +14,14 @@ import javax.inject.Singleton
 @Singleton
 class FirestoreSyncService @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val movieDao: MovieDao
+    private val movieDao: MovieDao,
+    private val crashlyticsService: CrashlyticsService
 ) {
     
     companion object {
         private const val USERS_COLLECTION = "users"
         private const val MOVIES_COLLECTION = "movies"
         private const val CREDITS_DOCUMENT = "credits"
-        private const val TAG = "FirestoreSync"
     }
 
     suspend fun fetchUserMovies(userId: String): Result<List<MovieEntity>> {
@@ -36,23 +36,19 @@ class FirestoreSyncService @Inject constructor(
                 try {
                     doc.toObject(FirestoreMovie::class.java)?.toEntity()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing movie document: ${e.message}")
+                    crashlyticsService.log("Error parsing movie document: ${doc.id}")
+                    crashlyticsService.recordException(e)
                     null
                 }
             }
             
-            Log.d(TAG, "Fetched ${movies.size} movies from Firestore")
             Result.success(movies)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch movies from Firestore: ${e.message}", e)
+            crashlyticsService.logNetworkError("fetchUserMovies", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Create or update user profile document in Firestore
-     * This should be called when a user signs up or signs in
-     */
     suspend fun createOrUpdateUserProfile(user: User): Result<Unit> {
         return try {
             val userDoc = firestore.collection(USERS_COLLECTION)
@@ -66,7 +62,6 @@ class FirestoreSyncService @Inject constructor(
                     .document(user.id)
                     .set(firestoreUser)
                     .await()
-                Log.d(TAG, "Created new user profile for ${user.id} with ${user.credits} credits")
             } else {
                 val updates = hashMapOf<String, Any?>(
                     "email" to user.email,
@@ -78,18 +73,14 @@ class FirestoreSyncService @Inject constructor(
                     .document(user.id)
                     .update(updates)
                     .await()
-                Log.d(TAG, "Updated user profile for ${user.id}")
             }
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to create/update user profile: ${e.message}", e)
+            crashlyticsService.logNetworkError("createOrUpdateUserProfile", e)
             Result.failure(e)
         }
     }
     
-    /**
-     * Fetch complete user profile from Firestore including credits
-     */
     suspend fun fetchUserProfile(userId: String): Result<User?> {
         return try {
             val snapshot = firestore.collection(USERS_COLLECTION)
@@ -98,18 +89,13 @@ class FirestoreSyncService @Inject constructor(
                 .await()
             
             val user = snapshot.toObject(FirestoreUser::class.java)?.toUser()
-            Log.d(TAG, "Fetched user profile: ${user?.email}, credits: ${user?.credits}")
             Result.success(user)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch user profile: ${e.message}", e)
+            crashlyticsService.logNetworkError("fetchUserProfile", e)
             Result.failure(e)
         }
     }
 
-    /**
-     * Update user credits in Firestore
-     * This updates the credits field in the main user document
-     */
     suspend fun updateUserCredits(userId: String, credits: Int): Result<Unit> {
         return try {
             val updates = hashMapOf<String, Any>(
@@ -120,18 +106,13 @@ class FirestoreSyncService @Inject constructor(
                 .document(userId)
                 .update(updates)
                 .await()
-            Log.d(TAG, "Updated user credits to $credits for user $userId")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to update user credits: ${e.message}", e)
+            crashlyticsService.logNetworkError("updateUserCredits", e)
             Result.failure(e)
         }
     }
     
-    /**
-     * Sync all pending changes to Firestore
-     * This processes movies marked as PENDING_CREATE, PENDING_UPDATE, and PENDING_DELETE
-     */
     suspend fun syncPendingChanges(userId: String): Result<SyncResult> {
         return try {
             var created = 0
@@ -158,7 +139,8 @@ class FirestoreSyncService @Inject constructor(
                         else -> {}
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to sync movie ${movie.title}: ${e.message}", e)
+                    crashlyticsService.log("Failed to sync movie ${movie.id}: ${e.message}")
+                    crashlyticsService.recordException(e)
                     movieDao.updateSyncState(movie.id, SyncState.FAILED)
                     failed++
                 }
@@ -177,7 +159,8 @@ class FirestoreSyncService @Inject constructor(
                     movieDao.deleteMovie(movie.id)
                     deleted++
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to delete movie ${movie.title}: ${e.message}", e)
+                    crashlyticsService.log("Failed to delete movie ${movie.id}: ${e.message}")
+                    crashlyticsService.recordException(e)
                     movieDao.updateSyncState(movie.id, SyncState.FAILED)
                     failed++
                 }
@@ -192,7 +175,7 @@ class FirestoreSyncService @Inject constructor(
             
             Result.success(result)
         } catch (e: Exception) {
-            Log.e(TAG, "Error during batch sync: ${e.message}", e)
+            crashlyticsService.logNetworkError("syncPendingChanges", e)
             Result.failure(e)
         }
     }

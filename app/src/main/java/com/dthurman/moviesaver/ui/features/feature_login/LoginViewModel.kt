@@ -6,6 +6,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import com.dthurman.moviesaver.domain.model.User
 import com.dthurman.moviesaver.domain.repository.AuthRepository
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -21,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val crashlyticsService: CrashlyticsService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Initial)
@@ -61,7 +63,6 @@ class LoginViewModel @Inject constructor(
 
     suspend fun handleGoogleSignIn(context: Context, webClientId: String) {
         try {
-            android.util.Log.d("TESTING123", "LoginViewModel: handleGoogleSignIn called")
             _uiState.value = LoginUiState.Loading
             
             val credentialManager = CredentialManager.create(context)
@@ -88,16 +89,22 @@ class LoginViewModel @Inject constructor(
                         val idToken = googleIdTokenCredential.idToken
                         signInWithGoogle(idToken)
                     } else {
-                        _uiState.value = LoginUiState.Error("Unexpected credential type")
+                        val error = "Unexpected credential type"
+                        crashlyticsService.log("Login error: $error")
+                        _uiState.value = LoginUiState.Error(error)
                     }
                 }
                 else -> {
-                    _uiState.value = LoginUiState.Error("Unexpected credential")
+                    val error = "Unexpected credential"
+                    crashlyticsService.log("Login error: $error")
+                    _uiState.value = LoginUiState.Error(error)
                 }
             }
         } catch (e: GetCredentialException) {
+            crashlyticsService.logAuthError(e)
             _uiState.value = LoginUiState.Error(e.message ?: "Sign-in cancelled")
         } catch (e: Exception) {
+            crashlyticsService.logAuthError(e)
             _uiState.value = LoginUiState.Error(e.message ?: "Unknown error occurred")
         }
     }

@@ -1,6 +1,5 @@
 package com.dthurman.moviesaver.data.sync
 
-import android.util.Log
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
@@ -12,17 +11,12 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Manages sync operations using WorkManager
- * Provides optimistic sync with guaranteed execution
- */
 @Singleton
 class SyncManager @Inject constructor(
     private val workManager: WorkManager
 ) {
     
     companion object {
-        private const val TAG = "SyncManager"
         private const val SYNC_WORK_NAME = "movie_sync_work"
         private const val PERIODIC_SYNC_WORK_NAME = "movie_periodic_sync"
         private const val PERIODIC_SYNC_INTERVAL_HOURS = 6L
@@ -43,7 +37,6 @@ class SyncManager @Inject constructor(
             ExistingWorkPolicy.REPLACE,
             syncWorkRequest
         )
-        Log.d(TAG, "Sync work enqueued")
     }
 
     fun startPeriodicSync() {
@@ -63,15 +56,12 @@ class SyncManager @Inject constructor(
         
         workManager.enqueueUniquePeriodicWork(
             PERIODIC_SYNC_WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP, // Keep existing work if already scheduled
+            ExistingPeriodicWorkPolicy.KEEP,
             periodicSyncRequest
         )
-        
-        Log.d(TAG, "Periodic sync scheduled")
     }
 
     fun stopPeriodicSync() {
-        Log.d(TAG, "Stopping periodic sync")
         workManager.cancelUniqueWork(PERIODIC_SYNC_WORK_NAME)
     }
 }

@@ -3,6 +3,7 @@ package com.dthurman.moviesaver.data
 import android.util.Log
 import com.dthurman.moviesaver.data.local.MovieDao
 import com.dthurman.moviesaver.data.remote.firebase.ai.FirebaseAiService
+import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import com.dthurman.moviesaver.data.remote.themovieapi.TheMovieApi
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.AiRepository
@@ -16,33 +17,40 @@ import kotlin.math.abs
 class AiRepositoryImpl @Inject constructor(
     private val firebaseAiService: FirebaseAiService,
     private val movieRepository: MovieRepository,
-    private val movieDao: MovieDao
+    private val movieDao: MovieDao,
+    private val crashlyticsService: CrashlyticsService
 ) : AiRepository {
 
     override suspend fun generatePersonalizedRecommendations(): List<Movie> {
-        val seenMovies = movieRepository.getSeenMovies().first()
-        val watchlistMovies = movieRepository.getWatchlistMovies().first()
-        val notInterestedMovies = movieRepository.getNotInterestedMovies()
+        return try {
+            val seenMovies = movieRepository.getSeenMovies().first()
+            val watchlistMovies = movieRepository.getWatchlistMovies().first()
+            val notInterestedMovies = movieRepository.getNotInterestedMovies()
 
-        val targetCount = 5
-        val maxAttempts = 3
-        val movieRecommendations = mutableListOf<Movie>()
+            val targetCount = 5
+            val maxAttempts = 3
+            val movieRecommendations = mutableListOf<Movie>()
 
-        val seenMovieIds = seenMovies.map { it.id }.toSet()
-        val watchlistMovieIds = watchlistMovies.map { it.id }.toSet()
-        val notInterestedMovieIds = notInterestedMovies.map { it.id }.toSet()
+            val seenMovieIds = seenMovies.map { it.id }.toSet()
+            val watchlistMovieIds = watchlistMovies.map { it.id }.toSet()
+            val notInterestedMovieIds = notInterestedMovies.map { it.id }.toSet()
 
-        var attempt = 0
-        while (movieRecommendations.size < targetCount && attempt < maxAttempts) {
-            attempt++
-            val needed = targetCount - movieRecommendations.size
+            var attempt = 0
+            while (movieRecommendations.size < targetCount && attempt < maxAttempts) {
+                attempt++
+                val needed = targetCount - movieRecommendations.size
 
-            val aiRecommendations = firebaseAiService.generateRecommendations(
-                seenMovies = seenMovies,
-                watchlistMovies = watchlistMovies,
-                notInterestedMovies = notInterestedMovies,
-                count = needed + 3 // Request a few extra in case some are filtered
-            )
+                val aiRecommendations = try {
+                    firebaseAiService.generateRecommendations(
+                        seenMovies = seenMovies,
+                        watchlistMovies = watchlistMovies,
+                        notInterestedMovies = notInterestedMovies,
+                        count = needed + 3 // Request a few extra in case some are filtered
+                    )
+                } catch (e: Exception) {
+                    crashlyticsService.logAiError(e)
+                    throw e
+                }
 
             for (aiRec in aiRecommendations) {
                 if (movieRecommendations.size >= targetCount) break
@@ -77,16 +85,26 @@ class AiRepositoryImpl @Inject constructor(
                             val movieWithStatus = (existingMovie ?: movie).copy(aiReason = aiRec.reason)
 
                             movieRecommendations.add(movieWithStatus)
+                            Log.d("AiRepository", "✓ Added '${movie.title}' (${movieRecommendations.size}/$targetCount)")
+                        } else {
+                            Log.d("AiRepository", "✗ No match found for: ${aiRec.title} (${aiRec.year})")
                         }
+                    } else {
+                        Log.d("AiRepository", "✗ TMDB API error: ${response.code()} - ${response.message()}")
                     }
                 } catch (e: Exception) {
                     Log.e("AiRepository", "Error fetching movie '${aiRec.title}': ${e.message}", e)
+                    crashlyticsService.logNetworkError("TMDB search for ${aiRec.title}", e)
                     continue
                 }
             }
+            }
+            movieRepository.saveRecommendations(movieRecommendations)
+            movieRecommendations
+        } catch (e: Exception) {
+            crashlyticsService.logAiError(e)
+            throw e
         }
-        movieRepository.saveRecommendations(movieRecommendations)
-        return movieRecommendations
     }
 
     override fun getSavedRecommendations(): Flow<List<Movie>> {
