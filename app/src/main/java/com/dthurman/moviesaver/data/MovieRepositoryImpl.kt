@@ -1,11 +1,9 @@
 package com.dthurman.moviesaver.data
 
 import android.util.Log
-import com.dthurman.moviesaver.data.local.database.MovieDao
-import com.dthurman.moviesaver.data.remote.TheMovieApi.theMovieApi
-import com.dthurman.moviesaver.data.remote.firestore.FirestoreSyncService
-import com.dthurman.moviesaver.data.remote.toDomain
-import com.dthurman.moviesaver.data.remote.toEntity
+import com.dthurman.moviesaver.data.local.MovieDao
+import com.dthurman.moviesaver.data.remote.firebase.firestore.FirestoreSyncService
+import com.dthurman.moviesaver.data.remote.themovieapi.TheMovieApi.theMovieApi
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.AuthRepository
 import com.dthurman.moviesaver.domain.repository.MovieRepository

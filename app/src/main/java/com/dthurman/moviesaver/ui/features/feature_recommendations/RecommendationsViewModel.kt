@@ -1,32 +1,34 @@
 package com.dthurman.moviesaver.ui.features.feature_recommendations
 
-import android.app.Activity
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dthurman.moviesaver.data.billing.PurchaseState
-import com.dthurman.moviesaver.domain.model.MovieRecommendation
+import com.dthurman.moviesaver.data.remote.billing.PurchaseState
+import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.AiRepository
 import com.dthurman.moviesaver.domain.repository.AuthRepository
-import com.dthurman.moviesaver.domain.repository.BillingRepository
-import com.dthurman.moviesaver.domain.repository.CreditsRepository
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val KEY_CURRENT_INDEX = "current_index"
 
+sealed class RecommendationEvent {
+    object LaunchPurchaseFlow : RecommendationEvent()
+}
+
 @HiltViewModel
 class RecommendationsViewModel @Inject constructor(
     private val aiRepository: AiRepository,
     private val movieRepository: MovieRepository,
-    private val creditsRepository: CreditsRepository,
-    private val authRepository: AuthRepository,
-    private val billingRepository: BillingRepository,
+    internal val authRepository: AuthRepository,
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
@@ -51,47 +53,40 @@ class RecommendationsViewModel @Inject constructor(
     private val _showPurchaseSuccessDialog = MutableStateFlow(false)
     val showPurchaseSuccessDialog: StateFlow<Boolean> = _showPurchaseSuccessDialog
     
-    var currentActivity: Activity? = null
+    private val _events = MutableSharedFlow<RecommendationEvent>()
+    val events: SharedFlow<RecommendationEvent> = _events.asSharedFlow()
 
     init {
-        // Monitor purchase state
         viewModelScope.launch {
-            billingRepository.purchaseState.collect { state ->
+            authRepository.purchaseState.collect { state ->
                 when (state) {
                     is PurchaseState.Success -> {
-                        // Process the purchase
-                        val success = billingRepository.processPurchase(state.purchase.purchaseToken)
+                        val success = authRepository.processPurchase(state.purchase.purchaseToken)
                         if (success) {
                             _showPurchaseSuccessDialog.value = true
                         }
-                        billingRepository.resetPurchaseState()
+                        authRepository.resetPurchaseState()
                     }
                     is PurchaseState.Error -> {
-                        // Handle error (could show error dialog)
-                        billingRepository.resetPurchaseState()
+                        authRepository.resetPurchaseState()
                     }
                     is PurchaseState.Canceled -> {
-                        billingRepository.resetPurchaseState()
+                        authRepository.resetPurchaseState()
                     }
-                    else -> { /* No action needed for other states */ }
+                    else -> { }
                 }
             }
         }
         
-        // Track seen movies count
         viewModelScope.launch {
             movieRepository.getSeenMovies().collect { seenMovies ->
                 _seenMoviesCount.value = seenMovies.size
             }
         }
         
-        // Track user credits
         viewModelScope.launch {
-            val userId = authRepository.getCurrentUser()?.id
-            if (userId != null) {
-                creditsRepository.getCreditsFlow(userId).collect { credits ->
-                    _userCredits.value = credits
-                }
+            authRepository.getCreditsFlow().collect { credits ->
+                _userCredits.value = credits
             }
         }
         
@@ -114,13 +109,11 @@ class RecommendationsViewModel @Inject constructor(
     }
 
     fun generateAiRecommendations() {
-        // Check if user has at least 5 seen movies
         if (_seenMoviesCount.value < 5) {
             _showMinimumMoviesDialog.value = true
             return
         }
         
-        // Check if user has credits
         if (_userCredits.value <= 0) {
             _showNoCreditsDialog.value = true
             return
@@ -130,10 +123,8 @@ class RecommendationsViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             
             try {
-                val userId = authRepository.getCurrentUser()?.id
-                if (userId != null) {
-                    // Deduct credit first
-                    val creditDeducted = creditsRepository.deductCredit(userId)
+                if (authRepository.getCurrentUser() != null) {
+                    val creditDeducted = authRepository.deductCredit()
                     
                     if (!creditDeducted) {
                         _showNoCreditsDialog.value = true
@@ -177,8 +168,8 @@ class RecommendationsViewModel @Inject constructor(
     }
     
     fun purchaseCredits() {
-        currentActivity?.let { activity ->
-            billingRepository.launchPurchaseFlow(activity)
+        viewModelScope.launch {
+            _events.emit(RecommendationEvent.LaunchPurchaseFlow)
             dismissNoCreditsDialog()
         }
     }
@@ -191,8 +182,7 @@ class RecommendationsViewModel @Inject constructor(
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                // Mark movie as not interested and clear aiReason
-                movieRepository.markAsNotInterested(currentRecommendation.movie.id)
+                movieRepository.markAsNotInterested(currentRecommendation.id)
                 _uiState.update { state ->
                     state.copy(currentIndex = 0)
                 }
@@ -204,7 +194,7 @@ class RecommendationsViewModel @Inject constructor(
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                movieRepository.clearAiReasonAndUpdateWatchlist(currentRecommendation.movie)
+                movieRepository.clearAiReasonAndUpdateWatchlist(currentRecommendation)
                 _uiState.update { state ->
                     state.copy(currentIndex = 0)
                 }
@@ -224,7 +214,7 @@ class RecommendationsViewModel @Inject constructor(
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                movieRepository.clearAiReasonAndMarkSeen(currentRecommendation.movie, rating)
+                movieRepository.clearAiReasonAndMarkSeen(currentRecommendation, rating)
                 dismissRatingDialog()
                 _uiState.update { state ->
                     state.copy(currentIndex = 0)
@@ -235,12 +225,12 @@ class RecommendationsViewModel @Inject constructor(
 }
 
 data class RecommendationsUiState(
-    val recommendations: List<MovieRecommendation> = emptyList(),
+    val recommendations: List<Movie> = emptyList(),
     val currentIndex: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null
 ) {
-    fun getCurrentRecommendation(): MovieRecommendation? {
+    fun getCurrentRecommendation(): Movie? {
         return recommendations.getOrNull(currentIndex)
     }
     

@@ -66,7 +66,6 @@ fun SettingsModal(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Theme Toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

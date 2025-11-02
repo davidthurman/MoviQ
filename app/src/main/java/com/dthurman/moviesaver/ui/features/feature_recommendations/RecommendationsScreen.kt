@@ -15,7 +15,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,12 +44,14 @@ fun RecommendationsScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? ComponentActivity
-    
-    // Set the activity reference for the ViewModel
-    DisposableEffect(activity) {
-        viewModel.currentActivity = activity
-        onDispose {
-            viewModel.currentActivity = null
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is RecommendationEvent.LaunchPurchaseFlow -> {
+                    activity?.let { viewModel.authRepository.launchPurchaseFlow(it) }
+                }
+            }
         }
     }
     
@@ -101,7 +103,7 @@ fun RecommendationsScreen(
                     val currentRec = uiState.getCurrentRecommendation()
                     if (currentRec != null) {
                         MovieRecommendationCard(
-                            recommendation = currentRec,
+                            movie = currentRec,
                             onMovieClick = onMovieClick,
                             onSkip = { viewModel.skipToNext() },
                             onAddToWatchlist = { viewModel.addToWatchlist() },
@@ -129,8 +131,8 @@ fun RecommendationsScreen(
         val currentRec = uiState.getCurrentRecommendation()
         if (currentRec != null) {
             RatingDialog(
-                movieTitle = currentRec.movie.title,
-                currentRating = currentRec.movie.rating,
+                movieTitle = currentRec.title,
+                currentRating = currentRec.rating,
                 onDismiss = { viewModel.dismissRatingDialog() },
                 onRatingSelected = { rating ->
                     viewModel.markAsSeenWithRating(rating)

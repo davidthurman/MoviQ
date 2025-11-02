@@ -37,17 +37,14 @@ class DetailViewModel @Inject constructor(
         val newSeenStatus = !currentMovie.isSeen
         
         if (newSeenStatus) {
-            // Show rating dialog when marking as seen
             _showRatingDialog.value = true
         } else {
-            // Show confirmation dialog when unmarking as seen
             _showUnseenConfirmDialog.value = true
         }
     }
 
     fun confirmUnseen() {
         val currentMovie = _movie.value ?: return
-        // Remove seen status, clear rating, and remove from favorites
         viewModelScope.launch {
             movieRepository.updateSeenStatus(currentMovie, false)
             movieRepository.updateRating(currentMovie, null)
@@ -65,12 +62,10 @@ class DetailViewModel @Inject constructor(
         val currentMovie = _movie.value ?: return
         viewModelScope.launch {
             if (!currentMovie.isSeen) {
-                // If not yet marked as seen, mark it as seen and remove from watchlist
                 movieRepository.updateSeenStatus(currentMovie, true)
                 var watchlistStatus = false
                 _movie.value = currentMovie.copy(isSeen = true, isWatchlist = watchlistStatus, rating = rating)
             } else {
-                // If already seen, just update the rating
                 _movie.value = currentMovie.copy(rating = rating)
             }
             movieRepository.updateRating(currentMovie, rating)

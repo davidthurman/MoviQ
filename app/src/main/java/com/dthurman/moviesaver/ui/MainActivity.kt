@@ -24,7 +24,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -32,11 +31,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.edit
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
-import com.dthurman.moviesaver.data.local.preferences.ThemePreferences
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import com.dthurman.moviesaver.ui.components.dialogs.SettingsModal
@@ -47,7 +46,6 @@ import com.dthurman.moviesaver.ui.nav.AppNavHost
 import com.dthurman.moviesaver.ui.nav.Destination
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -58,11 +56,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var movieRepository: MovieRepository
     
-    @Inject
-    lateinit var aiRepository: com.dthurman.moviesaver.domain.repository.AiRepository
-    
-    @Inject
-    lateinit var themePreferences: ThemePreferences
+    private val sharedPreferences by lazy {
+        getSharedPreferences("app_preferences", MODE_PRIVATE)
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,8 +67,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val currentUser by loginViewModel.currentUser.collectAsStateWithLifecycle()
-            val isDarkMode by themePreferences.isDarkMode.collectAsStateWithLifecycle(initialValue = true)
-            val coroutineScope = rememberCoroutineScope()
+            var isDarkMode by rememberSaveable { 
+                mutableStateOf(sharedPreferences.getBoolean("is_dark_mode", true))
+            }
             
             val appNavController = rememberNavController()
             val startDestination = Destination.SEEN
@@ -186,9 +183,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 isDarkMode = isDarkMode,
                                 onThemeToggle = { newValue ->
-                                    coroutineScope.launch {
-                                        themePreferences.setDarkMode(newValue)
-                                    }
+                                    isDarkMode = newValue
+                                    sharedPreferences.edit { putBoolean("is_dark_mode", newValue) }
                                 }
                             )
                         }

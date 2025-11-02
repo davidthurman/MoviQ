@@ -99,7 +99,7 @@
 -keep class com.dthurman.moviesaver.data.remote.** { *; }
 
 # Keep all Firestore models
--keep class com.dthurman.moviesaver.data.remote.firestore.** { *; }
+-keep class com.dthurman.moviesaver.data.remote.firebase.** { *; }
 
 # Keep all Room entities and DAOs
 -keep class com.dthurman.moviesaver.data.local.database.** { *; }

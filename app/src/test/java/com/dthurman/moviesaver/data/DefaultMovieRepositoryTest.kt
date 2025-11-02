@@ -23,8 +23,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import com.dthurman.moviesaver.data.local.database.MovieEntity
-import com.dthurman.moviesaver.data.local.database.MovieDao
+import com.dthurman.moviesaver.data.local.MovieEntity
+import com.dthurman.moviesaver.data.local.MovieDao
 
 /**
  * Unit tests for [com.dthurman.moviesaver.domain.repository.DefaultMovieRepository].

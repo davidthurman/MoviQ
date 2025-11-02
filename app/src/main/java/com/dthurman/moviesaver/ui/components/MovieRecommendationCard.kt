@@ -20,11 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dthurman.moviesaver.domain.model.Movie
-import com.dthurman.moviesaver.domain.model.MovieRecommendation
 
 @Composable
 fun MovieRecommendationCard(
-    recommendation: MovieRecommendation,
+    movie: Movie,
     onMovieClick: (Movie) -> Unit,
     onSkip: () -> Unit,
     onAddToWatchlist: () -> Unit,
@@ -41,7 +40,7 @@ fun MovieRecommendationCard(
             contentAlignment = Alignment.Center
         ) {
             MoviePreview(
-                movie = recommendation.movie,
+                movie = movie,
                 onMovieClick = onMovieClick,
                 modifier = Modifier.width(280.dp)
             )
@@ -56,7 +55,7 @@ fun MovieRecommendationCard(
                 .padding(vertical = 16.dp)
         ) {
             Text(
-                text = recommendation.aiReason,
+                text = movie.aiReason ?: "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.padding(16.dp)
