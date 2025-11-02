@@ -1,6 +1,7 @@
 package com.dthurman.moviesaver.data.remote.firebase.firestore
 
 import com.dthurman.moviesaver.data.local.MovieEntity
+import com.dthurman.moviesaver.data.local.SyncState
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.PropertyName
 
@@ -57,7 +58,8 @@ fun FirestoreMovie.toEntity(): MovieEntity {
         rating = this.rating,
         lastModified = this.lastModified,
         aiReason = this.aiReason,
-        notInterested = this.notInterested
+        notInterested = this.notInterested,
+        syncState = SyncState.SYNCED
     )
 }
 

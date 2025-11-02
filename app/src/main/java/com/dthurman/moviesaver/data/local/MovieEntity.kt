@@ -24,6 +24,14 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
+enum class SyncState {
+    PENDING_CREATE,
+    PENDING_UPDATE,
+    PENDING_DELETE,
+    SYNCED,
+    FAILED
+}
+
 @Entity(tableName = "movie")
 data class MovieEntity(
     @PrimaryKey val id: Int,
@@ -39,7 +47,8 @@ data class MovieEntity(
     val rating: Float? = null,
     val lastModified: Long = System.currentTimeMillis(),
     val aiReason: String? = null,
-    val notInterested: Boolean = false
+    val notInterested: Boolean = false,
+    val syncState: SyncState = SyncState.SYNCED
 )
 
 @Dao
@@ -62,20 +71,17 @@ interface MovieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateMovie(movie: MovieEntity)
 
-    @Query("UPDATE movie SET isSeen = :isSeen, lastModified = :timestamp WHERE id = :movieId")
+    @Query("UPDATE movie SET isSeen = :isSeen, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
     suspend fun updateSeenStatus(movieId: Int, isSeen: Boolean, timestamp: Long = System.currentTimeMillis())
 
-    @Query("UPDATE movie SET isWatchlist = :isWatchlist, lastModified = :timestamp WHERE id = :movieId")
+    @Query("UPDATE movie SET isWatchlist = :isWatchlist, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
     suspend fun updateWatchlistStatus(movieId: Int, isWatchlist: Boolean, timestamp: Long = System.currentTimeMillis())
 
-    @Query("UPDATE movie SET isFavorite = :isFavorite, lastModified = :timestamp WHERE id = :movieId")
+    @Query("UPDATE movie SET isFavorite = :isFavorite, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
     suspend fun updateFavoriteStatus(movieId: Int, isFavorite: Boolean, timestamp: Long = System.currentTimeMillis())
 
-    @Query("UPDATE movie SET rating = :rating, lastModified = :timestamp WHERE id = :movieId")
+    @Query("UPDATE movie SET rating = :rating, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
     suspend fun updateRating(movieId: Int, rating: Float?, timestamp: Long = System.currentTimeMillis())
-
-    @Query("DELETE FROM movie WHERE id = :movieId AND isSeen = 0 AND isWatchlist = 0 AND isFavorite = 0")
-    suspend fun deleteMovieIfNotUsed(movieId: Int)
     
     @Query("SELECT * FROM movie WHERE isSeen = 1 OR isWatchlist = 1 OR isFavorite = 1 OR rating IS NOT NULL")
     suspend fun getAllModifiedMovies(): List<MovieEntity>
@@ -83,18 +89,27 @@ interface MovieDao {
     @Query("SELECT * FROM movie WHERE aiReason IS NOT NULL ORDER BY addedAt DESC")
     fun getRecommendations(): Flow<List<MovieEntity>>
     
-    @Query("UPDATE movie SET aiReason = NULL WHERE id = :movieId")
-    suspend fun clearAiReason(movieId: Int)
-    
-    @Query("DELETE FROM movie WHERE id = :movieId AND aiReason IS NOT NULL")
-    suspend fun deleteRecommendation(movieId: Int)
+    @Query("UPDATE movie SET aiReason = NULL, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
+    suspend fun clearAiReason(movieId: Int, timestamp: Long = System.currentTimeMillis())
     
     @Query("SELECT * FROM movie WHERE notInterested = 1")
     suspend fun getNotInterestedMovies(): List<MovieEntity>
     
-    @Query("UPDATE movie SET notInterested = :notInterested, aiReason = NULL, lastModified = :timestamp WHERE id = :movieId")
+    @Query("UPDATE movie SET notInterested = :notInterested, aiReason = NULL, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
     suspend fun updateNotInterested(movieId: Int, notInterested: Boolean, timestamp: Long = System.currentTimeMillis())
     
     @Query("DELETE FROM movie")
     suspend fun clearAllMovies()
+
+    @Query("SELECT * FROM movie WHERE syncState != 'SYNCED' AND syncState != 'PENDING_DELETE'")
+    suspend fun getPendingSyncMovies(): List<MovieEntity>
+    
+    @Query("SELECT * FROM movie WHERE syncState = 'PENDING_DELETE'")
+    suspend fun getPendingDeleteMovies(): List<MovieEntity>
+    
+    @Query("UPDATE movie SET syncState = :syncState WHERE id = :movieId")
+    suspend fun updateSyncState(movieId: Int, syncState: SyncState)
+    
+    @Query("DELETE FROM movie WHERE id = :movieId")
+    suspend fun deleteMovie(movieId: Int)
 }

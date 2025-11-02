@@ -9,6 +9,5 @@ import kotlinx.coroutines.flow.Flow
 interface AiRepository {
     suspend fun generatePersonalizedRecommendations(): List<Movie>
     fun getSavedRecommendations(): Flow<List<Movie>>
-    suspend fun saveRecommendations(recommendations: List<Movie>)
 }
 

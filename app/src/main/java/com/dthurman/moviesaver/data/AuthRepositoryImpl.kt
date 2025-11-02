@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.data.remote.firebase.auth
+package com.dthurman.moviesaver.data
 
 import android.app.Activity
 import android.util.Log
@@ -7,6 +7,7 @@ import com.dthurman.moviesaver.data.remote.billing.BillingConnectionState
 import com.dthurman.moviesaver.data.remote.billing.BillingManager
 import com.dthurman.moviesaver.data.remote.billing.PurchaseState
 import com.dthurman.moviesaver.data.remote.firebase.firestore.FirestoreSyncService
+import com.dthurman.moviesaver.data.sync.SyncManager
 import com.dthurman.moviesaver.domain.model.User
 import com.dthurman.moviesaver.domain.repository.AuthRepository
 import com.dthurman.moviesaver.domain.repository.MovieRepository
@@ -16,6 +17,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,16 +32,17 @@ class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firestoreSyncService: FirestoreSyncService,
     private val movieRepositoryProvider: Provider<MovieRepository>,
-    private val billingManager: BillingManager
+    private val billingManager: BillingManager,
+    private val syncManager: SyncManager
 ) : AuthRepository {
-    
+
     companion object {
         private const val TAG = "AuthRepository"
         private const val CREDITS_FOR_PURCHASE = 50
         private const val MAX_RETRY_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 1000L
     }
-    
+
     private val movieRepository: MovieRepository
         get() = movieRepositoryProvider.get()
 
@@ -61,7 +64,7 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
         firebaseAuth.addAuthStateListener(authStateListener)
-        
+
         val firebaseUser = firebaseAuth.currentUser
         if (firebaseUser != null) {
             CoroutineScope(Dispatchers.IO).launch {
@@ -73,9 +76,9 @@ class AuthRepositoryImpl @Inject constructor(
         } else {
             val sendResult = trySend(null)
         }
-        
+
         awaitClose {
-            firebaseAuth.removeAuthStateListener(authStateListener) 
+            firebaseAuth.removeAuthStateListener(authStateListener)
         }
     }
 
@@ -88,22 +91,34 @@ class AuthRepositoryImpl @Inject constructor(
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val authResult = firebaseAuth.signInWithCredential(credential).await()
             val firebaseUser = authResult.user
-            
+
             if (firebaseUser != null) {
                 val isNewUser = authResult.additionalUserInfo?.isNewUser ?: false
-                
+
                 if (isNewUser) {
                     val newUser = firebaseUser.toUser(credits = 10)
                     firestoreSyncService.createOrUpdateUserProfile(newUser)
                     _currentUserCache.value = newUser
-                    Log.d(TAG, "New user created with 10 credits")
+                    
+                    // Start periodic sync for new user
+                    syncManager.startPeriodicSync()
+                    Log.d(TAG, "Started periodic sync for new user")
+                    
                     Result.success(newUser)
                 } else {
                     val userResult = firestoreSyncService.fetchUserProfile(firebaseUser.uid)
                     val user = userResult.getOrNull() ?: firebaseUser.toUser()
                     firestoreSyncService.createOrUpdateUserProfile(user)
                     _currentUserCache.value = user
-                    Log.d(TAG, "Existing user signed in with ${user.credits} credits")
+                    
+                    // Download existing movies from Firestore for returning user
+                    Log.d(TAG, "Syncing movies from Firestore for returning user")
+                    movieRepository.syncFromFirestore()
+                    
+                    // Start periodic sync for returning user
+                    syncManager.startPeriodicSync()
+                    Log.d(TAG, "Started periodic sync for returning user")
+                    
                     Result.success(user)
                 }
             } else {
@@ -117,24 +132,25 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signOut() {
         try {
+            // Stop periodic sync before clearing data
+            syncManager.stopPeriodicSync()
+            Log.d(TAG, "Stopped periodic sync on sign out")
+            
             clearLocalCache()
             _currentUserCache.value = null
             firebaseAuth.signOut()
-            Log.d(TAG, "User signed out and local cache cleared successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error during sign out: ${e.message}", e)
+            syncManager.stopPeriodicSync()
             firebaseAuth.signOut()
         }
     }
-    
+
     override suspend fun clearLocalCache() {
         try {
-            Log.d(TAG, "Clearing local cache...")
             movieRepository.clearAllLocalData()
             _currentUserCache.value = null
-            Log.d(TAG, "Local cache cleared successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Error clearing local cache: ${e.message}", e)
             throw e
         }
     }
@@ -146,7 +162,7 @@ class AuthRepositoryImpl @Inject constructor(
     ): Result<T> {
         var currentDelay = initialDelayMs
         var lastException: Exception? = null
-        
+
         repeat(maxAttempts) { attempt ->
             try {
                 val result = operation()
@@ -160,14 +176,14 @@ class AuthRepositoryImpl @Inject constructor(
             } catch (e: Exception) {
                 lastException = e
             }
-            
+
             if (attempt < maxAttempts - 1) {
                 Log.w(TAG, "Attempt ${attempt + 1} failed, retrying in ${currentDelay}ms...")
-                kotlinx.coroutines.delay(currentDelay)
+                delay(currentDelay)
                 currentDelay *= 2
             }
         }
-        
+
         return Result.failure(lastException ?: Exception("Operation failed after $maxAttempts attempts"))
     }
 
@@ -180,7 +196,7 @@ class AuthRepositoryImpl @Inject constructor(
         if (cachedUser != null) {
             return cachedUser.credits
         }
-        
+
         val userId = firebaseAuth.currentUser?.uid
         if (userId != null) {
             val result = firestoreSyncService.fetchUserProfile(userId)
@@ -199,18 +215,18 @@ class AuthRepositoryImpl @Inject constructor(
             Log.w(TAG, "Cannot deduct credit: user not logged in")
             return false
         }
-        
+
         if (user.credits <= 0) {
             Log.w(TAG, "No credits available to deduct")
             return false
         }
-        
+
         val newCredits = user.credits - 1
-        
+
         val result = retryWithExponentialBackoff {
             firestoreSyncService.updateUserCredits(user.id, newCredits)
         }
-        
+
         return if (result.isSuccess) {
             _currentUserCache.value = user.copy(credits = newCredits)
             Log.d(TAG, "Credit deducted successfully. Remaining: $newCredits")
@@ -227,13 +243,13 @@ class AuthRepositoryImpl @Inject constructor(
             Log.w(TAG, "Cannot add credits: user not logged in")
             return false
         }
-        
+
         val newCredits = user.credits + credits
-        
+
         val result = retryWithExponentialBackoff {
             firestoreSyncService.updateUserCredits(user.id, newCredits)
         }
-        
+
         return if (result.isSuccess) {
             _currentUserCache.value = user.copy(credits = newCredits)
             Log.d(TAG, "Added $credits credits. New total: $newCredits")
@@ -264,10 +280,10 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun processPurchase(purchaseToken: String): Boolean {
         return try {
             val user = getCurrentUser()
-            
+
             if (user != null) {
                 val success = addCredits(CREDITS_FOR_PURCHASE)
-                
+
                 if (success) {
                     Log.d(TAG, "Successfully processed purchase - added $CREDITS_FOR_PURCHASE credits")
                     true

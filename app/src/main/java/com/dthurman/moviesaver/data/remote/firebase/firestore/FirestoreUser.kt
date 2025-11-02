@@ -5,10 +5,6 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 
-/**
- * Firestore user document model
- * Stored at: users/{userId}
- */
 data class FirestoreUser(
     val id: String = "",
     val email: String? = null,
@@ -21,9 +17,6 @@ data class FirestoreUser(
     @get:PropertyName("lastUpdated") @set:PropertyName("lastUpdated") var lastUpdated: Timestamp? = null
 )
 
-/**
- * Convert domain User model to Firestore model
- */
 fun User.toFirestoreUser(): FirestoreUser {
     return FirestoreUser(
         id = this.id,
@@ -36,9 +29,6 @@ fun User.toFirestoreUser(): FirestoreUser {
     )
 }
 
-/**
- * Convert Firestore model to domain User model
- */
 fun FirestoreUser.toUser(): User {
     return User(
         id = this.id,

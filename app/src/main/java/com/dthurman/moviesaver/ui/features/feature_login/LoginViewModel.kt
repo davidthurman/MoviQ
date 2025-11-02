@@ -75,37 +75,29 @@ class LoginViewModel @Inject constructor(
                 .addCredentialOption(googleIdOption)
                 .build()
 
-            android.util.Log.d("TESTING123", "LoginViewModel: Requesting credentials")
             val result = credentialManager.getCredential(
                 request = request,
                 context = context,
             )
 
             val credential = result.credential
-            android.util.Log.d("TESTING123", "LoginViewModel: Got credential type: ${credential.type}")
-
             when (credential) {
                 is androidx.credentials.CustomCredential -> {
                     if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                         val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                         val idToken = googleIdTokenCredential.idToken
-                        android.util.Log.d("TESTING123", "LoginViewModel: Got Google ID token, signing in")
                         signInWithGoogle(idToken)
                     } else {
-                        android.util.Log.e("TESTING123", "LoginViewModel: Unexpected credential type: ${credential.type}")
                         _uiState.value = LoginUiState.Error("Unexpected credential type")
                     }
                 }
                 else -> {
-                    android.util.Log.e("TESTING123", "LoginViewModel: Unexpected credential class")
                     _uiState.value = LoginUiState.Error("Unexpected credential")
                 }
             }
         } catch (e: GetCredentialException) {
-            android.util.Log.e("TESTING123", "LoginViewModel: GetCredentialException - ${e.message}", e)
             _uiState.value = LoginUiState.Error(e.message ?: "Sign-in cancelled")
         } catch (e: Exception) {
-            android.util.Log.e("TESTING123", "LoginViewModel: Sign-in exception - ${e.message}", e)
             _uiState.value = LoginUiState.Error(e.message ?: "Unknown error occurred")
         }
     }

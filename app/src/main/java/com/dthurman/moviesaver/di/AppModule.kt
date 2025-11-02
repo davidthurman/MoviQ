@@ -2,15 +2,17 @@ package com.dthurman.moviesaver.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
+import com.dthurman.moviesaver.data.AiRepositoryImpl
+import com.dthurman.moviesaver.data.AuthRepositoryImpl
 import com.dthurman.moviesaver.data.DefaultMovieRepository
-import com.dthurman.moviesaver.data.remote.firebase.ai.AiRepositoryImpl
-import com.dthurman.moviesaver.data.remote.firebase.analytics.AnalyticsService
-import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
-import com.dthurman.moviesaver.data.remote.firebase.auth.AuthRepositoryImpl
-import com.dthurman.moviesaver.data.remote.billing.BillingManager
 import com.dthurman.moviesaver.data.local.AppDatabase
 import com.dthurman.moviesaver.data.local.MovieDao
+import com.dthurman.moviesaver.data.remote.billing.BillingManager
+import com.dthurman.moviesaver.data.remote.firebase.analytics.AnalyticsService
+import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import com.dthurman.moviesaver.data.remote.firebase.firestore.FirestoreSyncService
+import com.dthurman.moviesaver.data.sync.SyncManager
 import com.dthurman.moviesaver.domain.repository.AiRepository
 import com.dthurman.moviesaver.domain.repository.AuthRepository
 import com.dthurman.moviesaver.domain.repository.MovieRepository
@@ -72,8 +74,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirestoreSyncService(firestore: FirebaseFirestore): FirestoreSyncService {
-        return FirestoreSyncService(firestore)
+    fun provideFirestoreSyncService(
+        firestore: FirebaseFirestore,
+        movieDao: MovieDao
+    ): FirestoreSyncService {
+        return FirestoreSyncService(firestore, movieDao)
     }
 
     @Provides
@@ -116,17 +121,25 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
+        return WorkManager.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideAuthRepository(
         firebaseAuth: FirebaseAuth,
         firestoreSyncService: FirestoreSyncService,
         movieRepositoryProvider: Provider<MovieRepository>,
-        billingManager: BillingManager
+        billingManager: BillingManager,
+        syncManager: SyncManager
     ): AuthRepository {
         return AuthRepositoryImpl(
             firebaseAuth,
             firestoreSyncService,
             movieRepositoryProvider,
-            billingManager
+            billingManager,
+            syncManager
         )
     }
 }

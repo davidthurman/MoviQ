@@ -1,7 +1,9 @@
 package com.dthurman.moviesaver.data.remote.firebase.firestore
 
 import android.util.Log
+import com.dthurman.moviesaver.data.local.MovieDao
 import com.dthurman.moviesaver.data.local.MovieEntity
+import com.dthurman.moviesaver.data.local.SyncState
 import com.dthurman.moviesaver.domain.model.User
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -11,7 +13,8 @@ import javax.inject.Singleton
 
 @Singleton
 class FirestoreSyncService @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val movieDao: MovieDao
 ) {
     
     companion object {
@@ -19,23 +22,6 @@ class FirestoreSyncService @Inject constructor(
         private const val MOVIES_COLLECTION = "movies"
         private const val CREDITS_DOCUMENT = "credits"
         private const val TAG = "FirestoreSync"
-    }
-
-    suspend fun syncMovie(movie: MovieEntity, userId: String): Result<Unit> {
-        return try {
-            val firestoreMovie = movie.toFirestore()
-            firestore.collection(USERS_COLLECTION)
-                .document(userId)
-                .collection(MOVIES_COLLECTION)
-                .document(firestoreMovie.id)
-                .set(firestoreMovie)
-                .await()
-            Log.d(TAG, "Movie synced to Firestore: ${movie.title}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to sync movie to Firestore: ${e.message}", e)
-            Result.failure(e)
-        }
     }
 
     suspend fun fetchUserMovies(userId: String): Result<List<MovieEntity>> {
@@ -59,22 +45,6 @@ class FirestoreSyncService @Inject constructor(
             Result.success(movies)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch movies from Firestore: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
-
-    suspend fun deleteMovie(movieId: Int, userId: String): Result<Unit> {
-        return try {
-            firestore.collection(USERS_COLLECTION)
-                .document(userId)
-                .collection(MOVIES_COLLECTION)
-                .document(movieId.toString())
-                .delete()
-                .await()
-            Log.d(TAG, "Movie deleted from Firestore: $movieId")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to delete movie: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -157,7 +127,83 @@ class FirestoreSyncService @Inject constructor(
             Result.failure(e)
         }
     }
+    
+    /**
+     * Sync all pending changes to Firestore
+     * This processes movies marked as PENDING_CREATE, PENDING_UPDATE, and PENDING_DELETE
+     */
+    suspend fun syncPendingChanges(userId: String): Result<SyncResult> {
+        return try {
+            var created = 0
+            var updated = 0
+            var deleted = 0
+            var failed = 0
+            
+            val pendingSyncMovies = movieDao.getPendingSyncMovies()
+            pendingSyncMovies.forEach { movie ->
+                try {
+                    val firestoreMovie = movie.toFirestore()
+                    firestore.collection(USERS_COLLECTION)
+                        .document(userId)
+                        .collection(MOVIES_COLLECTION)
+                        .document(firestoreMovie.id)
+                        .set(firestoreMovie)
+                        .await()
+
+                    movieDao.updateSyncState(movie.id, SyncState.SYNCED)
+                    
+                    when (movie.syncState) {
+                        SyncState.PENDING_CREATE -> created++
+                        SyncState.PENDING_UPDATE -> updated++
+                        else -> {}
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to sync movie ${movie.title}: ${e.message}", e)
+                    movieDao.updateSyncState(movie.id, SyncState.FAILED)
+                    failed++
+                }
+            }
+            
+            val pendingDeleteMovies = movieDao.getPendingDeleteMovies()
+            pendingDeleteMovies.forEach { movie ->
+                try {
+                    firestore.collection(USERS_COLLECTION)
+                        .document(userId)
+                        .collection(MOVIES_COLLECTION)
+                        .document(movie.id.toString())
+                        .delete()
+                        .await()
+                    
+                    movieDao.deleteMovie(movie.id)
+                    deleted++
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to delete movie ${movie.title}: ${e.message}", e)
+                    movieDao.updateSyncState(movie.id, SyncState.FAILED)
+                    failed++
+                }
+            }
+            
+            val result = SyncResult(
+                created = created,
+                updated = updated,
+                deleted = deleted,
+                failed = failed
+            )
+            
+            Result.success(result)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during batch sync: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 
 }
+
+data class SyncResult(
+    val created: Int = 0,
+    val updated: Int = 0,
+    val deleted: Int = 0,
+    val failed: Int = 0
+)
 
 
