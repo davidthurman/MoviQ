@@ -1,4 +1,111 @@
 <resources>
-    <string name="app_name">MovieSaverApplication</string>
+    <string name="app_name">MoviQ</string>
     <string name="default_web_client_id">343250730319-k2ttj33cqgme9f47mlflomkdkjbi71sh.apps.googleusercontent.com</string>
+    
+    <!-- Common -->
+    <string name="loading">Loading…</string>
+    <string name="search">Search</string>
+    <string name="cancel">Cancel</string>
+    <string name="settings">Settings</string>
+    <string name="retry">Retry</string>
+    
+    <!-- Search -->
+    <string name="search_for_movies">Search for movies</string>
+    <string name="search_content_description">Search</string>
+    
+    <!-- AI Recommendations -->
+    <string name="ai_recommendations">AI Recommendations</string>
+    <string name="available_credits">Available Credits: %d</string>
+    <string name="generating_recommendations">Generating personalized recommendations…</string>
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_something_wrong">Oops! Something went wrong</string>
+    <string name="get_ai_recommendations">Personalized Recommendations</string>
+    <string name="ai_icon_content_description">AI Icon</string>
+    <string name="ai_recommendations_description">Let AI analyze your viewing history and suggest movies you\'ll love</string>
+    <string name="generate_recommendations">Generate</string>
+    <string name="all_out_of_recommendations">All Out of Recommendations!</string>
+    <string name="reviewed_all_recommendations">You\'ve reviewed all your recommendations. Ready for more?</string>
+    <string name="generate_more">Generate More</string>
+    
+    <!-- AI Service Errors -->
+    <string name="error_user_not_logged_in">User not logged in</string>
+    <string name="error_failed_to_generate">Failed to generate recommendations</string>
+    <string name="error_empty_ai_response">Empty response from AI</string>
+    <string name="error_failed_to_parse">Failed to parse AI response</string>
+    <string name="error_invalid_json">Invalid JSON format in AI response: %s</string>
+    
+    <!-- AI Prompts -->
+    <string name="ai_prompt_expert_intro">You are a movie recommendation expert. Based on the user\'s viewing history, suggest %d personalized movie recommendations.</string>
+    <string name="ai_prompt_watched_movies">User\'s watched movies (with their ratings and favorites marked):</string>
+    <string name="ai_prompt_watchlist_header">Movies already in their watchlist (DO NOT recommend these):</string>
+    <string name="ai_prompt_not_interested_header">Movies the user is NOT interested in (DO NOT recommend these):</string>
+    <string name="ai_prompt_json_instructions">Return ONLY a valid JSON array with exactly %d movie recommendations. Each object must have:\n- "title": The exact movie title (string)\n- "year": The release year (integer)\n- "reason": Why they\'ll enjoy it based on their history (1-2 sentences, string)\n\nIMPORTANT: Do NOT recommend any movies from their watched list, watchlist, or movies they\'re not interested in!\n\nExample format:\n[\n  {\n    "title": "The Shawshank Redemption",\n    "year": 1994,\n    "reason": "Given your love for character-driven dramas like The Green Mile, this redemptive story will resonate with you."\n  }\n]\n\nReturn ONLY the JSON array, no other text or markdown formatting.</string>
+    <string name="ai_prompt_new_user">The user hasn\'t watched any movies yet. Recommend %d popular, highly-rated movies across different genres.\n\nReturn ONLY a valid JSON array with exactly %d movie recommendations. Each object must have:\n- "title": The exact movie title (string)\n- "year": The release year (integer)\n- "reason": Why it\'s worth watching (1-2 sentences, string)\n\nExample format:\n[\n  {\n    "title": "The Shawshank Redemption",\n    "year": 1994,\n    "reason": "A timeless tale of hope and friendship that consistently ranks as one of the greatest films ever made."\n  }\n]\n\nReturn ONLY the JSON array, no other text or markdown formatting.</string>
+    <string name="ai_movie_item_format">- %1$s (%2$s)</string>
+    <string name="ai_movie_item_with_rating">- %1$s (%2$s) - User Rating: %3$s/5</string>
+    <string name="ai_movie_favorite_marker">⭐ FAVORITE</string>
+    
+    <!-- Credits Dialog -->
+    <string name="no_credits_remaining">No Credits Remaining</string>
+    <string name="no_credits_message">You\'ve used all your AI generation credits.</string>
+    <string name="purchase_credits_prompt">Purchase more credits to continue generating personalized movie recommendations!</string>
+    <string name="buy_credits_button">Buy 50 Credits - $5</string>
+    <string name="maybe_later">Maybe Later</string>
+    
+    <!-- Purchase Success -->
+    <string name="purchase_successful">Purchase Successful!</string>
+    <string name="credits_added_message">50 credits have been added to your account.</string>
+    <string name="can_generate_more">You can now generate more AI-powered movie recommendations!</string>
+    <string name="great">Great!</string>
+    
+    <!-- Login -->
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="movie_saver">Movie Saver</string>
+    <string name="track_and_discover">Track and discover your favorite movies</string>
+    <string name="google_logo_content_description">Google Logo</string>
+    <string name="app_logo_content_description">App Logo</string>
+    <string name="error_unexpected_credential_type">Unexpected credential type</string>
+    <string name="error_unexpected_credential">Unexpected credential</string>
+    <string name="error_sign_in_cancelled">Sign-in cancelled</string>
+    <string name="error_unknown_occurred">Unknown error occurred</string>
+    
+    <!-- Settings -->
+    <string name="sign_out">Sign Out</string>
+    <string name="close">Close</string>
+    <string name="user_default_name">User</string>
+    <string name="profile_picture_content_description">Profile Picture</string>
+    <string name="theme">Theme</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="light_mode">Light Mode</string>
+    
+    <!-- Movies/Seen Screen -->
+    <string name="my_movies">My Movies</string>
+    <string name="seen">Seen</string>
+    <string name="watchlist">Watchlist</string>
+    <string name="sort_title_asc">Title (A-Z)</string>
+    <string name="sort_title_desc">Title (Z-A)</string>
+    <string name="sort_date_added_asc">Date Added (Oldest)</string>
+    <string name="sort_date_added_desc">Date Added (Newest)</string>
+    <string name="sort_release_date_asc">Release Date (Oldest)</string>
+    <string name="sort_release_date_desc">Release Date (Newest)</string>
+    <string name="sort_label">Sort: %s</string>
+    <string name="sort_options_content_description">Sort options</string>
+    <string name="show_favorites_content_description">Show favorites only</string>
+    
+    <!-- Movie Detail -->
+    <string name="remove_from_seen">Remove from Seen?</string>
+    <string name="remove_movie_with_favorite_message">This will remove \"%s\" from your seen movies and favorites, and clear its rating.</string>
+    <string name="remove_movie_message">This will remove \"%s\" from your seen movies and clear its rating.</string>
+    <string name="remove">Remove</string>
+    <string name="add_to_watchlist">Add to Watchlist</string>
+    <string name="in_watchlist">In Watchlist</string>
+    <string name="add_to_seen">Add to Seen</string>
+    <string name="in_seen">In Seen</string>
+    <string name="overview">Overview</string>
+    <string name="hearted_content_description">Hearted</string>
+    
+    <!-- Navigation -->
+    <string name="nav_movies">Movies</string>
+    <string name="nav_recommendations">Recommendations</string>
+    <string name="nav_search">Search</string>
 </resources>

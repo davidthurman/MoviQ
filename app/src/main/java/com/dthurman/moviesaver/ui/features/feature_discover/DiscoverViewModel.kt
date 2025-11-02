@@ -55,12 +55,6 @@ class DiscoverViewModel @Inject constructor(
             }
         }
     }
-
-    fun addMovieToSeen(movie: Movie) {
-        viewModelScope.launch {
-            movieRepository.updateSeenStatus(movie, true)
-        }
-    }
 }
 
 data class DiscoverUiState(

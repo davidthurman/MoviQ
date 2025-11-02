@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components
+package com.dthurman.moviesaver.ui.components.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +21,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,9 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.User
 
 @Composable
@@ -38,6 +41,8 @@ fun SettingsModal(
     onDismiss: () -> Unit,
     currentUser: User?,
     onSignOut: () -> Unit,
+    isDarkMode: Boolean,
+    onThemeToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -52,10 +57,38 @@ fun SettingsModal(
                 .padding(24.dp)
         ) {
             Text(
-                text = "Settings",
+                text = stringResource(R.string.settings),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Theme Toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.theme),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = if (isDarkMode) stringResource(R.string.dark_mode) else stringResource(R.string.light_mode),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = isDarkMode,
+                    onCheckedChange = onThemeToggle
+                )
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
@@ -69,7 +102,7 @@ fun SettingsModal(
                     if (currentUser.photoUrl != null) {
                         AsyncImage(
                             model = currentUser.photoUrl,
-                            contentDescription = "Profile Picture",
+                            contentDescription = stringResource(R.string.profile_picture_content_description),
                             modifier = Modifier
                                 .size(56.dp)
                                 .clip(CircleShape)
@@ -78,7 +111,7 @@ fun SettingsModal(
                     } else {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Profile Picture",
+                            contentDescription = stringResource(R.string.profile_picture_content_description),
                             modifier = Modifier.size(56.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -90,7 +123,7 @@ fun SettingsModal(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = currentUser.displayName ?: "User",
+                            text = currentUser.displayName ?: stringResource(R.string.user_default_name),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -120,7 +153,7 @@ fun SettingsModal(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Sign Out")
+                    Text(stringResource(R.string.sign_out))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -135,7 +168,7 @@ fun SettingsModal(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("Close")
+                    Text(stringResource(R.string.close))
                 }
             }
         }

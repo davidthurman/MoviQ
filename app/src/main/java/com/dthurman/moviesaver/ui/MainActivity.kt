@@ -20,22 +20,26 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
+import com.dthurman.moviesaver.data.local.preferences.ThemePreferences
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
-import com.dthurman.moviesaver.ui.components.SettingsModal
+import com.dthurman.moviesaver.ui.components.dialogs.SettingsModal
 import com.dthurman.moviesaver.ui.features.feature_detail.DetailScreen
 import com.dthurman.moviesaver.ui.features.feature_login.LoginScreen
 import com.dthurman.moviesaver.ui.features.feature_login.LoginViewModel
@@ -56,6 +60,9 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var aiRepository: com.dthurman.moviesaver.domain.repository.AiRepository
+    
+    @Inject
+    lateinit var themePreferences: ThemePreferences
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +71,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val currentUser by loginViewModel.currentUser.collectAsStateWithLifecycle()
+            val isDarkMode by themePreferences.isDarkMode.collectAsStateWithLifecycle(initialValue = true)
+            val coroutineScope = rememberCoroutineScope()
             
             val appNavController = rememberNavController()
             val startDestination = Destination.SEEN
@@ -75,16 +84,14 @@ class MainActivity : ComponentActivity() {
 
             var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
 
-            LaunchedEffect(currentUser) {
-                if (currentUser != null) {
-                    launch {
-                        movieRepository.syncFromFirestore()
-                        aiRepository.syncRecommendationsFromFirestore()
-                    }
+            AppTheme(darkTheme = isDarkMode, dynamicColor = false) {
+                val view = window.decorView
+                SideEffect {
+                    val windowInsetsController = WindowCompat.getInsetsController(window, view)
+                    windowInsetsController.isAppearanceLightStatusBars = !isDarkMode
+                    windowInsetsController.isAppearanceLightNavigationBars = !isDarkMode
                 }
-            }
-
-            AppTheme(dynamicColor = false) {
+                
                 if (currentUser == null) {
                     LoginScreen()
                 } else {
@@ -104,18 +111,18 @@ class MainActivity : ComponentActivity() {
                                                 destination.icon != null -> {
                                                     Icon(
                                                         imageVector = destination.icon,
-                                                        contentDescription = destination.contentDescription
+                                                        contentDescription = stringResource(destination.contentDescriptionRes)
                                                     )
                                                 }
                                                 destination.iconRes != null -> {
                                                     Icon(
                                                         painter = painterResource(destination.iconRes),
-                                                        contentDescription = destination.contentDescription
+                                                        contentDescription = stringResource(destination.contentDescriptionRes)
                                                     )
                                                 }
                                             }
                                         },
-                                        label = { Text(destination.label) }
+                                        label = { Text(stringResource(destination.labelRes)) }
                                     )
                                 }
                             }
@@ -176,6 +183,12 @@ class MainActivity : ComponentActivity() {
                                 onSignOut = {
                                     loginViewModel.signOut()
                                     showSettingsDialog = false
+                                },
+                                isDarkMode = isDarkMode,
+                                onThemeToggle = { newValue ->
+                                    coroutineScope.launch {
+                                        themePreferences.setDarkMode(newValue)
+                                    }
                                 }
                             )
                         }

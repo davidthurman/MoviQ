@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -252,6 +253,18 @@ val unspecified_scheme = ColorFamily(
     Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
 )
 
+@Immutable
+data class ExtendedColors(
+    val starRating: Color = StarRatingColor,
+    val googleButtonBackground: Color = GoogleButtonBackground,
+    val googleButtonBorder: Color = GoogleButtonBorder,
+    val googleButtonText: Color = GoogleButtonText,
+    val googleButtonDisabledBackground: Color = GoogleButtonDisabledBackground,
+    val googleButtonDisabledText: Color = GoogleButtonDisabledText
+)
+
+val LocalExtendedColors = staticCompositionLocalOf { ExtendedColors() }
+
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -274,4 +287,8 @@ fun AppTheme(
         content = content
     )
 }
+
+val MaterialTheme.extendedColors: ExtendedColors
+    @Composable
+    get() = LocalExtendedColors.current
 

@@ -26,8 +26,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.dthurman.moviesaver.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.ui.components.EmptyState
@@ -51,7 +53,7 @@ fun SeenScreen(
     val isInitialLoad by viewModel.isInitialLoad.collectAsStateWithLifecycle()
 
     Column(modifier = modifier) {
-        TopBar(title = "My Movies", onSettingsClick = onSettingsClick)
+        TopBar(title = stringResource(R.string.my_movies), onSettingsClick = onSettingsClick)
         Column(modifier = Modifier.fillMaxSize()) {
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
@@ -70,8 +72,8 @@ fun SeenScreen(
                         label = { 
                             Text(
                                 text = when (filter) {
-                                    MovieFilter.SEEN -> "Seen"
-                                    MovieFilter.WATCHLIST -> "Watchlist"
+                                    MovieFilter.SEEN -> stringResource(R.string.seen)
+                                    MovieFilter.WATCHLIST -> stringResource(R.string.watchlist)
                                 }
                             ) 
                         }
@@ -83,10 +85,10 @@ fun SeenScreen(
                     TextButton(
                         onClick = { viewModel.onToggleSortMenu() }
                     ) {
-                        Text("Sort: ${sortOrder.displayName}")
+                        Text(stringResource(R.string.sort_label, stringResource(sortOrder.displayNameRes)))
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Sort options"
+                            contentDescription = stringResource(R.string.sort_options_content_description)
                         )
                     }
 
@@ -96,7 +98,7 @@ fun SeenScreen(
                     ) {
                         SortOrder.entries.forEach { order ->
                             DropdownMenuItem(
-                                text = { Text(order.displayName) },
+                                text = { Text(stringResource(order.displayNameRes)) },
                                 onClick = { viewModel.onSortOrderChanged(order) }
                             )
                         }
@@ -110,7 +112,7 @@ fun SeenScreen(
                         Icon(
                             modifier = Modifier.size(18.dp),
                             imageVector = if (showFavoritesOnly) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Show favorites only"
+                            contentDescription = stringResource(R.string.show_favorites_content_description)
                         )
                     },
                 )

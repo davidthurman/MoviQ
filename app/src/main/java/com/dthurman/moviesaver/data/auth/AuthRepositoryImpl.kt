@@ -1,7 +1,11 @@
 package com.dthurman.moviesaver.data.auth
 
+import android.util.Log
+import com.dthurman.moviesaver.data.remote.firestore.FirestoreSyncService
 import com.dthurman.moviesaver.domain.model.User
 import com.dthurman.moviesaver.domain.repository.AuthRepository
+import com.dthurman.moviesaver.domain.repository.CreditsRepository
+import com.dthurman.moviesaver.domain.repository.MovieRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.channels.awaitClose
@@ -9,27 +13,31 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import javax.inject.Provider
 
 class AuthRepositoryImpl @Inject constructor(
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val creditsRepository: CreditsRepository,
+    private val firestoreSyncService: FirestoreSyncService,
+    private val movieRepositoryProvider: Provider<MovieRepository>
 ) : AuthRepository {
+    
+    companion object {
+        private const val TAG = "AuthRepository"
+    }
+    
+    private val movieRepository: MovieRepository
+        get() = movieRepositoryProvider.get()
 
     override val currentUser: Flow<User?> = callbackFlow {
-        android.util.Log.d("TESTING123", "AuthRepository: Creating currentUser Flow")
         val authStateListener = FirebaseAuth.AuthStateListener { auth ->
             val user = auth.currentUser?.toUser()
-            android.util.Log.d("TESTING123", "AuthRepository: Auth state listener fired - user=${user?.email ?: "null"}")
             val result = trySend(user)
-            android.util.Log.d("TESTING123", "AuthRepository: trySend result=${result.isSuccess}")
         }
         firebaseAuth.addAuthStateListener(authStateListener)
-        android.util.Log.d("TESTING123", "AuthRepository: Auth listener added")
-        // Send initial value immediately
         val initialUser = firebaseAuth.currentUser?.toUser()
-        android.util.Log.d("TESTING123", "AuthRepository: Sending initial user=${initialUser?.email ?: "null"}")
         trySend(initialUser)
-        awaitClose { 
-            android.util.Log.d("TESTING123", "AuthRepository: Closing Flow, removing listener")
+        awaitClose {
             firebaseAuth.removeAuthStateListener(authStateListener) 
         }
     }
@@ -39,30 +47,51 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun signInWithGoogle(idToken: String): Result<User> {
-        android.util.Log.d("TESTING123", "AuthRepository: signInWithGoogle called")
         return try {
-            android.util.Log.d("TESTING123", "AuthRepository: Creating credential")
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            android.util.Log.d("TESTING123", "AuthRepository: Signing in with credential")
             val authResult = firebaseAuth.signInWithCredential(credential).await()
-            android.util.Log.d("TESTING123", "AuthRepository: Sign in completed, getting user")
             val user = authResult.user?.toUser()
-            android.util.Log.d("TESTING123", "AuthRepository: User from result=${user?.email ?: "null"}")
             if (user != null) {
-                android.util.Log.d("TESTING123", "AuthRepository: Returning success with user=${user.email}")
+                val isNewUser = authResult.additionalUserInfo?.isNewUser ?: false
+                if (isNewUser) {
+                    firestoreSyncService.createOrUpdateUserProfile(user, credits = 10)
+                    creditsRepository.initializeCredits(user.id, initialCredits = 10)
+                } else {
+                    firestoreSyncService.createOrUpdateUserProfile(user)
+                    creditsRepository.syncFromFirestore(user.id)
+                }
                 Result.success(user)
             } else {
-                android.util.Log.e("TESTING123", "AuthRepository: User is null!")
                 Result.failure(Exception("Failed to get user information"))
             }
         } catch (e: Exception) {
-            android.util.Log.e("TESTING123", "AuthRepository: Sign in exception: ${e.message}", e)
             Result.failure(e)
         }
     }
 
     override suspend fun signOut() {
-        firebaseAuth.signOut()
+        try {
+            // Clear local cache before signing out
+            clearLocalCache()
+            firebaseAuth.signOut()
+            Log.d(TAG, "User signed out and local cache cleared successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during sign out: ${e.message}", e)
+            // Still sign out from Firebase even if cache clearing fails
+            firebaseAuth.signOut()
+        }
+    }
+    
+    override suspend fun clearLocalCache() {
+        try {
+            Log.d(TAG, "Clearing local cache...")
+            movieRepository.clearAllLocalData()
+            creditsRepository.clearAllLocalCredits()
+            Log.d(TAG, "Local cache cleared successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clearing local cache: ${e.message}", e)
+            throw e
+        }
     }
 
     private fun com.google.firebase.auth.FirebaseUser.toUser(): User {

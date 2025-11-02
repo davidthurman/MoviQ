@@ -30,7 +30,6 @@ class AiRepositoryImpl @Inject constructor(
         val maxAttempts = 3
         val movieRecommendations = mutableListOf<MovieRecommendation>()
         
-        // Create a set of IDs to quickly check if a movie should be excluded
         val seenMovieIds = seenMovies.map { it.id }.toSet()
         val watchlistMovieIds = watchlistMovies.map { it.id }.toSet()
         val notInterestedMovieIds = notInterestedMovies.map { it.id }.toSet()
@@ -72,7 +71,6 @@ class AiRepositoryImpl @Inject constructor(
                         
                         val movie = movies.firstOrNull()
                         if (movie != null) {
-                            // Check if this movie is already in seen or watchlist
                             if (movie.id in seenMovieIds) {
                                 Log.d("AiRepository", "✗ Skipping '${movie.title}' - already in seen list")
                                 continue
@@ -88,7 +86,6 @@ class AiRepositoryImpl @Inject constructor(
                                 continue
                             }
                             
-                            // Check if we already added this movie in this session
                             if (movieRecommendations.any { it.movie.id == movie.id }) {
                                 Log.d("AiRepository", "✗ Skipping '${movie.title}' - duplicate in current recommendations")
                                 continue
@@ -140,15 +137,10 @@ class AiRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveRecommendations(recommendations: List<MovieRecommendation>) {
-        Log.d("AiRepository", "Saving ${recommendations.size} recommendations to Room and Firestore")
-        
         val movieEntities = recommendations.map { rec ->
             rec.movie.toEntity().copy(aiReason = rec.aiReason)
         }
         movieEntities.forEach { movieDao.insertOrUpdateMovie(it) }
-        
-        Log.d("AiRepository", "Saved ${recommendations.size} movies with aiReason to Room")
-        
         syncRecommendationsToFirestore(movieEntities)
     }
     
@@ -158,7 +150,6 @@ class AiRepositoryImpl @Inject constructor(
             if (userId != null) {
                 var synced = 0
                 movies.forEach { movie ->
-                    Log.d("AiRepository", "Syncing to Firestore: ${movie.title} | aiReason: ${movie.aiReason?.take(30)}")
                     val result = firestoreSyncService.syncMovie(movie, userId)
                     if (result.isSuccess) {
                         synced++
@@ -166,23 +157,12 @@ class AiRepositoryImpl @Inject constructor(
                         Log.e("AiRepository", "Failed to sync: ${movie.title}: ${result.exceptionOrNull()?.message}")
                     }
                 }
-                
-                Log.d("AiRepository", "Synced $synced/${movies.size} recommendations to Firestore")
             } else {
                 Log.w("AiRepository", "Cannot sync recommendations: user not logged in")
             }
         } catch (e: Exception) {
             Log.e("AiRepository", "Error syncing recommendations to Firestore: ${e.message}", e)
         }
-    }
-
-    override suspend fun clearRecommendations() {
-        // Not used - recommendations are managed individually
-    }
-    
-    override suspend fun syncRecommendationsFromFirestore() {
-        // Recommendations sync automatically via the regular movie sync
-        // since they're just movies with aiReason populated
     }
 }
 

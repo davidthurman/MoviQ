@@ -10,7 +10,5 @@ interface AiRepository {
     suspend fun generatePersonalizedRecommendations(): List<MovieRecommendation>
     fun getSavedRecommendations(): Flow<List<MovieRecommendation>>
     suspend fun saveRecommendations(recommendations: List<MovieRecommendation>)
-    suspend fun clearRecommendations()
-    suspend fun syncRecommendationsFromFirestore()
 }
 

@@ -1,6 +1,7 @@
 package com.dthurman.moviesaver.ui.nav
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
@@ -51,12 +52,12 @@ fun AppNavHost(
 
 enum class Destination(
     val route: String,
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector? = null,
     @DrawableRes val iconRes: Int? = null,
-    val contentDescription: String
+    @StringRes val contentDescriptionRes: Int
 ) {
-    SEEN("seen", "Movies", iconRes = R.drawable.outline_visibility_24, contentDescription = "Movies"),
-    RECOMMENDATIONS("recommendations", "Recommendations", iconRes = R.drawable.outline_wand_stars_24, contentDescription = "Recommendations"),
-    DISCOVER("discover", "Search", icon = Icons.Default.Search, contentDescription = "Search"),
+    SEEN("seen", R.string.nav_movies, iconRes = R.drawable.outline_visibility_24, contentDescriptionRes = R.string.nav_movies),
+    RECOMMENDATIONS("recommendations", R.string.nav_recommendations, iconRes = R.drawable.outline_wand_stars_24, contentDescriptionRes = R.string.nav_recommendations),
+    DISCOVER("discover", R.string.nav_search, icon = Icons.Default.Search, contentDescriptionRes = R.string.nav_search),
 }

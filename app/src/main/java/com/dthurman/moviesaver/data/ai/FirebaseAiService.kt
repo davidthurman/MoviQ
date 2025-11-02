@@ -1,5 +1,7 @@
 package com.dthurman.moviesaver.data.ai
 
+import android.content.Context
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.AiMovieRecommendation
 import com.dthurman.moviesaver.domain.model.Movie
 import com.google.firebase.vertexai.GenerativeModel
@@ -7,11 +9,13 @@ import com.google.firebase.vertexai.type.content
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class FirebaseAiService @Inject constructor(
     private val generativeModel: GenerativeModel,
-    private val gson: Gson
+    private val gson: Gson,
+    @ApplicationContext private val context: Context
 ) {
     suspend fun generateRecommendations(
         seenMovies: List<Movie>,
@@ -27,15 +31,15 @@ class FirebaseAiService @Inject constructor(
                     text(prompt)
                 }
             )
-            val jsonText = response.text ?: throw AiException("Empty response from AI")
+            val jsonText = response.text ?: throw AiException(context.getString(R.string.error_empty_ai_response))
             val cleanedJson = extractJson(jsonText)
             val type = object : TypeToken<List<AiMovieRecommendation>>() {}.type
             return gson.fromJson(cleanedJson, type)
-                ?: throw AiException("Failed to parse AI response")
+                ?: throw AiException(context.getString(R.string.error_failed_to_parse))
         } catch (e: JsonSyntaxException) {
-            throw AiException("Invalid JSON format in AI response: ${e.message}", e)
+            throw AiException(context.getString(R.string.error_invalid_json, e.message ?: ""), e)
         } catch (e: Exception) {
-            throw AiException("Failed to generate recommendations: ${e.message}", e)
+            throw AiException(context.getString(R.string.error_failed_to_generate) + ": ${e.message}", e)
         }
     }
 
@@ -47,90 +51,54 @@ class FirebaseAiService @Inject constructor(
     ): String {
         val moviesList = seenMovies.take(50).joinToString("\n") { movie ->
             buildString {
-                append("- ${movie.title} (${movie.releaseDate.take(4)})")
                 if (movie.rating != null) {
-                    append(" - User Rating: ${movie.rating}/5")
+                    append(context.getString(R.string.ai_movie_item_with_rating, 
+                        movie.title, movie.releaseDate.take(4), movie.rating))
+                } else {
+                    append(context.getString(R.string.ai_movie_item_format, 
+                        movie.title, movie.releaseDate.take(4)))
                 }
                 if (movie.isFavorite) {
-                    append(" ⭐ FAVORITE")
+                    append(" ${context.getString(R.string.ai_movie_favorite_marker)}")
                 }
             }
         }
         
         val watchlistList = watchlistMovies.joinToString("\n") { movie ->
-            "- ${movie.title} (${movie.releaseDate.take(4)})"
+            context.getString(R.string.ai_movie_item_format, movie.title, movie.releaseDate.take(4))
         }
         
         val notInterestedList = notInterestedMovies.joinToString("\n") { movie ->
-            "- ${movie.title} (${movie.releaseDate.take(4)})"
+            context.getString(R.string.ai_movie_item_format, movie.title, movie.releaseDate.take(4))
         }
 
         return if (moviesList.isNotEmpty()) {
             buildString {
-                append("""
-                    You are a movie recommendation expert. Based on the user's viewing history, suggest $count personalized movie recommendations.
-                    
-                    User's watched movies (with their ratings and favorites marked):
-                    $moviesList
-                """.trimIndent())
+                append(context.getString(R.string.ai_prompt_expert_intro, count))
+                append("\n\n")
+                append(context.getString(R.string.ai_prompt_watched_movies))
+                append("\n")
+                append(moviesList)
                 
                 if (watchlistList.isNotEmpty()) {
                     append("\n\n")
-                    append("""
-                        Movies already in their watchlist (DO NOT recommend these):
-                        $watchlistList
-                    """.trimIndent())
+                    append(context.getString(R.string.ai_prompt_watchlist_header))
+                    append("\n")
+                    append(watchlistList)
                 }
                 
                 if (notInterestedList.isNotEmpty()) {
                     append("\n\n")
-                    append("""
-                        Movies the user is NOT interested in (DO NOT recommend these):
-                        $notInterestedList
-                    """.trimIndent())
+                    append(context.getString(R.string.ai_prompt_not_interested_header))
+                    append("\n")
+                    append(notInterestedList)
                 }
                 
                 append("\n\n")
-                append("""
-                    Return ONLY a valid JSON array with exactly $count movie recommendations. Each object must have:
-                    - "title": The exact movie title (string)
-                    - "year": The release year (integer)
-                    - "reason": Why they'll enjoy it based on their history (1-2 sentences, string)
-                    
-                    IMPORTANT: Do NOT recommend any movies from their watched list, watchlist, or movies they're not interested in!
-                    
-                    Example format:
-                    [
-                      {
-                        "title": "The Shawshank Redemption",
-                        "year": 1994,
-                        "reason": "Given your love for character-driven dramas like The Green Mile, this redemptive story will resonate with you."
-                      }
-                    ]
-                    
-                    Return ONLY the JSON array, no other text or markdown formatting.
-                """.trimIndent())
+                append(context.getString(R.string.ai_prompt_json_instructions, count))
             }
         } else {
-            """
-                The user hasn't watched any movies yet. Recommend $count popular, highly-rated movies across different genres.
-                
-                Return ONLY a valid JSON array with exactly $count movie recommendations. Each object must have:
-                - "title": The exact movie title (string)
-                - "year": The release year (integer)
-                - "reason": Why it's worth watching (1-2 sentences, string)
-                
-                Example format:
-                [
-                  {
-                    "title": "The Shawshank Redemption",
-                    "year": 1994,
-                    "reason": "A timeless tale of hope and friendship that consistently ranks as one of the greatest films ever made."
-                  }
-                ]
-                
-                Return ONLY the JSON array, no other text or markdown formatting.
-            """.trimIndent()
+            context.getString(R.string.ai_prompt_new_user, count, count)
         }
     }
 
@@ -148,4 +116,5 @@ class FirebaseAiService @Inject constructor(
 }
 
 class AiException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
 

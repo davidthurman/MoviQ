@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components
+package com.dthurman.moviesaver.ui.components.dialogs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.dthurman.moviesaver.ui.theme.extendedColors
 
 @Composable
 fun RatingDialog(
@@ -96,7 +96,7 @@ fun RatingBar(
             Icon(
                 imageVector = if (isSelected) Icons.Filled.Star else Icons.Outlined.Star,
                 contentDescription = "Star $i",
-                tint = if (isSelected) Color(0xFFFFC107) else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (isSelected) MaterialTheme.extendedColors.starRating else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(40.dp)
                     .clickable { onRatingChanged(i.toFloat()) }

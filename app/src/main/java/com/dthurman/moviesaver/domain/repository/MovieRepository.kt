@@ -36,6 +36,7 @@ interface MovieRepository {
     suspend fun clearAiReasonAndMarkSeen(movie: Movie, rating: Float?)
     suspend fun markAsNotInterested(movieId: Int)
     suspend fun getNotInterestedMovies(): List<Movie>
+    suspend fun clearAllLocalData()
 }
 
 

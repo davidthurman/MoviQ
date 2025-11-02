@@ -217,8 +217,16 @@ val surfaceContainerDarkHighContrast = Color(0xFF2F312A)
 val surfaceContainerHighDarkHighContrast = Color(0xFF3A3C35)
 val surfaceContainerHighestDarkHighContrast = Color(0xFF454840)
 
+// Custom colors for app-specific use cases
+// Star rating color (amber/gold)
+val StarRatingColor = Color(0xFFFFC107)
 
-
+// Google button colors (these are brand colors and should remain consistent)
+val GoogleButtonBackground = Color(0xFFFFFFFF)
+val GoogleButtonBorder = Color(0xFFDDDDDD)
+val GoogleButtonText = Color(0xFF757575)
+val GoogleButtonDisabledBackground = Color(0xFFF5F5F5)
+val GoogleButtonDisabledText = Color(0xFFBDBDBD)
 
 
 

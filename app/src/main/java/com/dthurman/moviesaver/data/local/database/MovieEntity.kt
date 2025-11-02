@@ -94,4 +94,7 @@ interface MovieDao {
     
     @Query("UPDATE movie SET notInterested = :notInterested, aiReason = NULL, lastModified = :timestamp WHERE id = :movieId")
     suspend fun updateNotInterested(movieId: Int, notInterested: Boolean, timestamp: Long = System.currentTimeMillis())
+    
+    @Query("DELETE FROM movie")
+    suspend fun clearAllMovies()
 }

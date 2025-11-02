@@ -223,4 +223,13 @@ class DefaultMovieRepository @Inject constructor(
     override suspend fun getNotInterestedMovies(): List<Movie> {
         return movieDao.getNotInterestedMovies().map { it.toDomain() }
     }
+    
+    override suspend fun clearAllLocalData() {
+        try {
+            movieDao.clearAllMovies()
+            Log.d(TAG, "Cleared all local movie data")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clearing local movie data: ${e.message}", e)
+        }
+    }
 }

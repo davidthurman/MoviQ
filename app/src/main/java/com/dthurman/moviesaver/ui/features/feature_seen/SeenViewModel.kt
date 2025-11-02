@@ -1,7 +1,9 @@
 package com.dthurman.moviesaver.ui.features.feature_seen
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
 import com.dthurman.moviesaver.domain.repository.MovieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,13 +23,13 @@ enum class MovieFilter {
     WATCHLIST
 }
 
-enum class SortOrder(val displayName: String) {
-    TITLE_ASC("Title (A-Z)"),
-    TITLE_DESC("Title (Z-A)"),
-    DATE_ADDED_ASC("Date Added (Oldest)"),
-    DATE_ADDED_DESC("Date Added (Newest)"),
-    RELEASE_DATE_ASC("Release Date (Oldest)"),
-    RELEASE_DATE_DESC("Release Date (Newest)")
+enum class SortOrder(@StringRes val displayNameRes: Int) {
+    TITLE_ASC(R.string.sort_title_asc),
+    TITLE_DESC(R.string.sort_title_desc),
+    DATE_ADDED_ASC(R.string.sort_date_added_asc),
+    DATE_ADDED_DESC(R.string.sort_date_added_desc),
+    RELEASE_DATE_ASC(R.string.sort_release_date_asc),
+    RELEASE_DATE_DESC(R.string.sort_release_date_desc)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

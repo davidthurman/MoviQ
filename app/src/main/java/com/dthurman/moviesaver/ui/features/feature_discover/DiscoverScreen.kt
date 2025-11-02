@@ -36,7 +36,6 @@ fun DiscoverScreen(
         onSearch = { title -> viewModel.searchForMovies(title) },
         onMovieClick = onMovieClick,
         onSettingsClick = onSettingsClick,
-        onAddMovie = { movie -> viewModel.addMovieToSeen(movie)},
         isLoading = uiState.isLoading,
         error = uiState.error
     )
@@ -51,7 +50,6 @@ internal fun DiscoverScreen(
     onSearch: (title: String) -> Unit,
     onMovieClick: (Movie) -> Unit,
     onSettingsClick: () -> Unit,
-    onAddMovie: (movie: Movie) -> Unit,
     isLoading: Boolean = false,
     error: String? = null
 ) {
@@ -62,19 +60,12 @@ internal fun DiscoverScreen(
                 modifier = Modifier.padding(vertical = 20.dp),
                 trailingIcon = {
                     IconButton(onClick = onSettingsClick) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }
             )
         }
-        MovieList(
-            movies = movies,
-            onMovieClick = onMovieClick,
-            searchHeader = searchHeader
-        )
+        MovieList(movies = movies, onMovieClick = onMovieClick, searchHeader = searchHeader)
     }
 }
 
@@ -90,7 +81,6 @@ private fun DefaultPreview() {
             onSearch = {},
             onMovieClick = {},
             onSettingsClick = {},
-            onAddMovie = {},
             isLoading = false,
             error = null
         )
@@ -107,7 +97,6 @@ private fun PortraitPreview() {
             onSearch = {},
             onMovieClick = {},
             onSettingsClick = {},
-            onAddMovie = {},
             isLoading = false,
             error = null
         )

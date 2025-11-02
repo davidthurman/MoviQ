@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.domain.model.Movie
+import com.dthurman.moviesaver.ui.components.dialogs.StarRatingDisplay
 
 @Composable
 fun MoviePreview(

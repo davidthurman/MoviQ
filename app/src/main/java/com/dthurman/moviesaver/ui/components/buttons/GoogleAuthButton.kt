@@ -15,15 +15,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dthurman.moviesaver.R
+import com.dthurman.moviesaver.ui.theme.extendedColors
 
 @Composable
 fun GoogleAuthButton(
@@ -39,22 +41,22 @@ fun GoogleAuthButton(
             .height(50.dp)
             .border(
                 width = 1.dp,
-                color = Color(0xFFDDDDDD),
+                color = MaterialTheme.extendedColors.googleButtonBorder,
                 shape = RoundedCornerShape(4.dp)
             ),
         shape = RoundedCornerShape(4.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.White,
-            contentColor = Color(0xFF757575),
-            disabledContainerColor = Color(0xFFF5F5F5),
-            disabledContentColor = Color(0xFFBDBDBD)
+            containerColor = MaterialTheme.extendedColors.googleButtonBackground,
+            contentColor = MaterialTheme.extendedColors.googleButtonText,
+            disabledContainerColor = MaterialTheme.extendedColors.googleButtonDisabledBackground,
+            disabledContentColor = MaterialTheme.extendedColors.googleButtonDisabledText
         ),
         enabled = !isLoading
     ) {
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(24.dp),
-                color = Color(0xFF757575)
+                color = MaterialTheme.extendedColors.googleButtonText
             )
         } else {
             Row(
@@ -63,15 +65,14 @@ fun GoogleAuthButton(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.google_logo),
-                    contentDescription = "Google Logo",
+                    contentDescription = stringResource(R.string.google_logo_content_description),
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Sign in with Google",
+                    text = stringResource(R.string.sign_in_with_google),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF757575)
+                    fontWeight = FontWeight.Medium
                 )
             }
         }

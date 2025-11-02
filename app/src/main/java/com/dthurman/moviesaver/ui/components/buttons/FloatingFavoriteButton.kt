@@ -1,4 +1,4 @@
-package com.dthurman.moviesaver.ui.components
+package com.dthurman.moviesaver.ui.components.buttons
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

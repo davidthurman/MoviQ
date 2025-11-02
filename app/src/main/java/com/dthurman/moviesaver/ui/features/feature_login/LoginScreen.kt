@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,12 +64,12 @@ fun LoginScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.movie_icon),
-                    contentDescription = "App Logo",
+                    contentDescription = stringResource(R.string.app_logo_content_description),
                     modifier = Modifier.size(200.dp)
                 )
 
                 Text(
-                    text = "Movie Saver",
+                    text = stringResource(R.string.movie_saver),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -77,7 +78,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Track and discover your favorite movies",
+                    text = stringResource(R.string.track_and_discover),
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
