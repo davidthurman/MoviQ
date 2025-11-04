@@ -4,11 +4,14 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
 import com.dthurman.moviesaver.domain.model.User
 import com.dthurman.moviesaver.domain.repository.AuthRepository
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,11 +68,28 @@ class LoginViewModel @Inject constructor(
         try {
             _uiState.value = LoginUiState.Loading
             
+            // Check if Google Play Services is available
+            val googleApiAvailability = GoogleApiAvailability.getInstance()
+            val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
+            
+            if (resultCode != ConnectionResult.SUCCESS) {
+                val errorMessage = when (resultCode) {
+                    ConnectionResult.SERVICE_MISSING -> "Google Play Services is not installed"
+                    ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED -> "Google Play Services needs to be updated"
+                    ConnectionResult.SERVICE_DISABLED -> "Google Play Services is disabled"
+                    else -> "Google Play Services is not available (code: $resultCode)"
+                }
+                crashlyticsService.log("Play Services check failed: $errorMessage")
+                _uiState.value = LoginUiState.Error(errorMessage)
+                return
+            }
+            
             val credentialManager = CredentialManager.create(context)
             
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(webClientId)
+                .setAutoSelectEnabled(true)
                 .build()
 
             val request = GetCredentialRequest.Builder()
@@ -100,10 +120,28 @@ class LoginViewModel @Inject constructor(
                     _uiState.value = LoginUiState.Error(error)
                 }
             }
-        } catch (e: GetCredentialException) {
+        } catch (e: NoCredentialException) {
+            crashlyticsService.log("Auth Error - NoCredentialException: ${e.message}")
+            crashlyticsService.setCustomKey("auth_error_type", "no_credential")
             crashlyticsService.logAuthError(e)
-            _uiState.value = LoginUiState.Error(e.message ?: "Sign-in cancelled")
+            val detailedError = "No credentials found. Make sure:\n1. Google Play Services is updated\n2. You have a Google account on this device\n3. The app has proper OAuth configuration"
+            _uiState.value = LoginUiState.Error(detailedError)
+        } catch (e: GetCredentialException) {
+            crashlyticsService.log("Auth Error - GetCredentialException: ${e.message}")
+            crashlyticsService.setCustomKey("auth_error_type", "get_credential")
+            crashlyticsService.setCustomKey("auth_error_message", e.message ?: "unknown")
+            crashlyticsService.logAuthError(e)
+            val errorMsg = e.message ?: "Sign-in error"
+            val detailedError = if (errorMsg.contains("no provider", ignoreCase = true)) {
+                "Credential provider not found. Please update Google Play Services from the Play Store and try again."
+            } else {
+                errorMsg
+            }
+            _uiState.value = LoginUiState.Error(detailedError)
         } catch (e: Exception) {
+            crashlyticsService.log("Auth Error - General Exception: ${e.javaClass.simpleName} - ${e.message}")
+            crashlyticsService.setCustomKey("auth_error_type", "general")
+            crashlyticsService.setCustomKey("auth_error_class", e.javaClass.simpleName)
             crashlyticsService.logAuthError(e)
             _uiState.value = LoginUiState.Error(e.message ?: "Unknown error occurred")
         }

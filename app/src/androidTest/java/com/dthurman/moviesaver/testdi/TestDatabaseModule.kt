@@ -16,23 +16,33 @@
 
 package com.dthurman.moviesaver.testdi
 
-import dagger.Binds
+import android.content.Context
+import androidx.room.Room
+import com.dthurman.moviesaver.data.local.AppDatabase
+import com.dthurman.moviesaver.di.AppModule
 import dagger.Module
+import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
-import com.dthurman.moviesaver.domain.repository.MovieRepository
-import com.dthurman.moviesaver.data.di.DataModule
-import com.dthurman.moviesaver.data.di.FakeMovieRepository
+import javax.inject.Singleton
 
+/**
+ * Provides a test database for instrumented tests.
+ */
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
-    replaces = [DataModule::class]
+    replaces = [AppModule::class]
 )
-interface FakeDataModule {
+object TestDatabaseModule {
 
-    @Binds
-    abstract fun bindRepository(
-        fakeRepository: FakeMovieRepository
-    ): MovieRepository
+    @Provides
+    @Singleton
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+        return Room.inMemoryDatabaseBuilder(
+            context,
+            AppDatabase::class.java
+        ).allowMainThreadQueries().build()
+    }
 }

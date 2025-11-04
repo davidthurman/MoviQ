@@ -13,8 +13,8 @@ androidxTestRunner = "1.7.0"
 coroutines = "1.10.2"
 hilt = "2.57.1"
 junit = "4.13.2"
-kotlin = "2.2.10"
-ksp = "2.2.10-2.0.2"
+kotlin = "2.1.0"
+ksp = "2.1.0-1.0.29"
 pagingCommon = "3.3.6"
 retrofit = "3.0.0"
 coilCompose = "2.7.0"
@@ -76,6 +76,7 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 
 # Google Sign-In
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentialsPlayServices" }
 credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServices" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
@@ -88,6 +89,7 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 # WorkManager
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "androidxHilt" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidxHilt" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

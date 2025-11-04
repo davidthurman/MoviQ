@@ -60,7 +60,6 @@
     
     <!-- Login -->
     <string name="sign_in_with_google">Sign in with Google</string>
-    <string name="movie_saver">Movie Saver</string>
     <string name="track_and_discover">Track and discover your favorite movies</string>
     <string name="google_logo_content_description">Google Logo</string>
     <string name="app_logo_content_description">App Logo</string>

@@ -20,8 +20,8 @@ android {
         applicationId = "com.dthurman.moviesaver"
         minSdk = 23
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.1"
+        versionCode = 11
+        versionName = "0.6"
         val properties = Properties()
         val localPropertiesFile = project.rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
@@ -36,6 +36,15 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../release.keystore")
+            storePassword = "moviesaver2024"
+            keyAlias = "movie-saver-key"
+            keyPassword = "moviesaver2024"
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
@@ -43,6 +52,7 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -68,6 +78,11 @@ android {
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
+}
+
+kapt {
+    correctErrorTypes = true
+    useBuildCache = true
 }
 
 dependencies {
@@ -129,6 +144,7 @@ dependencies {
 
     // Google
     implementation(libs.play.services.auth)
+    implementation(libs.credentials)
     implementation(libs.credentials.play.services)
     implementation(libs.googleid)
     implementation(libs.billing)
@@ -138,5 +154,5 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
-    kapt(libs.hilt.compiler)
+    kapt(libs.androidx.hilt.compiler)
 }

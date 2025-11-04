@@ -19,6 +19,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    
+    <queries>
+        <package android:name="com.google.android.gms" />
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -31,6 +38,18 @@
         android:theme="@style/Theme.MovieSaverApplication"
         android:name=".MovieSaverApplication"
         tools:targetApi="31">
+        
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+        
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"

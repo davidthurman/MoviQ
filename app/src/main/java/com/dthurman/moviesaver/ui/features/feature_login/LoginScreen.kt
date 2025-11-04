@@ -69,7 +69,7 @@ fun LoginScreen(
                 )
 
                 Text(
-                    text = stringResource(R.string.movie_saver),
+                    text = stringResource(R.string.app_name),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

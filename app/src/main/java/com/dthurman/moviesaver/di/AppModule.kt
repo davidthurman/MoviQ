@@ -44,7 +44,7 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "Movie"
-        ).fallbackToDestructiveMigration(true).build()
+        ).build()
     }
 
     @Provides
@@ -76,9 +76,10 @@ object AppModule {
     @Singleton
     fun provideFirestoreSyncService(
         firestore: FirebaseFirestore,
-        movieDao: MovieDao
+        movieDao: MovieDao,
+        crashlyticsService: CrashlyticsService
     ): FirestoreSyncService {
-        return FirestoreSyncService(firestore, movieDao)
+        return FirestoreSyncService(firestore, movieDao, crashlyticsService)
     }
 
     @Provides
@@ -115,8 +116,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideBillingManager(@ApplicationContext context: Context): BillingManager {
-        return BillingManager(context)
+    fun provideBillingManager(
+        @ApplicationContext context: Context,
+        crashlyticsService: CrashlyticsService
+    ): BillingManager {
+        return BillingManager(context, crashlyticsService)
     }
 
     @Provides
@@ -133,7 +137,8 @@ object AppModule {
         movieRepositoryProvider: Provider<MovieRepository>,
         billingManager: BillingManager,
         syncManager: SyncManager,
-        analyticsService: AnalyticsService
+        analyticsService: AnalyticsService,
+        crashlyticsService: CrashlyticsService
     ): AuthRepository {
         return AuthRepositoryImpl(
             firebaseAuth,
@@ -141,7 +146,8 @@ object AppModule {
             movieRepositoryProvider,
             billingManager,
             syncManager,
-            analyticsService
+            analyticsService,
+            crashlyticsService
         )
     }
 }
