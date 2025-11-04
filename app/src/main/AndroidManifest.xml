@@ -51,7 +51,7 @@
         </provider>
         
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".core.app.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.MovieSaver.Splash">
             <intent-filter>

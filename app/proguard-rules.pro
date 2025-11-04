@@ -105,7 +105,7 @@
 -keep class com.dthurman.moviesaver.data.local.database.** { *; }
 
 # Keep domain models (used for serialization and reflection)
--keep class com.dthurman.moviesaver.domain.model.** { *; }
+-keep class com.dthurman.moviesaver.core.domain.model.** { *; }
 
 # ===========================
 # Firebase

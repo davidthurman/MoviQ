@@ -3,19 +3,30 @@ package com.dthurman.moviesaver.di
 import android.content.Context
 import androidx.room.Room
 import androidx.work.WorkManager
-import com.dthurman.moviesaver.data.AiRepositoryImpl
-import com.dthurman.moviesaver.data.AuthRepositoryImpl
-import com.dthurman.moviesaver.data.DefaultMovieRepository
-import com.dthurman.moviesaver.data.local.AppDatabase
-import com.dthurman.moviesaver.data.local.MovieDao
-import com.dthurman.moviesaver.data.remote.billing.BillingManager
-import com.dthurman.moviesaver.data.remote.firebase.analytics.AnalyticsService
-import com.dthurman.moviesaver.data.remote.firebase.analytics.CrashlyticsService
-import com.dthurman.moviesaver.data.remote.firebase.firestore.FirestoreSyncService
-import com.dthurman.moviesaver.data.sync.SyncManager
-import com.dthurman.moviesaver.domain.repository.AiRepository
-import com.dthurman.moviesaver.domain.repository.AuthRepository
-import com.dthurman.moviesaver.domain.repository.MovieRepository
+import com.dthurman.moviesaver.core.data.local.MovieDao
+import com.dthurman.moviesaver.core.data.local.MovieDatabase
+import com.dthurman.moviesaver.core.data.remote.user.FirestoreUserDataSource
+import com.dthurman.moviesaver.core.data.remote.user.UserRemoteDataSource
+import com.dthurman.moviesaver.core.data.repository.CreditsRepositoryImpl
+import com.dthurman.moviesaver.core.data.repository.UserRepositoryImpl
+import com.dthurman.moviesaver.core.data.sync.SyncManager
+import com.dthurman.moviesaver.core.domain.repository.CreditsRepository
+import com.dthurman.moviesaver.core.domain.repository.UserRepository
+import com.dthurman.moviesaver.core.observability.AnalyticsTracker
+import com.dthurman.moviesaver.core.observability.ErrorLogger
+import com.dthurman.moviesaver.feature_ai_recs.data.repository.AiRepositoryImpl
+import com.dthurman.moviesaver.feature_ai_recs.domain.repository.AiRepository
+import com.dthurman.moviesaver.feature_auth.data.repository.AuthRepositoryImpl
+import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
+import com.dthurman.moviesaver.feature_billing.data.repository.BillingRepositoryImpl
+import com.dthurman.moviesaver.feature_billing.domain.BillingManager
+import com.dthurman.moviesaver.feature_billing.domain.repository.BillingRepository
+import com.dthurman.moviesaver.feature_movies.data.remote.data_source.FirestoreMovieDataSource
+import com.dthurman.moviesaver.feature_movies.data.remote.data_source.MovieRemoteDataSource
+import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.MovieInformationDataSource
+import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.TheMovieDBDataSource
+import com.dthurman.moviesaver.feature_movies.data.repository.DefaultMovieRepository
+import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
@@ -39,16 +50,16 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+    fun provideAppDatabase(@ApplicationContext context: Context): MovieDatabase {
         return Room.databaseBuilder(
             context,
-            AppDatabase::class.java,
+            MovieDatabase::class.java,
             "Movie"
         ).build()
     }
 
     @Provides
-    fun provideMovieDao(database: AppDatabase): MovieDao {
+    fun provideMovieDao(database: MovieDatabase): MovieDao {
         return database.movieDao()
     }
 
@@ -74,12 +85,29 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirestoreSyncService(
+    fun provideUserRemoteDataSource(
+        firestore: FirebaseFirestore,
+        errorLogger: ErrorLogger
+    ): UserRemoteDataSource {
+        return FirestoreUserDataSource(firestore, errorLogger)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMovieRemoteDataSource(
         firestore: FirebaseFirestore,
         movieDao: MovieDao,
-        crashlyticsService: CrashlyticsService
-    ): FirestoreSyncService {
-        return FirestoreSyncService(firestore, movieDao, crashlyticsService)
+        errorLogger: ErrorLogger
+    ): MovieRemoteDataSource {
+        return FirestoreMovieDataSource(firestore, movieDao, errorLogger)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMovieInformationDataSource(
+        errorLogger: ErrorLogger
+    ): MovieInformationDataSource {
+        return TheMovieDBDataSource(errorLogger)
     }
 
     @Provides
@@ -102,25 +130,14 @@ object AppModule {
         return Gson()
     }
 
-    @Provides
-    @Singleton
-    fun provideAnalyticsService(): AnalyticsService {
-        return AnalyticsService()
-    }
-
-    @Provides
-    @Singleton
-    fun provideCrashlyticsService(): CrashlyticsService {
-        return CrashlyticsService()
-    }
 
     @Provides
     @Singleton
     fun provideBillingManager(
         @ApplicationContext context: Context,
-        crashlyticsService: CrashlyticsService
+        errorLogger: ErrorLogger
     ): BillingManager {
-        return BillingManager(context, crashlyticsService)
+        return BillingManager(context, errorLogger)
     }
 
     @Provides
@@ -131,23 +148,33 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideUserRepositoryImpl(
+        firebaseAuth: FirebaseAuth,
+        userRemoteDataSource: UserRemoteDataSource,
+        errorLogger: ErrorLogger
+    ): UserRepositoryImpl {
+        return UserRepositoryImpl(firebaseAuth, userRemoteDataSource, errorLogger)
+    }
+
+    @Provides
+    @Singleton
     fun provideAuthRepository(
         firebaseAuth: FirebaseAuth,
-        firestoreSyncService: FirestoreSyncService,
+        userRemoteDataSource: UserRemoteDataSource,
         movieRepositoryProvider: Provider<MovieRepository>,
-        billingManager: BillingManager,
+        userRepository: UserRepositoryImpl,
         syncManager: SyncManager,
-        analyticsService: AnalyticsService,
-        crashlyticsService: CrashlyticsService
+        analytics: AnalyticsTracker,
+        errorLogger: ErrorLogger
     ): AuthRepository {
         return AuthRepositoryImpl(
             firebaseAuth,
-            firestoreSyncService,
+            userRemoteDataSource,
             movieRepositoryProvider,
-            billingManager,
+            userRepository,
             syncManager,
-            analyticsService,
-            crashlyticsService
+            analytics,
+            errorLogger
         )
     }
 }
@@ -163,5 +190,16 @@ interface AppBindingModule {
     @Singleton
     @Binds
     fun bindAiRepository(impl: AiRepositoryImpl): AiRepository
-}
 
+    @Singleton
+    @Binds
+    fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+
+    @Singleton
+    @Binds
+    fun bindCreditsRepository(impl: CreditsRepositoryImpl): CreditsRepository
+
+    @Singleton
+    @Binds
+    fun bindBillingRepository(impl: BillingRepositoryImpl): BillingRepository
+}
