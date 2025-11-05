@@ -3,9 +3,6 @@ package com.dthurman.moviesaver.feature_movies.domain.util
 import androidx.annotation.StringRes
 import com.dthurman.moviesaver.R
 
-/**
- * Defines the different ways movies can be ordered/sorted.
- */
 enum class MovieOrder(@StringRes val displayNameRes: Int) {
     TITLE_ASC(R.string.sort_title_asc),
     TITLE_DESC(R.string.sort_title_desc),

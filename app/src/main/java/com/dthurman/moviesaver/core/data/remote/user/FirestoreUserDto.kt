@@ -5,10 +5,6 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 
-/**
- * Firestore DTO for User data.
- * Separated from domain model to allow independent evolution.
- */
 data class FirestoreUserDto(
     val id: String = "",
     val email: String? = null,
@@ -21,7 +17,6 @@ data class FirestoreUserDto(
     @get:PropertyName("lastUpdated") @set:PropertyName("lastUpdated") var lastUpdated: Timestamp? = null
 )
 
-// Mapper extensions
 fun User.toFirestoreDto(): FirestoreUserDto {
     return FirestoreUserDto(
         id = this.id,

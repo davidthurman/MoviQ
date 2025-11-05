@@ -7,10 +7,6 @@ import com.dthurman.moviesaver.feature_movies.data.remote.data_source.MovieRemot
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Service responsible for syncing movie data between local storage and Firestore.
- * Handles both download (cloud -> local) and upload (local -> cloud) synchronization.
- */
 @Singleton
 class MovieSyncService @Inject constructor(
     private val movieDao: MovieDao,
@@ -21,10 +17,6 @@ class MovieSyncService @Inject constructor(
     @Volatile
     private var isSyncingFromCloud = false
 
-    /**
-     * Download movies from Firestore and merge with local database.
-     * Cloud data takes precedence based on lastModified timestamp.
-     */
     suspend fun syncFromFirestore() {
         try {
             val userId = userRepository.getCurrentUser()?.id
@@ -69,9 +61,6 @@ class MovieSyncService @Inject constructor(
         }
     }
 
-    /**
-     * Check if a cloud sync download is currently in progress.
-     */
     fun isSyncingFromCloud(): Boolean = isSyncingFromCloud
 }
 

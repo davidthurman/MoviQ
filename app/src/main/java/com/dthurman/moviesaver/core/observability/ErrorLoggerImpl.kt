@@ -6,10 +6,6 @@ import com.google.firebase.ktx.Firebase
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Firebase implementation of ErrorLogger.
- * Handles all error logging and crash reporting using Firebase Crashlytics.
- */
 @Singleton
 class ErrorLoggerImpl @Inject constructor() : ErrorLogger {
 
@@ -80,8 +76,6 @@ class ErrorLoggerImpl @Inject constructor() : ErrorLogger {
         recordException(exception)
     }
 
-    // Additional helper methods (not in interface, but useful)
-
     fun setCrashlyticsCollectionEnabled(enabled: Boolean) {
         crashlytics.setCrashlyticsCollectionEnabled(enabled)
     }
@@ -109,7 +103,6 @@ class ErrorLoggerImpl @Inject constructor() : ErrorLogger {
         movieCount?.let { setCustomKey(Keys.MOVIE_COUNT, it) }
     }
 
-    // Context keys for crash reports
     private object Keys {
         const val SCREEN_NAME = "screen_name"
         const val USER_ACTION = "user_action"

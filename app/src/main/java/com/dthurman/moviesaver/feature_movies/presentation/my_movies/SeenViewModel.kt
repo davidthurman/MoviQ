@@ -43,7 +43,6 @@ class SeenViewModel @Inject constructor(
         _selectedFilter,
         _sortOrder
     ) { filter, order ->
-        // Update the filter with the new sort order
         when (filter) {
             is MovieFilter.SeenMovies -> MovieFilter.SeenMovies(order)
             is MovieFilter.WatchlistMovies -> MovieFilter.WatchlistMovies(order)

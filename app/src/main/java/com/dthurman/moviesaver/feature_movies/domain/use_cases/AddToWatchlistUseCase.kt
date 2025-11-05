@@ -5,10 +5,6 @@ import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import javax.inject.Inject
 
-/**
- * Use case for adding a movie to the watchlist.
- * Encapsulates business logic and analytics tracking.
- */
 class AddToWatchlistUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
     private val analytics: AnalyticsTracker

@@ -10,10 +10,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * Dependency injection module for observability services.
- * Provides analytics tracking and error logging implementations.
- */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class ObservabilityModule {

@@ -126,13 +126,11 @@ class RecommendationsViewModel @Inject constructor(
     }
 
     fun generateAiRecommendations() {
-        // Business rule validation: minimum movies requirement
         if (_seenMoviesCount.value < 5) {
             _showMinimumMoviesDialog.value = true
             return
         }
         
-        // Business rule validation: credits requirement
         if (_userCredits.value <= 0) {
             _showNoCreditsDialog.value = true
             return
@@ -191,13 +189,8 @@ class RecommendationsViewModel @Inject constructor(
         _showPurchaseSuccessDialog.value = false
     }
     
-    /**
-     * Launches the Google Play billing flow for purchasing credits.
-     * The result will be observed through the purchase state flow.
-     */
     fun launchPurchaseFlow(activity: android.app.Activity) {
         launchPurchaseFlowUseCase(activity)
-        // Purchase result will be handled through observePurchaseStateUseCase in init block
     }
 
     fun skipToNext() {

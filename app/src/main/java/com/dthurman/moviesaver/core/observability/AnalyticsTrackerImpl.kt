@@ -7,10 +7,6 @@ import com.google.firebase.ktx.Firebase
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Firebase implementation of AnalyticsTracker.
- * Handles all analytics tracking using Firebase Analytics.
- */
 @Singleton
 class AnalyticsTrackerImpl @Inject constructor() : AnalyticsTracker {
 
@@ -67,8 +63,6 @@ class AnalyticsTrackerImpl @Inject constructor() : AnalyticsTracker {
         ))
     }
 
-    // Additional domain-specific methods (not in interface, but used by features)
-    
     override fun logMovieRated(movieId: Int, movieTitle: String, rating: Float) {
         logEvent(Events.MOVIE_RATED, mapOf(
             Params.MOVIE_ID to movieId,
@@ -90,7 +84,6 @@ class AnalyticsTrackerImpl @Inject constructor() : AnalyticsTracker {
         ))
     }
 
-    // Event names
     private object Events {
         const val MOVIE_SAVED = "movie_saved"
         const val MOVIE_RATED = "movie_rated"
@@ -100,7 +93,6 @@ class AnalyticsTrackerImpl @Inject constructor() : AnalyticsTracker {
         const val CREDITS_USED = "credits_used"
     }
 
-    // Parameter names
     private object Params {
         const val MOVIE_ID = "movie_id"
         const val MOVIE_TITLE = "movie_title"

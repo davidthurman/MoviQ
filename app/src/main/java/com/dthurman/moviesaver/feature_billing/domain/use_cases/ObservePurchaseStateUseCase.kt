@@ -5,10 +5,6 @@ import com.dthurman.moviesaver.feature_billing.domain.repository.BillingReposito
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
-/**
- * Use case for observing purchase state changes.
- * Returns a StateFlow that emits purchase state updates.
- */
 class ObservePurchaseStateUseCase @Inject constructor(
     private val billingRepository: BillingRepository
 ) {

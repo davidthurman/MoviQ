@@ -9,11 +9,6 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Firestore implementation of MovieRemoteDataSource.
- * Handles all movie-related Firestore operations.
- * Uses the unified Movie model directly - no DTO mapping needed!
- */
 @Singleton
 class FirestoreMovieDataSource @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -92,7 +87,6 @@ class FirestoreMovieDataSource @Inject constructor(
             var deleted = 0
             var failed = 0
             
-            // Sync creates/updates
             pendingMovies.forEach { movie ->
                 try {
                     syncMovie(userId, movie).getOrThrow()
@@ -111,7 +105,6 @@ class FirestoreMovieDataSource @Inject constructor(
                 }
             }
             
-            // Sync deletes
             pendingDeletes.forEach { movie ->
                 try {
                     deleteMovie(userId, movie.id).getOrThrow()

@@ -6,10 +6,6 @@ import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
 import javax.inject.Inject
 
-/**
- * Use case for signing in with Google credentials.
- * Handles the authentication flow and error tracking.
- */
 class SignInWithGoogleUseCase @Inject constructor(
     private val authRepository: AuthRepository,
     private val analytics: AnalyticsTracker,

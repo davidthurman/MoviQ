@@ -5,10 +5,6 @@ import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
 import javax.inject.Inject
 
-/**
- * Use case for signing out the current user.
- * Handles cleanup and analytics tracking.
- */
 class SignOutUseCase @Inject constructor(
     private val authRepository: AuthRepository,
     private val analytics: AnalyticsTracker,

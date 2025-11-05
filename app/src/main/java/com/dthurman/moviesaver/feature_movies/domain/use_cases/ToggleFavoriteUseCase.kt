@@ -5,9 +5,6 @@ import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import javax.inject.Inject
 
-/**
- * Use case for toggling favorite status of a movie.
- */
 class ToggleFavoriteUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
     private val analytics: AnalyticsTracker

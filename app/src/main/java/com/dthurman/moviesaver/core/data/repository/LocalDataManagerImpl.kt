@@ -13,10 +13,6 @@ class LocalDataManagerImpl @Inject constructor(
     override suspend fun clearAllLocalData() {
         try {
             movieDao.clearAllMovies()
-            // In the future, add other data sources to clear:
-            // creditsDao.clearCredits()
-            // userPreferencesDao.clearPreferences()
-            // etc.
         } catch (e: Exception) {
             errorLogger.logDatabaseError("clearAllLocalData", e)
             throw e

@@ -8,10 +8,6 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Firestore implementation of UserRemoteDataSource.
- * Handles all user-related Firestore operations.
- */
 @Singleton
 class FirestoreUserDataSource @Inject constructor(
     private val firestore: FirebaseFirestore,

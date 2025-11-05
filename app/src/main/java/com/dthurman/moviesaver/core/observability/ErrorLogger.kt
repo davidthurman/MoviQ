@@ -1,9 +1,5 @@
 package com.dthurman.moviesaver.core.observability
 
-/**
- * Interface for logging errors and crashes across the application.
- * This abstraction allows for easy testing and swapping of crash reporting providers.
- */
 interface ErrorLogger {
     fun log(message: String)
     fun recordException(exception: Throwable)

@@ -5,10 +5,6 @@ import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import javax.inject.Inject
 
-/**
- * Use case for searching movies by title.
- * Handles search execution and analytics tracking.
- */
 class SearchMoviesUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
     private val analytics: AnalyticsTracker
@@ -16,7 +12,6 @@ class SearchMoviesUseCase @Inject constructor(
     suspend operator fun invoke(query: String): Result<List<Movie>> {
         val trimmedQuery = query.trim()
         
-        // Simple validation: minimum 2 characters
         if (trimmedQuery.length < 2) {
             return Result.failure(IllegalArgumentException("Search query must be at least 2 characters"))
         }

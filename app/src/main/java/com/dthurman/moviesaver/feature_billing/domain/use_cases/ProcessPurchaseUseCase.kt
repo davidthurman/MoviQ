@@ -4,10 +4,6 @@ import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_billing.domain.repository.BillingRepository
 import javax.inject.Inject
 
-/**
- * Use case for processing a completed purchase.
- * Handles credit addition and purchase verification.
- */
 class ProcessPurchaseUseCase @Inject constructor(
     private val billingRepository: BillingRepository,
     private val errorLogger: ErrorLogger

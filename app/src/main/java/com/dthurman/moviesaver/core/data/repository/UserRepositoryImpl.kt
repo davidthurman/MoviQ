@@ -49,7 +49,6 @@ class UserRepositoryImpl @Inject constructor(
         }
         firebaseAuth.addAuthStateListener(authStateListener)
 
-        // Emit initial value
         val firebaseUser = firebaseAuth.currentUser
         if (firebaseUser != null) {
             CoroutineScope(Dispatchers.IO).launch {

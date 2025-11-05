@@ -5,10 +5,6 @@ import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.MarkMovieAsSeenUseCase
 import javax.inject.Inject
 
-/**
- * Use case for accepting an AI recommendation and marking it as seen.
- * Removes the AI recommendation reason and optionally adds a rating.
- */
 class AcceptRecommendationAsSeenUseCase @Inject constructor(
     private val markAsSeenUseCase: MarkMovieAsSeenUseCase,
     private val analytics: AnalyticsTracker

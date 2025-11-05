@@ -73,7 +73,6 @@ class LoginViewModel @Inject constructor(
         try {
             _uiState.value = LoginUiState.Loading
             
-            // Check if Google Play Services is available
             val googleApiAvailability = GoogleApiAvailability.getInstance()
             val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
             

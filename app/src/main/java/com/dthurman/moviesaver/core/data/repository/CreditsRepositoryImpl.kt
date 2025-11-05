@@ -32,7 +32,6 @@ class CreditsRepositoryImpl @Inject constructor(
             return user.credits
         }
 
-        // Try to refresh user profile
         val result = userRepository.refreshUserProfile()
         return result.getOrNull()?.credits ?: 0
     }

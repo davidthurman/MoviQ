@@ -4,10 +4,6 @@ import com.dthurman.moviesaver.core.observability.ErrorLogger
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * TheMovieDB implementation of MovieInformationDataSource.
- * Handles all TheMovieDB API calls.
- */
 @Singleton
 class TheMovieDBDataSource @Inject constructor(
     private val errorLogger: ErrorLogger

@@ -5,10 +5,6 @@ import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import javax.inject.Inject
 
-/**
- * Use case for accepting an AI recommendation and adding it to watchlist.
- * Removes the AI recommendation reason when accepting.
- */
 class AcceptRecommendationToWatchlistUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
     private val analytics: AnalyticsTracker

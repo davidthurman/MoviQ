@@ -5,10 +5,6 @@ import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_billing.domain.repository.BillingRepository
 import javax.inject.Inject
 
-/**
- * Use case for launching the in-app purchase flow.
- * Handles the Google Play billing dialog.
- */
 class LaunchPurchaseFlowUseCase @Inject constructor(
     private val billingRepository: BillingRepository,
     private val errorLogger: ErrorLogger
