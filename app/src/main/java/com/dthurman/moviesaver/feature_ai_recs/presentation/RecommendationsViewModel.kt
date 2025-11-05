@@ -5,17 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.core.domain.use_cases.GetCreditsUseCase
-import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationAsSeenUseCase
-import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationToWatchlistUseCase
-import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GenerateAiRecommendationsUseCase
-import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSavedRecommendationsUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AiRecsUseCases
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.InsufficientCreditsException
-import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.RejectRecommendationUseCase
 import com.dthurman.moviesaver.feature_billing.domain.PurchaseState
-import com.dthurman.moviesaver.feature_billing.domain.use_cases.ObservePurchaseStateUseCase
-import com.dthurman.moviesaver.feature_billing.domain.use_cases.ProcessPurchaseUseCase
-import com.dthurman.moviesaver.feature_billing.domain.use_cases.ResetPurchaseStateUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.BillingUseCases
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -35,17 +29,10 @@ sealed class RecommendationEvent {
 
 @HiltViewModel
 class RecommendationsViewModel @Inject constructor(
-    private val generateAiRecommendationsUseCase: GenerateAiRecommendationsUseCase,
-    private val getSavedRecommendationsUseCase: GetSavedRecommendationsUseCase,
-    private val getUserMoviesUseCase: GetUserMoviesUseCase,
+    private val aiRecsUseCases: AiRecsUseCases,
+    private val moviesUseCases: MoviesUseCases,
+    private val billingUseCases: BillingUseCases,
     private val getCreditsUseCase: GetCreditsUseCase,
-    private val observePurchaseStateUseCase: ObservePurchaseStateUseCase,
-    private val processPurchaseUseCase: ProcessPurchaseUseCase,
-    private val resetPurchaseStateUseCase: ResetPurchaseStateUseCase,
-    private val launchPurchaseFlowUseCase: com.dthurman.moviesaver.feature_billing.domain.use_cases.LaunchPurchaseFlowUseCase,
-    private val acceptToWatchlistUseCase: AcceptRecommendationToWatchlistUseCase,
-    private val acceptAsSeenUseCase: AcceptRecommendationAsSeenUseCase,
-    private val rejectRecommendationUseCase: RejectRecommendationUseCase,
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
@@ -75,20 +62,20 @@ class RecommendationsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            observePurchaseStateUseCase().collect { state ->
+            billingUseCases.observePurchaseState().collect { state ->
                 when (state) {
                     is PurchaseState.Success -> {
-                        val result = processPurchaseUseCase(state.purchase.purchaseToken)
+                        val result = billingUseCases.processPurchase(state.purchase.purchaseToken)
                         if (result.isSuccess) {
                             _showPurchaseSuccessDialog.value = true
                         }
-                        resetPurchaseStateUseCase()
+                        billingUseCases.resetPurchaseState()
                     }
                     is PurchaseState.Error -> {
-                        resetPurchaseStateUseCase()
+                        billingUseCases.resetPurchaseState()
                     }
                     is PurchaseState.Canceled -> {
-                        resetPurchaseStateUseCase()
+                        billingUseCases.resetPurchaseState()
                     }
                     else -> { }
                 }
@@ -96,7 +83,7 @@ class RecommendationsViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            getUserMoviesUseCase(MovieFilter.SeenMovies()).collect { seenMovies ->
+            moviesUseCases.getUserMovies(MovieFilter.SeenMovies()).collect { seenMovies ->
                 _seenMoviesCount.value = seenMovies.size
             }
         }
@@ -110,7 +97,7 @@ class RecommendationsViewModel @Inject constructor(
         val savedIndex = savedStateHandle.get<Int>(KEY_CURRENT_INDEX) ?: 0
         
         viewModelScope.launch {
-            getSavedRecommendationsUseCase().collect { savedRecommendations ->
+            aiRecsUseCases.getSavedRecommendations().collect { savedRecommendations ->
                 _uiState.update { 
                     it.copy(
                         recommendations = savedRecommendations,
@@ -139,7 +126,7 @@ class RecommendationsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             
-            val result = generateAiRecommendationsUseCase()
+            val result = aiRecsUseCases.generateRecommendations()
             
             if (result.isSuccess) {
                 val recommendations = result.getOrNull() ?: emptyList()
@@ -161,7 +148,7 @@ class RecommendationsViewModel @Inject constructor(
                         _uiState.update { 
                             it.copy(
                                 isLoading = false,
-                                error = exception?.message ?: "Failed to generate recommendations"
+                                error = exception?.message
                             )
                         }
                     }
@@ -190,14 +177,14 @@ class RecommendationsViewModel @Inject constructor(
     }
     
     fun launchPurchaseFlow(activity: android.app.Activity) {
-        launchPurchaseFlowUseCase(activity)
+        billingUseCases.launchPurchaseFlow(activity)
     }
 
     fun skipToNext() {
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                rejectRecommendationUseCase(currentRecommendation.id)
+                aiRecsUseCases.rejectRecommendation(currentRecommendation.id)
                 _uiState.update { state ->
                     state.copy(currentIndex = 0)
                 }
@@ -209,7 +196,7 @@ class RecommendationsViewModel @Inject constructor(
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                acceptToWatchlistUseCase(currentRecommendation)
+                aiRecsUseCases.acceptToWatchlist(currentRecommendation)
                 _uiState.update { state ->
                     state.copy(currentIndex = 0)
                 }
@@ -229,7 +216,7 @@ class RecommendationsViewModel @Inject constructor(
         val currentRecommendation = _uiState.value.getCurrentRecommendation()
         if (currentRecommendation != null) {
             viewModelScope.launch {
-                acceptAsSeenUseCase(currentRecommendation, rating)
+                aiRecsUseCases.acceptAsSeen(currentRecommendation, rating)
                 dismissRatingDialog()
                 _uiState.update { state ->
                     state.copy(currentIndex = 0)

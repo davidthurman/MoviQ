@@ -18,7 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.feature_movies.presentation.shared.MoviePreview
 
@@ -73,7 +75,7 @@ fun MovieRecommendationCard(
                 onClick = onSkip,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Skip")
+                Text(stringResource(R.string.skip))
             }
 
             Button(
@@ -83,14 +85,14 @@ fun MovieRecommendationCard(
                     containerColor = MaterialTheme.colorScheme.secondary
                 )
             ) {
-                Text("Watchlist")
+                Text(stringResource(R.string.watchlist))
             }
 
             Button(
                 onClick = onMarkAsSeen,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Seen")
+                Text(stringResource(R.string.seen))
             }
         }
     }

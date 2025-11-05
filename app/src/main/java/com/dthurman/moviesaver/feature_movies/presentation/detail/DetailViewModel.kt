@@ -3,14 +3,7 @@ package com.dthurman.moviesaver.feature_movies.presentation.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.AddToWatchlistUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetMovieByIdUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.MarkMovieAsSeenUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.RateMovieUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.RemoveFromSeenUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.ToggleFavoriteUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateFavoriteStatusUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateWatchlistStatusUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,14 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    private val getMovieByIdUseCase: GetMovieByIdUseCase,
-    private val markAsSeenUseCase: MarkMovieAsSeenUseCase,
-    private val removeFromSeenUseCase: RemoveFromSeenUseCase,
-    private val rateMovieUseCase: RateMovieUseCase,
-    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val addToWatchlistUseCase: AddToWatchlistUseCase,
-    private val updateWatchlistStatusUseCase: UpdateWatchlistStatusUseCase,
-    private val updateFavoriteStatusUseCase: UpdateFavoriteStatusUseCase
+    private val moviesUseCases: MoviesUseCases
 ): ViewModel() {
 
     private val _movie = MutableStateFlow<Movie?>(null)
@@ -41,7 +27,7 @@ class DetailViewModel @Inject constructor(
 
     fun loadMovie(movie: Movie) {
         viewModelScope.launch {
-            val result = getMovieByIdUseCase(movie.id)
+            val result = moviesUseCases.getMovieById(movie.id)
             _movie.value = result.getOrNull() ?: movie
         }
     }
@@ -60,8 +46,8 @@ class DetailViewModel @Inject constructor(
     fun confirmUnseen() {
         val currentMovie = _movie.value ?: return
         viewModelScope.launch {
-            removeFromSeenUseCase(currentMovie)
-            updateFavoriteStatusUseCase(currentMovie, false)
+            moviesUseCases.removeFromSeen(currentMovie)
+            moviesUseCases.updateFavoriteStatus(currentMovie, false)
             _movie.value = currentMovie.copy(isSeen = false, rating = null, isFavorite = false)
         }
         _showUnseenConfirmDialog.value = false
@@ -75,10 +61,10 @@ class DetailViewModel @Inject constructor(
         val currentMovie = _movie.value ?: return
         viewModelScope.launch {
             if (!currentMovie.isSeen) {
-                markAsSeenUseCase(currentMovie, rating)
+                moviesUseCases.markMovieAsSeen(currentMovie, rating)
                 _movie.value = currentMovie.copy(isSeen = true, isWatchlist = false, rating = rating)
             } else if (rating != null) {
-                rateMovieUseCase(currentMovie, rating)
+                moviesUseCases.rateMovie(currentMovie, rating)
                 _movie.value = currentMovie.copy(rating = rating)
             }
         }
@@ -98,9 +84,9 @@ class DetailViewModel @Inject constructor(
         val newWatchlistStatus = !currentMovie.isWatchlist
         viewModelScope.launch {
             if (newWatchlistStatus) {
-                addToWatchlistUseCase(currentMovie)
+                moviesUseCases.addToWatchlist(currentMovie)
             } else {
-                updateWatchlistStatusUseCase(currentMovie, false)
+                moviesUseCases.updateWatchlistStatus(currentMovie, false)
             }
             _movie.value = currentMovie.copy(isWatchlist = newWatchlistStatus)
         }
@@ -109,7 +95,7 @@ class DetailViewModel @Inject constructor(
     fun toggleFavorite() {
         val currentMovie = _movie.value ?: return
         viewModelScope.launch {
-            toggleFavoriteUseCase(currentMovie)
+            moviesUseCases.toggleFavorite(currentMovie)
             _movie.value = currentMovie.copy(isFavorite = !currentMovie.isFavorite)
         }
     }

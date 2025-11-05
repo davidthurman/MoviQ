@@ -8,11 +8,10 @@ import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dthurman.moviesaver.core.observability.ErrorLogger
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.User
-import com.dthurman.moviesaver.feature_auth.domain.use_cases.ObserveCurrentUserUseCase
-import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignInWithGoogleUseCase
-import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignOutUseCase
+import com.dthurman.moviesaver.core.observability.ErrorLogger
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.AuthUseCases
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -28,31 +27,30 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
-    private val signOutUseCase: SignOutUseCase,
-    observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val authUseCases: AuthUseCases,
     private val errorLogger: ErrorLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Initial)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    val currentUser: StateFlow<User?> = observeCurrentUserUseCase()
+    val currentUser: StateFlow<User?> = authUseCases.observeCurrentUser()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = null
         )
 
-    fun signInWithGoogle(idToken: String) {
+    fun signInWithGoogle(idToken: String, context: Context) {
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
-            val result = signInWithGoogleUseCase(idToken)
+            val result = authUseCases.signInWithGoogle(idToken)
             _uiState.value = if (result.isSuccess) {
                 val user = result.getOrNull()!!
                 LoginUiState.Success(user)
             } else {
-                val error = result.exceptionOrNull()?.message ?: "Unknown error occurred"
+                val error = result.exceptionOrNull()?.message 
+                    ?: context.getString(R.string.error_unknown_occurred)
                 LoginUiState.Error(error)
             }
         }
@@ -64,7 +62,7 @@ class LoginViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
-            signOutUseCase()
+            authUseCases.signOut()
             _uiState.value = LoginUiState.Initial
         }
     }
@@ -78,12 +76,12 @@ class LoginViewModel @Inject constructor(
             
             if (resultCode != ConnectionResult.SUCCESS) {
                 val errorMessage = when (resultCode) {
-                    ConnectionResult.SERVICE_MISSING -> "Google Play Services is not installed"
-                    ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED -> "Google Play Services needs to be updated"
-                    ConnectionResult.SERVICE_DISABLED -> "Google Play Services is disabled"
-                    else -> "Google Play Services is not available (code: $resultCode)"
+                    ConnectionResult.SERVICE_MISSING -> context.getString(R.string.error_play_services_missing)
+                    ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED -> context.getString(R.string.error_play_services_update_required)
+                    ConnectionResult.SERVICE_DISABLED -> context.getString(R.string.error_play_services_disabled)
+                    else -> context.getString(R.string.error_play_services_unavailable, resultCode)
                 }
-                errorLogger.log("Play Services check failed: $errorMessage")
+                errorLogger.log(context.getString(R.string.error_play_services_check_failed, errorMessage))
                 _uiState.value = LoginUiState.Error(errorMessage)
                 return
             }
@@ -111,43 +109,43 @@ class LoginViewModel @Inject constructor(
                     if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                         val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                         val idToken = googleIdTokenCredential.idToken
-                        signInWithGoogle(idToken)
+                        signInWithGoogle(idToken, context)
                     } else {
-                        val error = "Unexpected credential type"
-                        errorLogger.log("Login error: $error")
+                        val error = context.getString(R.string.error_unexpected_credential_type)
+                        errorLogger.log(context.getString(R.string.error_login_error, error))
                         _uiState.value = LoginUiState.Error(error)
                     }
                 }
                 else -> {
-                    val error = "Unexpected credential"
-                    errorLogger.log("Login error: $error")
+                    val error = context.getString(R.string.error_unexpected_credential)
+                    errorLogger.log(context.getString(R.string.error_login_error, error))
                     _uiState.value = LoginUiState.Error(error)
                 }
             }
         } catch (e: NoCredentialException) {
-            errorLogger.log("Auth Error - NoCredentialException: ${e.message}")
+            errorLogger.log(context.getString(R.string.error_auth_no_credential, e.message ?: ""))
             errorLogger.setCustomKey("auth_error_type", "no_credential")
             errorLogger.logAuthError(e)
-            val detailedError = "No credentials found. Make sure:\n1. Google Play Services is updated\n2. You have a Google account on this device\n3. The app has proper OAuth configuration"
+            val detailedError = context.getString(R.string.error_no_credentials_found)
             _uiState.value = LoginUiState.Error(detailedError)
         } catch (e: GetCredentialException) {
-            errorLogger.log("Auth Error - GetCredentialException: ${e.message}")
+            errorLogger.log(context.getString(R.string.error_auth_get_credential, e.message ?: ""))
             errorLogger.setCustomKey("auth_error_type", "get_credential")
             errorLogger.setCustomKey("auth_error_message", e.message ?: "unknown")
             errorLogger.logAuthError(e)
-            val errorMsg = e.message ?: "Sign-in error"
+            val errorMsg = e.message ?: context.getString(R.string.error_sign_in_error)
             val detailedError = if (errorMsg.contains("no provider", ignoreCase = true)) {
-                "Credential provider not found. Please update Google Play Services from the Play Store and try again."
+                context.getString(R.string.error_credential_provider_not_found)
             } else {
                 errorMsg
             }
             _uiState.value = LoginUiState.Error(detailedError)
         } catch (e: Exception) {
-            errorLogger.log("Auth Error - General Exception: ${e.javaClass.simpleName} - ${e.message}")
+            errorLogger.log(context.getString(R.string.error_auth_general, e.javaClass.simpleName, e.message ?: ""))
             errorLogger.setCustomKey("auth_error_type", "general")
             errorLogger.setCustomKey("auth_error_class", e.javaClass.simpleName)
             errorLogger.logAuthError(e)
-            _uiState.value = LoginUiState.Error(e.message ?: "Unknown error occurred")
+            _uiState.value = LoginUiState.Error(e.message ?: context.getString(R.string.error_unknown_occurred))
         }
     }
 }

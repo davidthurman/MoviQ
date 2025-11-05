@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.dthurman.moviesaver.R
@@ -81,7 +82,7 @@ fun MoviePreview(
                                 .padding(6.dp)
                                 .size(24.dp),
                             imageVector = Icons.Filled.Favorite,
-                            contentDescription = "Hearted",
+                            contentDescription = stringResource(R.string.hearted_content_description),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }

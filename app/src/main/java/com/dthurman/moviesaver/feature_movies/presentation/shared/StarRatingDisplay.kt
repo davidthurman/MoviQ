@@ -12,8 +12,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.ui.theme.extendedColors
 
 @Composable
@@ -39,7 +41,7 @@ fun StarRatingDisplay(
             val isSelected = rating != null && i <= rating
             Icon(
                 imageVector = if (isSelected) Icons.Filled.Star else Icons.Outlined.Star,
-                contentDescription = "Star $i",
+                contentDescription = stringResource(R.string.star_content_description, i),
                 tint = if (isSelected) MaterialTheme.extendedColors.starRating else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(starSize)
             )

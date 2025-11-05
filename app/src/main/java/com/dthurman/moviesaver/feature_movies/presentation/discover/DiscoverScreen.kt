@@ -12,10 +12,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.feature_movies.presentation.discover.components.SearchBar
 import com.dthurman.moviesaver.feature_movies.presentation.shared.MovieList
@@ -60,7 +62,7 @@ internal fun DiscoverScreen(
                 modifier = Modifier.padding(vertical = 20.dp),
                 trailingIcon = {
                     IconButton(onClick = onSettingsClick) {
-                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = stringResource(R.string.settings_content_description))
                     }
                 }
             )

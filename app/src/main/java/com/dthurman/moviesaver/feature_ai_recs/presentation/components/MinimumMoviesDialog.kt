@@ -11,8 +11,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dthurman.moviesaver.R
 
 @Composable
 fun MinimumMoviesDialog(
@@ -27,7 +29,7 @@ fun MinimumMoviesDialog(
         title = {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Not Enough Movies",
+                text = stringResource(R.string.not_enough_movies),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
@@ -38,13 +40,13 @@ fun MinimumMoviesDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Add at least 5 movies to your collection to generate personalized recommendations.",
+                    text = stringResource(R.string.add_minimum_movies_message),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Current: $currentCount / 5 movies",
+                    text = stringResource(R.string.current_movie_count, currentCount),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center
@@ -53,7 +55,7 @@ fun MinimumMoviesDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Got It")
+                Text(stringResource(R.string.got_it))
             }
         },
         modifier = modifier

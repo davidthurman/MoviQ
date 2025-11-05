@@ -32,6 +32,34 @@ import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.Movi
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.TheMovieDBDataSource
 import com.dthurman.moviesaver.feature_movies.data.repository.MovieRepositoryImpl
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.AddToWatchlistUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetMovieByIdUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetPopularMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.MarkMovieAsSeenUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.RateMovieUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.RemoveFromSeenUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.SearchMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.ToggleFavoriteUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateFavoriteStatusUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateWatchlistStatusUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationAsSeenUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationToWatchlistUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AiRecsUseCases
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GenerateAiRecommendationsUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSavedRecommendationsUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.RejectRecommendationUseCase
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.AuthUseCases
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.ObserveCurrentUserUseCase
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignInWithGoogleUseCase
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignOutUseCase
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.BillingUseCases
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.LaunchPurchaseFlowUseCase
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.ObservePurchaseStateUseCase
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.ProcessPurchaseUseCase
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.ResetPurchaseStateUseCase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
@@ -182,6 +210,86 @@ object AppModule {
             syncManager,
             analytics,
             errorLogger
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideMoviesUseCases(
+        getMoviesUseCase: GetMoviesUseCase,
+        getUserMoviesUseCase: GetUserMoviesUseCase,
+        getMovieByIdUseCase: GetMovieByIdUseCase,
+        getPopularMoviesUseCase: GetPopularMoviesUseCase,
+        searchMoviesUseCase: SearchMoviesUseCase,
+        addToWatchlistUseCase: AddToWatchlistUseCase,
+        updateWatchlistStatusUseCase: UpdateWatchlistStatusUseCase,
+        markMovieAsSeenUseCase: MarkMovieAsSeenUseCase,
+        removeFromSeenUseCase: RemoveFromSeenUseCase,
+        rateMovieUseCase: RateMovieUseCase,
+        toggleFavoriteUseCase: ToggleFavoriteUseCase,
+        updateFavoriteStatusUseCase: UpdateFavoriteStatusUseCase
+    ): MoviesUseCases {
+        return MoviesUseCases(
+            getMovies = getMoviesUseCase,
+            getUserMovies = getUserMoviesUseCase,
+            getMovieById = getMovieByIdUseCase,
+            getPopularMovies = getPopularMoviesUseCase,
+            searchMovies = searchMoviesUseCase,
+            addToWatchlist = addToWatchlistUseCase,
+            updateWatchlistStatus = updateWatchlistStatusUseCase,
+            markMovieAsSeen = markMovieAsSeenUseCase,
+            removeFromSeen = removeFromSeenUseCase,
+            rateMovie = rateMovieUseCase,
+            toggleFavorite = toggleFavoriteUseCase,
+            updateFavoriteStatus = updateFavoriteStatusUseCase
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideAiRecsUseCases(
+        generateRecommendationsUseCase: GenerateAiRecommendationsUseCase,
+        getSavedRecommendationsUseCase: GetSavedRecommendationsUseCase,
+        acceptToWatchlistUseCase: AcceptRecommendationToWatchlistUseCase,
+        acceptAsSeenUseCase: AcceptRecommendationAsSeenUseCase,
+        rejectRecommendationUseCase: RejectRecommendationUseCase
+    ): AiRecsUseCases {
+        return AiRecsUseCases(
+            generateRecommendations = generateRecommendationsUseCase,
+            getSavedRecommendations = getSavedRecommendationsUseCase,
+            acceptToWatchlist = acceptToWatchlistUseCase,
+            acceptAsSeen = acceptAsSeenUseCase,
+            rejectRecommendation = rejectRecommendationUseCase
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthUseCases(
+        signInWithGoogleUseCase: SignInWithGoogleUseCase,
+        signOutUseCase: SignOutUseCase,
+        observeCurrentUserUseCase: ObserveCurrentUserUseCase
+    ): AuthUseCases {
+        return AuthUseCases(
+            signInWithGoogle = signInWithGoogleUseCase,
+            signOut = signOutUseCase,
+            observeCurrentUser = observeCurrentUserUseCase
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideBillingUseCases(
+        launchPurchaseFlowUseCase: LaunchPurchaseFlowUseCase,
+        observePurchaseStateUseCase: ObservePurchaseStateUseCase,
+        processPurchaseUseCase: ProcessPurchaseUseCase,
+        resetPurchaseStateUseCase: ResetPurchaseStateUseCase
+    ): BillingUseCases {
+        return BillingUseCases(
+            launchPurchaseFlow = launchPurchaseFlowUseCase,
+            observePurchaseState = observePurchaseStateUseCase,
+            processPurchase = processPurchaseUseCase,
+            resetPurchaseState = resetPurchaseStateUseCase
         )
     }
 }

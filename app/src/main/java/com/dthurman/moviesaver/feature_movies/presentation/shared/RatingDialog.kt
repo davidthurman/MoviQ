@@ -23,7 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.ui.theme.extendedColors
 
 @Composable
@@ -40,7 +42,7 @@ fun RatingDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Rate Movie",
+                text = stringResource(R.string.rate_movie),
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -68,12 +70,12 @@ fun RatingDialog(
                     onDismiss()
                 }
             ) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         },
         modifier = modifier
@@ -95,7 +97,7 @@ fun RatingBar(
             val isSelected = i <= rating
             Icon(
                 imageVector = if (isSelected) Icons.Filled.Star else Icons.Outlined.Star,
-                contentDescription = "Star $i",
+                contentDescription = stringResource(R.string.star_content_description, i),
                 tint = if (isSelected) MaterialTheme.extendedColors.starRating else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(40.dp)

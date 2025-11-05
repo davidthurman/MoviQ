@@ -3,7 +3,7 @@ package com.dthurman.moviesaver.feature_movies.presentation.my_movies
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +21,7 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SeenViewModel @Inject constructor(
-    private val getUserMoviesUseCase: GetUserMoviesUseCase
+    private val moviesUseCases: MoviesUseCases
 ): ViewModel() {
 
     private val _sortOrder = MutableStateFlow(MovieOrder.DATE_ADDED_DESC)
@@ -51,7 +51,7 @@ class SeenViewModel @Inject constructor(
         }
     }
         .flatMapLatest { filter ->
-            getUserMoviesUseCase(filter)
+            moviesUseCases.getUserMovies(filter)
         }
         .combine(_showFavoritesOnly) { movies, showFavoritesOnly ->
             if (showFavoritesOnly) {

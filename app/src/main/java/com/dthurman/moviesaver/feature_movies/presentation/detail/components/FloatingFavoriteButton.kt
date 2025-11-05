@@ -14,7 +14,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.dthurman.moviesaver.R
 
 @Composable
 fun FloatingFavoriteButton(
@@ -33,7 +35,7 @@ fun FloatingFavoriteButton(
                 .padding(6.dp)
                 .size(24.dp),
             imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-            contentDescription = "Hearted",
+            contentDescription = stringResource(R.string.hearted_content_description),
             tint = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }

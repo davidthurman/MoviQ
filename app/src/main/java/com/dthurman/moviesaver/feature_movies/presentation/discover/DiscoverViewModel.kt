@@ -1,11 +1,13 @@
 package com.dthurman.moviesaver.feature_movies.presentation.discover
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetPopularMoviesUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.SearchMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,11 +15,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DiscoverViewModel @Inject constructor(
-    private val getPopularMoviesUseCase: GetPopularMoviesUseCase,
-    private val searchMoviesUseCase: SearchMoviesUseCase
+    @ApplicationContext private val context: Context,
+    private val moviesUseCases: MoviesUseCases
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DiscoverUiState())
+    private val _uiState = MutableStateFlow(
+        DiscoverUiState(searchHeader = context.getString(R.string.popular_movies))
+    )
     val uiState: StateFlow<DiscoverUiState> = _uiState
 
     init {
@@ -28,7 +32,7 @@ class DiscoverViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = getPopularMoviesUseCase.invoke()
+            val result = moviesUseCases.getPopularMovies.invoke()
             
             _uiState.value = if (result.isSuccess) {
                 _uiState.value.copy(
@@ -39,7 +43,7 @@ class DiscoverViewModel @Inject constructor(
             } else {
                 _uiState.value.copy(
                     isLoading = false,
-                    error = result.exceptionOrNull()?.message ?: "Unknown error"
+                    error = result.exceptionOrNull()?.message
                 )
             }
         }
@@ -54,19 +58,19 @@ class DiscoverViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = searchMoviesUseCase.invoke(title)
+            val result = moviesUseCases.searchMovies.invoke(title)
             
             _uiState.value = if (result.isSuccess) {
                 _uiState.value.copy(
                     movies = result.getOrNull() ?: emptyList(),
-                    searchHeader = "Results for \"$title\":",
+                    searchHeader = context.getString(R.string.search_results_for, title),
                     isLoading = false,
                     error = null
                 )
             } else {
                 _uiState.value.copy(
                     isLoading = false,
-                    error = result.exceptionOrNull()?.message ?: "Unknown error"
+                    error = result.exceptionOrNull()?.message
                 )
             }
         }
@@ -75,7 +79,7 @@ class DiscoverViewModel @Inject constructor(
 
 data class DiscoverUiState(
     val query: String = "",
-    val searchHeader: String = "Popular:",
+    val searchHeader: String = "",
     val movies: List<Movie> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
