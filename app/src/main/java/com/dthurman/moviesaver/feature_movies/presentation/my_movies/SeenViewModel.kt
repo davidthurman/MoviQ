@@ -1,11 +1,11 @@
 package com.dthurman.moviesaver.feature_movies.presentation.my_movies
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
+import com.dthurman.moviesaver.feature_movies.domain.util.MovieOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,31 +18,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class MovieFilter {
-    SEEN,
-    WATCHLIST
-}
-
-enum class SortOrder(@StringRes val displayNameRes: Int) {
-    TITLE_ASC(R.string.sort_title_asc),
-    TITLE_DESC(R.string.sort_title_desc),
-    DATE_ADDED_ASC(R.string.sort_date_added_asc),
-    DATE_ADDED_DESC(R.string.sort_date_added_desc),
-    RELEASE_DATE_ASC(R.string.sort_release_date_asc),
-    RELEASE_DATE_DESC(R.string.sort_release_date_desc)
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SeenViewModel @Inject constructor(
-    private val movieRepository: MovieRepository
+    private val getUserMoviesUseCase: GetUserMoviesUseCase
 ): ViewModel() {
 
-    private val _selectedFilter = MutableStateFlow(MovieFilter.SEEN)
-    val selectedFilter: StateFlow<MovieFilter> = _selectedFilter.asStateFlow()
+    private val _sortOrder = MutableStateFlow(MovieOrder.DATE_ADDED_DESC)
+    val sortOrder: StateFlow<MovieOrder> = _sortOrder.asStateFlow()
 
-    private val _sortOrder = MutableStateFlow(SortOrder.DATE_ADDED_DESC)
-    val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
+    private val _selectedFilter = MutableStateFlow<MovieFilter>(MovieFilter.SeenMovies())
+    val selectedFilter: StateFlow<MovieFilter> = _selectedFilter.asStateFlow()
 
     private val _showSortMenu = MutableStateFlow(false)
     val showSortMenu: StateFlow<Boolean> = _showSortMenu.asStateFlow()
@@ -53,15 +39,21 @@ class SeenViewModel @Inject constructor(
     private val _isInitialLoad = MutableStateFlow(true)
     val isInitialLoad: StateFlow<Boolean> = _isInitialLoad.asStateFlow()
 
-    val movies: StateFlow<List<Movie>?> = _selectedFilter
-        .flatMapLatest { filter ->
-            when (filter) {
-                MovieFilter.SEEN -> movieRepository.getSeenMovies()
-                MovieFilter.WATCHLIST -> movieRepository.getWatchlistMovies()
-            }
+    val movies: StateFlow<List<Movie>?> = combine(
+        _selectedFilter,
+        _sortOrder
+    ) { filter, order ->
+        // Update the filter with the new sort order
+        when (filter) {
+            is MovieFilter.SeenMovies -> MovieFilter.SeenMovies(order)
+            is MovieFilter.WatchlistMovies -> MovieFilter.WatchlistMovies(order)
+            is MovieFilter.FavoriteMovies -> MovieFilter.FavoriteMovies(order)
+            else -> filter
         }
-        .combine(_sortOrder) { movies, sort ->
-            sortMovies(movies, sort)
+    }
+        .flatMapLatest { filter ->
+            // GetMoviesUseCase now handles both filtering and sorting
+            getUserMoviesUseCase(filter)
         }
         .combine(_showFavoritesOnly) { movies, showFavoritesOnly ->
             if (showFavoritesOnly) {
@@ -82,23 +74,12 @@ class SeenViewModel @Inject constructor(
         }
     }
 
-    private fun sortMovies(movies: List<Movie>, sortOrder: SortOrder): List<Movie> {
-        return when (sortOrder) {
-            SortOrder.TITLE_ASC -> movies.sortedBy { it.title.lowercase() }
-            SortOrder.TITLE_DESC -> movies.sortedByDescending { it.title.lowercase() }
-            SortOrder.DATE_ADDED_ASC -> movies.sortedBy { it.id }
-            SortOrder.DATE_ADDED_DESC -> movies.sortedByDescending { it.id }
-            SortOrder.RELEASE_DATE_ASC -> movies.sortedBy { it.releaseDate }
-            SortOrder.RELEASE_DATE_DESC -> movies.sortedByDescending { it.releaseDate }
-        }
-    }
-
     fun onFilterChanged(filter: MovieFilter) {
         _selectedFilter.value = filter
     }
 
-    fun onSortOrderChanged(sortOrder: SortOrder) {
-        _sortOrder.value = sortOrder
+    fun onSortOrderChanged(order: MovieOrder) {
+        _sortOrder.value = order
         _showSortMenu.value = false
     }
 

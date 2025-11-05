@@ -10,7 +10,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.core.domain.model.User
-import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.ObserveCurrentUserUseCase
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignInWithGoogleUseCase
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignOutUseCase
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -26,15 +28,16 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val userRepository: com.dthurman.moviesaver.core.domain.repository.UserRepository,
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
+    private val signOutUseCase: SignOutUseCase,
+    observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val errorLogger: ErrorLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Initial)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    val currentUser: StateFlow<User?> = userRepository.currentUser
+    val currentUser: StateFlow<User?> = observeCurrentUserUseCase()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
@@ -44,7 +47,7 @@ class LoginViewModel @Inject constructor(
     fun signInWithGoogle(idToken: String) {
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
-            val result = authRepository.signInWithGoogle(idToken)
+            val result = signInWithGoogleUseCase(idToken)
             _uiState.value = if (result.isSuccess) {
                 val user = result.getOrNull()!!
                 LoginUiState.Success(user)
@@ -61,7 +64,7 @@ class LoginViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
-            authRepository.signOut()
+            signOutUseCase()
             _uiState.value = LoginUiState.Initial
         }
     }

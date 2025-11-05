@@ -13,7 +13,7 @@ import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class DefaultMovieRepository @Inject constructor(
+class MovieRepositoryImpl @Inject constructor(
     private val movieDao: MovieDao,
     private val movieRemoteDataSource: MovieRemoteDataSource,
     private val movieInformationDataSource: MovieInformationDataSource,

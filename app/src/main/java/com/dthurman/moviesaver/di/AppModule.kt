@@ -25,7 +25,7 @@ import com.dthurman.moviesaver.feature_movies.data.remote.data_source.FirestoreM
 import com.dthurman.moviesaver.feature_movies.data.remote.data_source.MovieRemoteDataSource
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.MovieInformationDataSource
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.TheMovieDBDataSource
-import com.dthurman.moviesaver.feature_movies.data.repository.DefaultMovieRepository
+import com.dthurman.moviesaver.feature_movies.data.repository.MovieRepositoryImpl
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -185,7 +185,7 @@ interface AppBindingModule {
 
     @Singleton
     @Binds
-    fun bindMovieRepository(impl: DefaultMovieRepository): MovieRepository
+    fun bindMovieRepository(impl: MovieRepositoryImpl): MovieRepository
 
     @Singleton
     @Binds

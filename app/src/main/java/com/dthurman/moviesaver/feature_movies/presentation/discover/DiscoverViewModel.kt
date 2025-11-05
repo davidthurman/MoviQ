@@ -3,7 +3,8 @@ package com.dthurman.moviesaver.feature_movies.presentation.discover
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DiscoverViewModel @Inject constructor(
-    private val movieRepository: MovieRepository
+    private val getUserMoviesUseCase: GetUserMoviesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DiscoverUiState())
@@ -25,13 +26,19 @@ class DiscoverViewModel @Inject constructor(
     fun getMovies() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            try {
-                val results = movieRepository.getPopularMovies()
-                _uiState.value = _uiState.value.copy(movies = results, isLoading = false)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
+            
+            val result = getUserMoviesUseCase.getSuspend(MovieFilter.PopularMovies())
+            
+            _uiState.value = if (result.isSuccess) {
+                _uiState.value.copy(
+                    movies = result.getOrNull() ?: emptyList(),
                     isLoading = false,
-                    error = e.message ?: "Unknown error"
+                    error = null
+                )
+            } else {
+                _uiState.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Unknown error"
                 )
             }
         }
@@ -42,15 +49,23 @@ class DiscoverViewModel @Inject constructor(
             getMovies()
             return
         }
+        
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            try {
-                val results = movieRepository.searchMovieByTitle(title)
-                _uiState.value = _uiState.value.copy(movies = results, searchHeader = "Results for \"$title\":", isLoading = false)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
+            
+            val result = getUserMoviesUseCase.getSuspend(MovieFilter.SearchResults(query = title))
+            
+            _uiState.value = if (result.isSuccess) {
+                _uiState.value.copy(
+                    movies = result.getOrNull() ?: emptyList(),
+                    searchHeader = "Results for \"$title\":",
                     isLoading = false,
-                    error = e.message ?: "Unknown error"
+                    error = null
+                )
+            } else {
+                _uiState.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Unknown error"
                 )
             }
         }

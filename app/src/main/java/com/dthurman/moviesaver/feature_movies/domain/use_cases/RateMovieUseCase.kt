@@ -14,6 +14,10 @@ class RateMovieUseCase @Inject constructor(
     private val analytics: AnalyticsTracker
 ) {
     suspend operator fun invoke(movie: Movie, rating: Float): Result<Unit> {
+        if (rating !in 0.0f..5.0f) {
+            return Result.failure(IllegalArgumentException("Rating must be between 0 and 5"))
+        }
+        
         return try {
             movieRepository.updateRating(movie, rating)
             analytics.logMovieRated(movie.id, movie.title, rating)

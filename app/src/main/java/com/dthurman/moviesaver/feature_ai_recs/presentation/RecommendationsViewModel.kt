@@ -4,12 +4,19 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.feature_ai_recs.domain.repository.AiRepository
+import com.dthurman.moviesaver.core.domain.use_cases.GetCreditsUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationAsSeenUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationToWatchlistUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GenerateAiRecommendationsUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSavedRecommendationsUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.InsufficientCreditsException
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.RejectRecommendationUseCase
 import com.dthurman.moviesaver.feature_billing.domain.PurchaseState
-import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.ObservePurchaseStateUseCase
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.ProcessPurchaseUseCase
+import com.dthurman.moviesaver.feature_billing.domain.use_cases.ResetPurchaseStateUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,11 +35,14 @@ sealed class RecommendationEvent {
 
 @HiltViewModel
 class RecommendationsViewModel @Inject constructor(
-    private val aiRepository: AiRepository,
-    private val movieRepository: MovieRepository,
-    private val userRepository: com.dthurman.moviesaver.core.domain.repository.UserRepository,
-    private val creditsRepository: com.dthurman.moviesaver.core.domain.repository.CreditsRepository,
-    internal val billingRepository: com.dthurman.moviesaver.feature_billing.domain.repository.BillingRepository,
+    private val generateAiRecommendationsUseCase: GenerateAiRecommendationsUseCase,
+    private val getSavedRecommendationsUseCase: GetSavedRecommendationsUseCase,
+    private val getUserMoviesUseCase: GetUserMoviesUseCase,
+    private val getCreditsUseCase: GetCreditsUseCase,
+    private val observePurchaseStateUseCase: ObservePurchaseStateUseCase,
+    private val processPurchaseUseCase: ProcessPurchaseUseCase,
+    private val resetPurchaseStateUseCase: ResetPurchaseStateUseCase,
+    private val launchPurchaseFlowUseCase: com.dthurman.moviesaver.feature_billing.domain.use_cases.LaunchPurchaseFlowUseCase,
     private val acceptToWatchlistUseCase: AcceptRecommendationToWatchlistUseCase,
     private val acceptAsSeenUseCase: AcceptRecommendationAsSeenUseCase,
     private val rejectRecommendationUseCase: RejectRecommendationUseCase,
@@ -65,20 +75,20 @@ class RecommendationsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            billingRepository.purchaseState.collect { state ->
+            observePurchaseStateUseCase().collect { state ->
                 when (state) {
                     is PurchaseState.Success -> {
-                        val success = billingRepository.processPurchase(state.purchase.purchaseToken)
-                        if (success) {
+                        val result = processPurchaseUseCase(state.purchase.purchaseToken)
+                        if (result.isSuccess) {
                             _showPurchaseSuccessDialog.value = true
                         }
-                        billingRepository.resetPurchaseState()
+                        resetPurchaseStateUseCase()
                     }
                     is PurchaseState.Error -> {
-                        billingRepository.resetPurchaseState()
+                        resetPurchaseStateUseCase()
                     }
                     is PurchaseState.Canceled -> {
-                        billingRepository.resetPurchaseState()
+                        resetPurchaseStateUseCase()
                     }
                     else -> { }
                 }
@@ -86,13 +96,13 @@ class RecommendationsViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            movieRepository.getSeenMovies().collect { seenMovies ->
+            getUserMoviesUseCase(MovieFilter.SeenMovies()).collect { seenMovies ->
                 _seenMoviesCount.value = seenMovies.size
             }
         }
         
         viewModelScope.launch {
-            creditsRepository.getCreditsFlow().collect { credits ->
+            getCreditsUseCase().collect { credits ->
                 _userCredits.value = credits
             }
         }
@@ -100,7 +110,7 @@ class RecommendationsViewModel @Inject constructor(
         val savedIndex = savedStateHandle.get<Int>(KEY_CURRENT_INDEX) ?: 0
         
         viewModelScope.launch {
-            aiRepository.getSavedRecommendations().collect { savedRecommendations ->
+            getSavedRecommendationsUseCase().collect { savedRecommendations ->
                 _uiState.update { 
                     it.copy(
                         recommendations = savedRecommendations,
@@ -116,11 +126,13 @@ class RecommendationsViewModel @Inject constructor(
     }
 
     fun generateAiRecommendations() {
+        // Business rule validation: minimum movies requirement
         if (_seenMoviesCount.value < 5) {
             _showMinimumMoviesDialog.value = true
             return
         }
         
+        // Business rule validation: credits requirement
         if (_userCredits.value <= 0) {
             _showNoCreditsDialog.value = true
             return
@@ -129,38 +141,32 @@ class RecommendationsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             
-            try {
-                if (userRepository.getCurrentUser() != null) {
-                    val creditResult = creditsRepository.deductCredits(1)
-                    
-                    if (creditResult.isFailure) {
-                        _showNoCreditsDialog.value = true
-                        _uiState.update { it.copy(isLoading = false) }
-                        return@launch
-                    }
-                    
-                    val recommendations = aiRepository.generatePersonalizedRecommendations()
-                    _uiState.update { 
-                        it.copy(
-                            recommendations = recommendations,
-                            currentIndex = 0,
-                            isLoading = false
-                        )
-                    }
-                } else {
-                    _uiState.update { 
-                        it.copy(
-                            isLoading = false,
-                            error = "User not logged in"
-                        )
-                    }
-                }
-            } catch (e: Exception) {
+            val result = generateAiRecommendationsUseCase()
+            
+            if (result.isSuccess) {
+                val recommendations = result.getOrNull() ?: emptyList()
                 _uiState.update { 
                     it.copy(
+                        recommendations = recommendations,
+                        currentIndex = 0,
                         isLoading = false,
-                        error = e.message ?: "Failed to generate recommendations"
+                        error = null
                     )
+                }
+            } else {
+                val exception = result.exceptionOrNull()
+                when (exception) {
+                    is InsufficientCreditsException -> {
+                        _showNoCreditsDialog.value = true
+                    }
+                    else -> {
+                        _uiState.update { 
+                            it.copy(
+                                isLoading = false,
+                                error = exception?.message ?: "Failed to generate recommendations"
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -183,6 +189,15 @@ class RecommendationsViewModel @Inject constructor(
     
     fun dismissPurchaseSuccessDialog() {
         _showPurchaseSuccessDialog.value = false
+    }
+    
+    /**
+     * Launches the Google Play billing flow for purchasing credits.
+     * The result will be observed through the purchase state flow.
+     */
+    fun launchPurchaseFlow(activity: android.app.Activity) {
+        launchPurchaseFlowUseCase(activity)
+        // Purchase result will be handled through observePurchaseStateUseCase in init block
     }
 
     fun skipToNext() {

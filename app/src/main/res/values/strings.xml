@@ -87,6 +87,8 @@
     <string name="sort_date_added_desc">Date Added (Newest)</string>
     <string name="sort_release_date_asc">Release Date (Oldest)</string>
     <string name="sort_release_date_desc">Release Date (Newest)</string>
+    <string name="sort_rating_asc">Rating (Low to High)</string>
+    <string name="sort_rating_desc">Rating (High to Low)</string>
     <string name="sort_label">Sort: %s</string>
     <string name="sort_options_content_description">Sort options</string>
     <string name="show_favorites_content_description">Show favorites only</string>

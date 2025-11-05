@@ -39,20 +39,15 @@ import androidx.navigation.compose.rememberNavController
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.feature_auth.presentation.LoginScreen
 import com.dthurman.moviesaver.feature_auth.presentation.LoginViewModel
-import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import com.dthurman.moviesaver.feature_movies.presentation.detail.DetailScreen
 import com.dthurman.moviesaver.ui.components.SettingsModal
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val loginViewModel: LoginViewModel by viewModels()
-
-    @Inject
-    lateinit var movieRepository: MovieRepository
     
     private val sharedPreferences by lazy {
         getSharedPreferences("app_preferences", MODE_PRIVATE)

@@ -3,13 +3,14 @@ package com.dthurman.moviesaver.feature_movies.presentation.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.core.observability.AnalyticsTracker
-import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.AddToWatchlistUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetMovieByIdUseCase
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.MarkMovieAsSeenUseCase
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.RateMovieUseCase
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.RemoveFromSeenUseCase
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.ToggleFavoriteUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateFavoriteStatusUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateWatchlistStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,13 +20,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    val movieRepository: MovieRepository,
+    private val getMovieByIdUseCase: GetMovieByIdUseCase,
     private val markAsSeenUseCase: MarkMovieAsSeenUseCase,
     private val removeFromSeenUseCase: RemoveFromSeenUseCase,
     private val rateMovieUseCase: RateMovieUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val addToWatchlistUseCase: AddToWatchlistUseCase,
-    private val analytics: AnalyticsTracker
+    private val updateWatchlistStatusUseCase: UpdateWatchlistStatusUseCase,
+    private val updateFavoriteStatusUseCase: UpdateFavoriteStatusUseCase
 ): ViewModel() {
 
     private val _movie = MutableStateFlow<Movie?>(null)
@@ -39,9 +41,8 @@ class DetailViewModel @Inject constructor(
 
     fun loadMovie(movie: Movie) {
         viewModelScope.launch {
-            val dbMovie = movieRepository.getMovieById(movie.id)
-            _movie.value = dbMovie ?: movie
-            analytics.logMovieDetailsViewed(movie.id, movie.title)
+            val result = getMovieByIdUseCase(movie.id)
+            _movie.value = result.getOrNull() ?: movie
         }
     }
 
@@ -60,7 +61,7 @@ class DetailViewModel @Inject constructor(
         val currentMovie = _movie.value ?: return
         viewModelScope.launch {
             removeFromSeenUseCase(currentMovie)
-            movieRepository.updateFavoriteStatus(currentMovie, false)
+            updateFavoriteStatusUseCase(currentMovie, false)
             _movie.value = currentMovie.copy(isSeen = false, rating = null, isFavorite = false)
         }
         _showUnseenConfirmDialog.value = false
@@ -99,7 +100,7 @@ class DetailViewModel @Inject constructor(
             if (newWatchlistStatus) {
                 addToWatchlistUseCase(currentMovie)
             } else {
-                movieRepository.updateWatchlistStatus(currentMovie, false)
+                updateWatchlistStatusUseCase(currentMovie, false)
             }
             _movie.value = currentMovie.copy(isWatchlist = newWatchlistStatus)
         }

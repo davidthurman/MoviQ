@@ -49,7 +49,7 @@ fun RecommendationsScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is RecommendationEvent.LaunchPurchaseFlow -> {
-                    activity?.let { viewModel.billingRepository.launchPurchaseFlow(it) }
+                    activity?.let { viewModel.launchPurchaseFlow(it) }
                 }
             }
         }
