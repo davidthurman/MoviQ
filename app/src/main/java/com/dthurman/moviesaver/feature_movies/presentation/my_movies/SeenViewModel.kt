@@ -52,7 +52,6 @@ class SeenViewModel @Inject constructor(
         }
     }
         .flatMapLatest { filter ->
-            // GetMoviesUseCase now handles both filtering and sorting
             getUserMoviesUseCase(filter)
         }
         .combine(_showFavoritesOnly) { movies, showFavoritesOnly ->

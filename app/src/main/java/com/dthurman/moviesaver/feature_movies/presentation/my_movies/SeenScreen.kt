@@ -33,11 +33,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
+import com.dthurman.moviesaver.feature_movies.domain.util.MovieOrder
 import com.dthurman.moviesaver.feature_movies.presentation.my_movies.components.EmptyState
 import com.dthurman.moviesaver.feature_movies.presentation.my_movies.components.GenericLoadingScreen
 import com.dthurman.moviesaver.feature_movies.presentation.shared.MovieList
 import com.dthurman.moviesaver.ui.components.TopBar
-import kotlin.collections.isNotEmpty
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,21 +63,20 @@ fun SeenScreen(
                     .padding(horizontal = 12.dp)
                     .padding(top = 12.dp)
             ) {
-                MovieFilter.entries.forEachIndexed { index, filter ->
+                val filters = listOf(
+                    MovieFilter.SeenMovies() to R.string.seen,
+                    MovieFilter.WatchlistMovies() to R.string.watchlist
+                )
+                filters.forEachIndexed { index, (filter, labelRes) ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
-                            count = MovieFilter.entries.size
+                            count = filters.size
                         ),
                         onClick = { viewModel.onFilterChanged(filter) },
-                        selected = filter == selectedFilter,
+                        selected = filter::class == selectedFilter::class,
                         label = { 
-                            Text(
-                                text = when (filter) {
-                                    MovieFilter.SEEN -> stringResource(R.string.seen)
-                                    MovieFilter.WATCHLIST -> stringResource(R.string.watchlist)
-                                }
-                            ) 
+                            Text(text = stringResource(labelRes)) 
                         }
                     )
                 }
@@ -98,7 +97,7 @@ fun SeenScreen(
                         expanded = showSortMenu,
                         onDismissRequest = { viewModel.onDismissSortMenu() }
                     ) {
-                        SortOrder.entries.forEach { order ->
+                        MovieOrder.entries.forEach { order ->
                             DropdownMenuItem(
                                 text = { Text(stringResource(order.displayNameRes)) },
                                 onClick = { viewModel.onSortOrderChanged(order) }
