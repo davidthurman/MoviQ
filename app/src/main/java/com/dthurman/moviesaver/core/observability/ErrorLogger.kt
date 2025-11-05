@@ -6,10 +6,10 @@ interface ErrorLogger {
     fun setUserId(userId: String?)
     fun clearUserId()
     fun setCustomKey(key: String, value: Any)
-    fun logAuthError(exception: Exception)
-    fun logBillingError(responseCode: Int, exception: Exception)
-    fun logDatabaseError(operation: String, exception: Exception)
-    fun logNetworkError(operation: String, exception: Exception)
-    fun logAiError(exception: Exception)
+    fun logAuthError(exception: Throwable)
+    fun logBillingError(responseCode: Int, exception: Throwable)
+    fun logDatabaseError(operation: String, exception: Throwable)
+    fun logNetworkError(operation: String, exception: Throwable)
+    fun logAiError(exception: Throwable)
 }
 

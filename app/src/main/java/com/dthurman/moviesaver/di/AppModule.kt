@@ -53,6 +53,7 @@ import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSavedRecommen
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSeenMoviesCountUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.RejectRecommendationUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.AuthUseCases
+import com.dthurman.moviesaver.feature_auth.domain.use_cases.GetGoogleCredentialUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.ObserveCurrentUserUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignInWithGoogleUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignOutUseCase
@@ -271,12 +272,14 @@ object AppModule {
     fun provideAuthUseCases(
         signInWithGoogleUseCase: SignInWithGoogleUseCase,
         signOutUseCase: SignOutUseCase,
-        observeCurrentUserUseCase: ObserveCurrentUserUseCase
+        observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+        getGoogleCredentialUseCase: GetGoogleCredentialUseCase
     ): AuthUseCases {
         return AuthUseCases(
             signInWithGoogle = signInWithGoogleUseCase,
             signOut = signOutUseCase,
-            observeCurrentUser = observeCurrentUserUseCase
+            observeCurrentUser = observeCurrentUserUseCase,
+            getGoogleCredential = getGoogleCredentialUseCase
         )
     }
 

@@ -7,95 +7,92 @@ import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SeenViewModel @Inject constructor(
     private val moviesUseCases: MoviesUseCases
 ): ViewModel() {
 
-    private val _sortOrder = MutableStateFlow(MovieOrder.DATE_ADDED_DESC)
-    val sortOrder: StateFlow<MovieOrder> = _sortOrder.asStateFlow()
-
-    private val _selectedFilter = MutableStateFlow<MovieFilter>(MovieFilter.SeenMovies())
-    val selectedFilter: StateFlow<MovieFilter> = _selectedFilter.asStateFlow()
-
-    private val _showSortMenu = MutableStateFlow(false)
-    val showSortMenu: StateFlow<Boolean> = _showSortMenu.asStateFlow()
-
-    private val _showFavoritesOnly = MutableStateFlow(false)
-    val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly.asStateFlow()
-
-    private val _isInitialLoad = MutableStateFlow(true)
-    val isInitialLoad: StateFlow<Boolean> = _isInitialLoad.asStateFlow()
-
-    val movies: StateFlow<List<Movie>?> = combine(
-        _selectedFilter,
-        _sortOrder
-    ) { filter, order ->
-        when (filter) {
-            is MovieFilter.SeenMovies -> MovieFilter.SeenMovies(order)
-            is MovieFilter.WatchlistMovies -> MovieFilter.WatchlistMovies(order)
-            is MovieFilter.FavoriteMovies -> MovieFilter.FavoriteMovies(order)
-            else -> filter
-        }
-    }
-        .flatMapLatest { filter ->
-            moviesUseCases.getUserMovies(filter)
-        }
-        .combine(_showFavoritesOnly) { movies, showFavoritesOnly ->
-            if (showFavoritesOnly) {
-                movies.filter { it.isFavorite }
-            } else {
-                movies
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    private val _state = MutableStateFlow(SeenUiState())
+    val state: StateFlow<SeenUiState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            movies.collect { movieList ->
-                if (movieList != null && _isInitialLoad.value) {
-                    _isInitialLoad.value = false
-                }
+        loadMovies()
+    }
+
+    fun onEvent(event: SeenEvent) {
+        when (event) {
+            SeenEvent.ToggleSortMenu -> {
+                _state.value = _state.value.copy(showSortMenu = true)
+            }
+            SeenEvent.DismissSortMenu -> {
+                _state.value = _state.value.copy(showSortMenu = false)
+            }
+            SeenEvent.FavoritesToggled -> {
+                _state.value = _state.value.copy(
+                    showFavoritesOnly = !_state.value.showFavoritesOnly
+                )
+                loadMovies()
+            }
+            is SeenEvent.FilterChange -> {
+                _state.value = _state.value.copy(selectedFilter = event.filter)
+                loadMovies()
+            }
+            is SeenEvent.OrderChange -> {
+                _state.value = _state.value.copy(
+                    sortOrder = event.order,
+                    showSortMenu = false
+                )
+                loadMovies()
             }
         }
     }
 
-    fun onFilterChanged(filter: MovieFilter) {
-        _selectedFilter.value = filter
-    }
-
-    fun onSortOrderChanged(order: MovieOrder) {
-        _sortOrder.value = order
-        _showSortMenu.value = false
-    }
-
-    fun onToggleSortMenu() {
-        _showSortMenu.value = !_showSortMenu.value
-    }
-
-    fun onDismissSortMenu() {
-        _showSortMenu.value = false
-    }
-
-    fun onToggleFavoritesOnly() {
-        _showFavoritesOnly.value = !_showFavoritesOnly.value
+    private fun loadMovies() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            
+            val filter = when (_state.value.selectedFilter) {
+                is MovieFilter.SeenMovies -> MovieFilter.SeenMovies(_state.value.sortOrder)
+                is MovieFilter.WatchlistMovies -> MovieFilter.WatchlistMovies(_state.value.sortOrder)
+                is MovieFilter.FavoriteMovies -> MovieFilter.FavoriteMovies(_state.value.sortOrder)
+            }
+            
+            moviesUseCases.getUserMovies(filter).collect { movies ->
+                val filteredMovies = if (_state.value.showFavoritesOnly) {
+                    movies.filter { it.isFavorite }
+                } else {
+                    movies
+                }
+                
+                _state.value = _state.value.copy(
+                    movies = filteredMovies,
+                    isLoading = false
+                )
+            }
+        }
     }
 }
 
 data class SeenUiState(
     val movies: List<Movie> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val showSortMenu: Boolean = false,
+    val showFavoritesOnly: Boolean = false,
+    val selectedFilter: MovieFilter = MovieFilter.SeenMovies(),
+    val sortOrder: MovieOrder = MovieOrder.DATE_ADDED_DESC
 )
+
+sealed class SeenEvent {
+    data class OrderChange(val order: MovieOrder): SeenEvent()
+    data class FilterChange(val filter: MovieFilter): SeenEvent()
+    object FavoritesToggled: SeenEvent()
+    object ToggleSortMenu: SeenEvent()
+    object DismissSortMenu: SeenEvent()
+}

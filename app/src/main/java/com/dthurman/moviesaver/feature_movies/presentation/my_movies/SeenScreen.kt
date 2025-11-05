@@ -47,12 +47,7 @@ fun SeenScreen(
     onSettingsClick: () -> Unit = {},
     viewModel: SeenViewModel = hiltViewModel()
 ) {
-    val movies by viewModel.movies.collectAsStateWithLifecycle()
-    val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
-    val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
-    val showSortMenu by viewModel.showSortMenu.collectAsStateWithLifecycle()
-    val showFavoritesOnly by viewModel.showFavoritesOnly.collectAsStateWithLifecycle()
-    val isInitialLoad by viewModel.isInitialLoad.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     Column(modifier = modifier) {
         TopBar(title = stringResource(R.string.my_movies), onSettingsClick = onSettingsClick)
@@ -73,8 +68,8 @@ fun SeenScreen(
                             index = index,
                             count = filters.size
                         ),
-                        onClick = { viewModel.onFilterChanged(filter) },
-                        selected = filter::class == selectedFilter::class,
+                        onClick = { viewModel.onEvent(SeenEvent.FilterChange(filter)) },
+                        selected = filter::class == state.selectedFilter::class,
                         label = { 
                             Text(text = stringResource(labelRes)) 
                         }
@@ -84,9 +79,9 @@ fun SeenScreen(
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Box(modifier = Modifier) {
                     TextButton(
-                        onClick = { viewModel.onToggleSortMenu() }
+                        onClick = { viewModel.onEvent(SeenEvent.ToggleSortMenu) }
                     ) {
-                        Text(stringResource(R.string.sort_label, stringResource(sortOrder.displayNameRes)))
+                        Text(stringResource(R.string.sort_label, stringResource(state.sortOrder.displayNameRes)))
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = stringResource(R.string.sort_options_content_description)
@@ -94,25 +89,25 @@ fun SeenScreen(
                     }
 
                     DropdownMenu(
-                        expanded = showSortMenu,
-                        onDismissRequest = { viewModel.onDismissSortMenu() }
+                        expanded = state.showSortMenu,
+                        onDismissRequest = { viewModel.onEvent(SeenEvent.DismissSortMenu) }
                     ) {
                         MovieOrder.entries.forEach { order ->
                             DropdownMenuItem(
                                 text = { Text(stringResource(order.displayNameRes)) },
-                                onClick = { viewModel.onSortOrderChanged(order) }
+                                onClick = { viewModel.onEvent(SeenEvent.OrderChange(order)) }
                             )
                         }
                     }
                 }
                 FilterChip(
                     shape = CircleShape,
-                    selected = showFavoritesOnly,
-                    onClick = { viewModel.onToggleFavoritesOnly() },
+                    selected = state.showFavoritesOnly,
+                    onClick = { viewModel.onEvent(SeenEvent.FavoritesToggled) },
                     label = {
                         Icon(
                             modifier = Modifier.size(18.dp),
-                            imageVector = if (showFavoritesOnly) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            imageVector = if (state.showFavoritesOnly) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = stringResource(R.string.show_favorites_content_description)
                         )
                     },
@@ -120,13 +115,13 @@ fun SeenScreen(
             }
             
             when {
-                isInitialLoad -> {
+                state.isLoading -> {
                     GenericLoadingScreen()
                 }
-                movies != null && movies!!.isNotEmpty() -> {
+                state.movies.isNotEmpty() -> {
                     MovieList(
                         modifier = modifier.fillMaxSize(),
-                        movies = movies!!,
+                        movies = state.movies,
                         onMovieClick = onMovieClick
                     )
                 }

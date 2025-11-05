@@ -43,34 +43,34 @@ class ErrorLoggerImpl @Inject constructor() : ErrorLogger {
         }
     }
 
-    override fun logAuthError(exception: Exception) {
+    override fun logAuthError(exception: Throwable) {
         setCustomKey(Keys.ERROR_CONTEXT, "auth_error")
         log("Authentication error: ${exception.message}")
         recordException(exception)
     }
 
-    override fun logBillingError(responseCode: Int, exception: Exception) {
+    override fun logBillingError(responseCode: Int, exception: Throwable) {
         setCustomKey(Keys.ERROR_CONTEXT, "billing_error")
         setCustomKey(Keys.ERROR_CODE, responseCode)
         log("Billing error (code $responseCode): ${exception.message}")
         recordException(exception)
     }
 
-    override fun logDatabaseError(operation: String, exception: Exception) {
+    override fun logDatabaseError(operation: String, exception: Throwable) {
         setCustomKey(Keys.ERROR_CONTEXT, "database_error")
         setCustomKey(Keys.USER_ACTION, operation)
         log("Database error during $operation: ${exception.message}")
         recordException(exception)
     }
 
-    override fun logNetworkError(operation: String, exception: Exception) {
+    override fun logNetworkError(operation: String, exception: Throwable) {
         setCustomKey(Keys.ERROR_CONTEXT, "network_error")
         setCustomKey(Keys.USER_ACTION, operation)
         log("Network error during $operation: ${exception.message}")
         recordException(exception)
     }
 
-    override fun logAiError(exception: Exception) {
+    override fun logAiError(exception: Throwable) {
         setCustomKey(Keys.ERROR_CONTEXT, "ai_error")
         log("AI error: ${exception.message}")
         recordException(exception)
@@ -78,19 +78,6 @@ class ErrorLoggerImpl @Inject constructor() : ErrorLogger {
 
     fun setCrashlyticsCollectionEnabled(enabled: Boolean) {
         crashlytics.setCrashlyticsCollectionEnabled(enabled)
-    }
-
-    fun logNetworkError(endpoint: String, error: Throwable) {
-        setCustomKey(Keys.API_ENDPOINT, endpoint)
-        setCustomKey(Keys.ERROR_CONTEXT, "network_error")
-        log("Network error at $endpoint: ${error.message}")
-        recordException(error)
-    }
-
-    fun logAiError(error: Throwable) {
-        setCustomKey(Keys.ERROR_CONTEXT, "ai_error")
-        log("AI service error: ${error.message}")
-        recordException(error)
     }
 
     fun setScreenContext(screenName: String) {
