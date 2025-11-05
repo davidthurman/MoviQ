@@ -4,9 +4,7 @@ import com.dthurman.moviesaver.core.data.local.MovieDao
 import com.dthurman.moviesaver.core.data.sync.SyncManager
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.core.domain.model.SyncState
-import com.dthurman.moviesaver.core.domain.repository.UserRepository
 import com.dthurman.moviesaver.core.observability.ErrorLogger
-import com.dthurman.moviesaver.feature_movies.data.remote.data_source.MovieRemoteDataSource
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.MovieInformationDataSource
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.toDomain
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
@@ -15,15 +13,10 @@ import javax.inject.Inject
 
 class MovieRepositoryImpl @Inject constructor(
     private val movieDao: MovieDao,
-    private val movieRemoteDataSource: MovieRemoteDataSource,
     private val movieInformationDataSource: MovieInformationDataSource,
-    private val userRepository: UserRepository,
     private val syncManager: SyncManager,
     private val errorLogger: ErrorLogger
 ) : MovieRepository {
-    
-    @Volatile
-    private var isSyncingFromCloud = false
 
     override fun getSeenMovies(): Flow<List<Movie>> {
         return movieDao.getSeenMovies()
@@ -136,80 +129,6 @@ class MovieRepositoryImpl @Inject constructor(
     }
 
     private fun triggerSync() {
-        if (isSyncingFromCloud) {
-            return
-        }
         syncManager.triggerSync()
-    }
-
-    override suspend fun syncFromFirestore() {
-        try {
-            val userId = userRepository.getCurrentUser()?.id
-            if (userId != null) {
-                isSyncingFromCloud = true
-
-                try {
-                    val downloadResult = movieRemoteDataSource.fetchUserMovies(userId)
-                    if (downloadResult.isSuccess) {
-                        val cloudMovies = downloadResult.getOrNull() ?: emptyList()
-                        var updated = 0
-                        var skipped = 0
-
-                        cloudMovies.forEach { cloudMovie ->
-                            val localMovie = movieDao.getMovieById(cloudMovie.id)
-
-                            if (localMovie == null) {
-                                movieDao.insertOrUpdateMovie(cloudMovie)
-                                updated++
-                            } else {
-                                if (cloudMovie.lastModified > localMovie.lastModified) {
-                                    movieDao.insertOrUpdateMovie(cloudMovie)
-                                    updated++
-                                } else {
-                                    skipped++
-                                }
-                            }
-                        }
-                    } else {
-                        errorLogger.log("Failed to sync from Firestore: ${downloadResult.exceptionOrNull()?.message}")
-                        downloadResult.exceptionOrNull()?.let { errorLogger.recordException(it) }
-                    }
-                } finally {
-                    isSyncingFromCloud = false
-                }
-            }
-        } catch (e: Exception) {
-            errorLogger.logDatabaseError("syncFromFirestore", e)
-            isSyncingFromCloud = false
-        }
-    }
-    
-    override suspend fun markAsNotInterested(movieId: Int) {
-        movieDao.updateNotInterested(movieId, true)
-        triggerSync()
-    }
-    
-    override suspend fun getNotInterestedMovies(): List<Movie> {
-        return movieDao.getNotInterestedMovies()
-    }
-    
-    override suspend fun clearAllLocalData() {
-        try {
-            movieDao.clearAllMovies()
-        } catch (e: Exception) {
-            errorLogger.logDatabaseError("clearAllLocalData", e)
-        }
-    }
-    
-    override suspend fun saveRecommendations(recommendations: List<Movie>) {
-        val moviesToSave = recommendations.map { movie ->
-            movie.copy(syncState = SyncState.PENDING_CREATE)
-        }
-        moviesToSave.forEach { movieDao.insertOrUpdateMovie(it) }
-        triggerSync()
-    }
-
-    override fun getAiRecommendations(): Flow<List<Movie>> {
-        return movieDao.getRecommendations()
     }
 }

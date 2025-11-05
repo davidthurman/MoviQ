@@ -3,8 +3,8 @@ package com.dthurman.moviesaver.feature_movies.presentation.discover
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
-import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetPopularMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.SearchMoviesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DiscoverViewModel @Inject constructor(
-    private val getUserMoviesUseCase: GetUserMoviesUseCase
+    private val getPopularMoviesUseCase: GetPopularMoviesUseCase,
+    private val searchMoviesUseCase: SearchMoviesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DiscoverUiState())
@@ -27,7 +28,7 @@ class DiscoverViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = getUserMoviesUseCase.getSuspend(MovieFilter.PopularMovies())
+            val result = getPopularMoviesUseCase.invoke()
             
             _uiState.value = if (result.isSuccess) {
                 _uiState.value.copy(
@@ -53,7 +54,7 @@ class DiscoverViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = getUserMoviesUseCase.getSuspend(MovieFilter.SearchResults(query = title))
+            val result = searchMoviesUseCase.invoke(title)
             
             _uiState.value = if (result.isSuccess) {
                 _uiState.value.copy(
@@ -75,10 +76,7 @@ class DiscoverViewModel @Inject constructor(
 data class DiscoverUiState(
     val query: String = "",
     val searchHeader: String = "Popular:",
-    val mode: Mode = Mode.Popular,
     val movies: List<Movie> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
-) {
-    enum class Mode { Popular, Search }
-}
+)

@@ -4,6 +4,7 @@ import android.util.Log
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.AiRepository
+import com.dthurman.moviesaver.feature_ai_recs.domain.repository.RecommendationRepository
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.TheMovieDBApi
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.toDomain
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
@@ -15,6 +16,7 @@ import kotlin.math.abs
 class AiRepositoryImpl @Inject constructor(
     private val aiService: AiService,
     private val movieRepository: MovieRepository,
+    private val recommendationRepository: RecommendationRepository,
     private val errorLogger: ErrorLogger
 ) : AiRepository {
 
@@ -22,7 +24,7 @@ class AiRepositoryImpl @Inject constructor(
         return try {
             val seenMovies = movieRepository.getSeenMovies().first()
             val watchlistMovies = movieRepository.getWatchlistMovies().first()
-            val notInterestedMovies = movieRepository.getNotInterestedMovies()
+            val notInterestedMovies = recommendationRepository.getNotInterestedMovies()
 
             val targetCount = 5
             val maxAttempts = 3
@@ -96,7 +98,7 @@ class AiRepositoryImpl @Inject constructor(
                 }
             }
             }
-            movieRepository.saveRecommendations(movieRecommendations)
+            recommendationRepository.saveRecommendations(movieRecommendations)
             movieRecommendations
         } catch (e: Exception) {
             errorLogger.logAiError(e)
@@ -105,6 +107,6 @@ class AiRepositoryImpl @Inject constructor(
     }
 
     override fun getSavedRecommendations(): Flow<List<Movie>> {
-        return movieRepository.getAiRecommendations()
+        return recommendationRepository.getSavedRecommendations()
     }
 }

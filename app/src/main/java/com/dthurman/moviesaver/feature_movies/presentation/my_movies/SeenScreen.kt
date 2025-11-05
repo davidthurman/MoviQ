@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
+import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import com.dthurman.moviesaver.feature_movies.presentation.my_movies.components.EmptyState
 import com.dthurman.moviesaver.feature_movies.presentation.my_movies.components.GenericLoadingScreen
 import com.dthurman.moviesaver.feature_movies.presentation.shared.MovieList

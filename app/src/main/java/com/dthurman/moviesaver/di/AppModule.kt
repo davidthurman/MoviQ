@@ -8,14 +8,19 @@ import com.dthurman.moviesaver.core.data.local.MovieDatabase
 import com.dthurman.moviesaver.core.data.remote.user.FirestoreUserDataSource
 import com.dthurman.moviesaver.core.data.remote.user.UserRemoteDataSource
 import com.dthurman.moviesaver.core.data.repository.CreditsRepositoryImpl
+import com.dthurman.moviesaver.core.data.repository.LocalDataManagerImpl
 import com.dthurman.moviesaver.core.data.repository.UserRepositoryImpl
+import com.dthurman.moviesaver.core.data.sync.MovieSyncService
 import com.dthurman.moviesaver.core.data.sync.SyncManager
 import com.dthurman.moviesaver.core.domain.repository.CreditsRepository
+import com.dthurman.moviesaver.core.domain.repository.LocalDataManager
 import com.dthurman.moviesaver.core.domain.repository.UserRepository
 import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_ai_recs.data.repository.AiRepositoryImpl
+import com.dthurman.moviesaver.feature_ai_recs.data.repository.RecommendationRepositoryImpl
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.AiRepository
+import com.dthurman.moviesaver.feature_ai_recs.domain.repository.RecommendationRepository
 import com.dthurman.moviesaver.feature_auth.data.repository.AuthRepositoryImpl
 import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
 import com.dthurman.moviesaver.feature_billing.data.repository.BillingRepositoryImpl
@@ -161,7 +166,8 @@ object AppModule {
     fun provideAuthRepository(
         firebaseAuth: FirebaseAuth,
         userRemoteDataSource: UserRemoteDataSource,
-        movieRepositoryProvider: Provider<MovieRepository>,
+        localDataManager: LocalDataManager,
+        movieSyncService: MovieSyncService,
         userRepository: UserRepositoryImpl,
         syncManager: SyncManager,
         analytics: AnalyticsTracker,
@@ -170,7 +176,8 @@ object AppModule {
         return AuthRepositoryImpl(
             firebaseAuth,
             userRemoteDataSource,
-            movieRepositoryProvider,
+            localDataManager,
+            movieSyncService,
             userRepository,
             syncManager,
             analytics,
@@ -193,6 +200,10 @@ interface AppBindingModule {
 
     @Singleton
     @Binds
+    fun bindRecommendationRepository(impl: RecommendationRepositoryImpl): RecommendationRepository
+
+    @Singleton
+    @Binds
     fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
 
     @Singleton
@@ -202,4 +213,8 @@ interface AppBindingModule {
     @Singleton
     @Binds
     fun bindBillingRepository(impl: BillingRepositoryImpl): BillingRepository
+
+    @Singleton
+    @Binds
+    fun bindLocalDataManager(impl: LocalDataManagerImpl): LocalDataManager
 }

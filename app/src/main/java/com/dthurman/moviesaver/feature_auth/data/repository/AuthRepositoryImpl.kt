@@ -2,31 +2,29 @@ package com.dthurman.moviesaver.feature_auth.data.repository
 
 import com.dthurman.moviesaver.core.data.remote.user.UserRemoteDataSource
 import com.dthurman.moviesaver.core.data.repository.UserRepositoryImpl
+import com.dthurman.moviesaver.core.data.sync.MovieSyncService
 import com.dthurman.moviesaver.core.data.sync.SyncManager
 import com.dthurman.moviesaver.core.domain.model.User
+import com.dthurman.moviesaver.core.domain.repository.LocalDataManager
 import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
-import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import javax.inject.Provider
 
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val userRemoteDataSource: UserRemoteDataSource,
-    private val movieRepositoryProvider: Provider<MovieRepository>,
+    private val localDataManager: LocalDataManager,
+    private val movieSyncService: MovieSyncService,
     private val userRepository: UserRepositoryImpl, // Internal access to set user
     private val syncManager: SyncManager,
     private val analytics: AnalyticsTracker,
     private val errorLogger: ErrorLogger
 ) : AuthRepository {
-
-    private val movieRepository: MovieRepository
-        get() = movieRepositoryProvider.get()
 
     override suspend fun signInWithGoogle(idToken: String): Result<User> {
         return try {
@@ -52,7 +50,7 @@ class AuthRepositoryImpl @Inject constructor(
                     userRepository.setCurrentUser(user)
                     analytics.setUserId(user.id)
                     errorLogger.setUserId(user.id)
-                    movieRepository.syncFromFirestore()
+                    movieSyncService.syncFromFirestore()
                     syncManager.startPeriodicSync()
                     Result.success(user)
                 }
@@ -70,7 +68,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun signOut() {
         try {
             syncManager.stopPeriodicSync()
-            movieRepository.clearAllLocalData()
+            localDataManager.clearAllLocalData()
             userRepository.clearCache()
             analytics.setUserId(null)
             errorLogger.clearUserId()

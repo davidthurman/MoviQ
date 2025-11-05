@@ -14,10 +14,4 @@ interface MovieRepository {
     suspend fun updateRating(movie: Movie, rating: Float?)
     suspend fun getPopularMovies(): List<Movie>
     suspend fun searchMovieByTitle(title: String): List<Movie>
-    suspend fun syncFromFirestore()
-    suspend fun markAsNotInterested(movieId: Int)
-    suspend fun getNotInterestedMovies(): List<Movie>
-    suspend fun clearAllLocalData()
-    suspend fun saveRecommendations(recommendations: List<Movie>)
-    fun getAiRecommendations(): Flow<List<Movie>>
 }
