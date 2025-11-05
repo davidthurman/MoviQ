@@ -50,6 +50,7 @@ import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommenda
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AiRecsUseCases
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GenerateAiRecommendationsUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSavedRecommendationsUseCase
+import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSeenMoviesCountUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.RejectRecommendationUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.AuthUseCases
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.ObserveCurrentUserUseCase
@@ -252,14 +253,16 @@ object AppModule {
         getSavedRecommendationsUseCase: GetSavedRecommendationsUseCase,
         acceptToWatchlistUseCase: AcceptRecommendationToWatchlistUseCase,
         acceptAsSeenUseCase: AcceptRecommendationAsSeenUseCase,
-        rejectRecommendationUseCase: RejectRecommendationUseCase
+        rejectRecommendationUseCase: RejectRecommendationUseCase,
+        getSeenMoviesCountUseCase: GetSeenMoviesCountUseCase
     ): AiRecsUseCases {
         return AiRecsUseCases(
             generateRecommendations = generateRecommendationsUseCase,
             getSavedRecommendations = getSavedRecommendationsUseCase,
             acceptToWatchlist = acceptToWatchlistUseCase,
             acceptAsSeen = acceptAsSeenUseCase,
-            rejectRecommendation = rejectRecommendationUseCase
+            rejectRecommendation = rejectRecommendationUseCase,
+            getSeenMoviesCount = getSeenMoviesCountUseCase
         )
     }
 

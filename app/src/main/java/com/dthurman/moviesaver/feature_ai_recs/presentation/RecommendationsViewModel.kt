@@ -9,8 +9,6 @@ import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AiRecsUseCases
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.InsufficientCreditsException
 import com.dthurman.moviesaver.feature_billing.domain.PurchaseState
 import com.dthurman.moviesaver.feature_billing.domain.use_cases.BillingUseCases
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
-import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +28,6 @@ sealed class RecommendationEvent {
 @HiltViewModel
 class RecommendationsViewModel @Inject constructor(
     private val aiRecsUseCases: AiRecsUseCases,
-    private val moviesUseCases: MoviesUseCases,
     private val billingUseCases: BillingUseCases,
     private val getCreditsUseCase: GetCreditsUseCase,
     private val savedStateHandle: SavedStateHandle
@@ -83,8 +80,8 @@ class RecommendationsViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            moviesUseCases.getUserMovies(MovieFilter.SeenMovies()).collect { seenMovies ->
-                _seenMoviesCount.value = seenMovies.size
+            aiRecsUseCases.getSeenMoviesCount().collect { count ->
+                _seenMoviesCount.value = count
             }
         }
         

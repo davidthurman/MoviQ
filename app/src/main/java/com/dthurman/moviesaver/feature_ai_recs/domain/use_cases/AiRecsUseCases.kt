@@ -5,6 +5,7 @@ data class AiRecsUseCases(
     val getSavedRecommendations: GetSavedRecommendationsUseCase,
     val acceptToWatchlist: AcceptRecommendationToWatchlistUseCase,
     val acceptAsSeen: AcceptRecommendationAsSeenUseCase,
-    val rejectRecommendation: RejectRecommendationUseCase
+    val rejectRecommendation: RejectRecommendationUseCase,
+    val getSeenMoviesCount: GetSeenMoviesCountUseCase
 )
 
