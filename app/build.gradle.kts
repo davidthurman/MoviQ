@@ -88,71 +88,87 @@ kapt {
 dependencies {
 
     implementation(libs.androidx.paging.common)
-
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation) // Compose Bill of Materials (makes sure all Compose dependencies are compatible
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
 
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-
-    androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.android.compiler)
-
-    testImplementation(libs.hilt.android.testing)
-    kaptTest(libs.hilt.android.compiler)
-
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.hilt.navigation.compose)
+
+
+    // ----- Room Start -----
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    testImplementation(libs.junit.jupiter)
     ksp(libs.androidx.room.compiler)
+    // ----- Room End -----
 
+
+    // ----- Hilt Start -----
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    kaptTest(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
+    kapt(libs.androidx.hilt.compiler)
+    // ----- Hilt End -----
+
+
+    // ----- Compose Start ------
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-
     debugImplementation(libs.androidx.compose.ui.tooling)
-
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // ----- Compose End ------
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
 
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.test.runner)
-
+    // ----- Network Start ------
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.coil.compose)
+    // ----- Network End ------
 
+
+    // ----- Google Start ------
+    implementation(libs.play.services.auth)
+    implementation(libs.credentials)
+    implementation(libs.credentials.play.services)
+    implementation(libs.googleid)
+    implementation(libs.billing)
+    // ----- Google End ------
+
+
+    // ----- Firebase Start -----
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.vertexai)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
-
-    // Google
-    implementation(libs.play.services.auth)
-    implementation(libs.credentials)
-    implementation(libs.credentials.play.services)
-    implementation(libs.googleid)
-    implementation(libs.billing)
-
-    implementation(libs.androidx.datastore.preferences)
+    // ----- Firebase End -----
     
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.androidx.hilt.work)
-    kapt(libs.androidx.hilt.compiler)
+
+
+    implementation(libs.androidx.datastore.preferences)
+
+
+    // ----- Testing -----
+    testImplementation(libs.hilt.android.testing)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.truth)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    kaptAndroidTest(libs.hilt.android.compiler)
 }

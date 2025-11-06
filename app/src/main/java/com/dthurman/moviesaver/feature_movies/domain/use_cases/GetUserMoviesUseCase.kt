@@ -27,8 +27,8 @@ class GetUserMoviesUseCase @Inject constructor(
         return when (order) {
             MovieOrder.TITLE_ASC -> movies.sortedBy { it.title.lowercase() }
             MovieOrder.TITLE_DESC -> movies.sortedByDescending { it.title.lowercase() }
-            MovieOrder.DATE_ADDED_ASC -> movies.sortedBy { it.id }
-            MovieOrder.DATE_ADDED_DESC -> movies.sortedByDescending { it.id }
+            MovieOrder.DATE_ADDED_ASC -> movies.sortedBy { it.addedAt }
+            MovieOrder.DATE_ADDED_DESC -> movies.sortedByDescending { it.addedAt }
             MovieOrder.RELEASE_DATE_ASC -> movies.sortedBy { it.releaseDate }
             MovieOrder.RELEASE_DATE_DESC -> movies.sortedByDescending { it.releaseDate }
             MovieOrder.RATING_ASC -> movies.sortedBy { it.rating ?: 0f }

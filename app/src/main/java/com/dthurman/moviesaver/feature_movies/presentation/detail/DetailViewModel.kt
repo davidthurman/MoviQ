@@ -46,7 +46,7 @@ class DetailViewModel @Inject constructor(
     fun confirmUnseen() {
         val currentMovie = _movie.value ?: return
         viewModelScope.launch {
-            moviesUseCases.removeFromSeen(currentMovie)
+            moviesUseCases.updateSeenStatus(currentMovie, false)
             moviesUseCases.updateFavoriteStatus(currentMovie, false)
             _movie.value = currentMovie.copy(isSeen = false, rating = null, isFavorite = false)
         }
@@ -61,10 +61,10 @@ class DetailViewModel @Inject constructor(
         val currentMovie = _movie.value ?: return
         viewModelScope.launch {
             if (!currentMovie.isSeen) {
-                moviesUseCases.markMovieAsSeen(currentMovie, rating)
+                moviesUseCases.updateSeenStatus(currentMovie, true, rating)
                 _movie.value = currentMovie.copy(isSeen = true, isWatchlist = false, rating = rating)
             } else if (rating != null) {
-                moviesUseCases.rateMovie(currentMovie, rating)
+                moviesUseCases.updateRating(currentMovie, rating)
                 _movie.value = currentMovie.copy(rating = rating)
             }
         }
@@ -83,20 +83,17 @@ class DetailViewModel @Inject constructor(
         val currentMovie = _movie.value ?: return
         val newWatchlistStatus = !currentMovie.isWatchlist
         viewModelScope.launch {
-            if (newWatchlistStatus) {
-                moviesUseCases.addToWatchlist(currentMovie)
-            } else {
-                moviesUseCases.updateWatchlistStatus(currentMovie, false)
-            }
+            moviesUseCases.updateWatchlistStatus(currentMovie, newWatchlistStatus)
             _movie.value = currentMovie.copy(isWatchlist = newWatchlistStatus)
         }
     }
 
     fun toggleFavorite() {
         val currentMovie = _movie.value ?: return
+        val newFavoriteStatus = !currentMovie.isFavorite
         viewModelScope.launch {
-            moviesUseCases.toggleFavorite(currentMovie)
-            _movie.value = currentMovie.copy(isFavorite = !currentMovie.isFavorite)
+            moviesUseCases.updateFavoriteStatus(currentMovie, newFavoriteStatus)
+            _movie.value = currentMovie.copy(isFavorite = newFavoriteStatus)
         }
     }
 

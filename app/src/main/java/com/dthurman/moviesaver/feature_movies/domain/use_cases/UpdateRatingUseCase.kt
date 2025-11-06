@@ -5,19 +5,18 @@ import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
 import javax.inject.Inject
 
-class ToggleFavoriteUseCase @Inject constructor(
+class UpdateRatingUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
     private val analytics: AnalyticsTracker
 ) {
-    suspend operator fun invoke(movie: Movie): Result<Unit> {
+    suspend operator fun invoke(movie: Movie, rating: Float): Result<Unit> {
+        if (rating !in 0.0f..5.0f) {
+            return Result.failure(IllegalArgumentException("Rating must be between 0 and 5"))
+        }
+        
         return try {
-            val newStatus = !movie.isFavorite
-            movieRepository.updateFavoriteStatus(movie, newStatus)
-            
-            if (newStatus) {
-                analytics.logEvent("movie_favorited", mapOf("movie_id" to movie.id))
-            }
-            
+            movieRepository.updateRating(movie, rating)
+            analytics.logMovieRated(movie.id, movie.title, rating)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

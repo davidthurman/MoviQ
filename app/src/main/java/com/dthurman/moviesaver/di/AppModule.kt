@@ -21,30 +21,6 @@ import com.dthurman.moviesaver.feature_ai_recs.data.repository.AiRepositoryImpl
 import com.dthurman.moviesaver.feature_ai_recs.data.repository.RecommendationRepositoryImpl
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.AiRepository
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.RecommendationRepository
-import com.dthurman.moviesaver.feature_auth.data.repository.AuthRepositoryImpl
-import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
-import com.dthurman.moviesaver.feature_billing.data.repository.BillingRepositoryImpl
-import com.dthurman.moviesaver.feature_billing.domain.BillingManager
-import com.dthurman.moviesaver.feature_billing.domain.repository.BillingRepository
-import com.dthurman.moviesaver.feature_movies.data.remote.data_source.FirestoreMovieDataSource
-import com.dthurman.moviesaver.feature_movies.data.remote.data_source.MovieRemoteDataSource
-import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.MovieInformationDataSource
-import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.TheMovieDBDataSource
-import com.dthurman.moviesaver.feature_movies.data.repository.MovieRepositoryImpl
-import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.AddToWatchlistUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetMovieByIdUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetMoviesUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetPopularMoviesUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.MarkMovieAsSeenUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.RateMovieUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.RemoveFromSeenUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.SearchMoviesUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.ToggleFavoriteUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateFavoriteStatusUseCase
-import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateWatchlistStatusUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationAsSeenUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationToWatchlistUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AiRecsUseCases
@@ -52,16 +28,36 @@ import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GenerateAiRecomm
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSavedRecommendationsUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.GetSeenMoviesCountUseCase
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.RejectRecommendationUseCase
+import com.dthurman.moviesaver.feature_auth.data.repository.AuthRepositoryImpl
+import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.AuthUseCases
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.GetGoogleCredentialUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.ObserveCurrentUserUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignInWithGoogleUseCase
 import com.dthurman.moviesaver.feature_auth.domain.use_cases.SignOutUseCase
+import com.dthurman.moviesaver.feature_billing.data.repository.BillingRepositoryImpl
+import com.dthurman.moviesaver.feature_billing.domain.BillingManager
+import com.dthurman.moviesaver.feature_billing.domain.repository.BillingRepository
 import com.dthurman.moviesaver.feature_billing.domain.use_cases.BillingUseCases
 import com.dthurman.moviesaver.feature_billing.domain.use_cases.LaunchPurchaseFlowUseCase
 import com.dthurman.moviesaver.feature_billing.domain.use_cases.ObservePurchaseStateUseCase
 import com.dthurman.moviesaver.feature_billing.domain.use_cases.ProcessPurchaseUseCase
 import com.dthurman.moviesaver.feature_billing.domain.use_cases.ResetPurchaseStateUseCase
+import com.dthurman.moviesaver.feature_movies.data.remote.data_source.FirestoreMovieDataSource
+import com.dthurman.moviesaver.feature_movies.data.remote.data_source.MovieRemoteDataSource
+import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.MovieInformationDataSource
+import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.TheMovieDBDataSource
+import com.dthurman.moviesaver.feature_movies.data.repository.MovieRepositoryImpl
+import com.dthurman.moviesaver.feature_movies.domain.repository.MovieRepository
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetMovieByIdUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetPopularMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.GetUserMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.MoviesUseCases
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.SearchMoviesUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateFavoriteStatusUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateRatingUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateSeenStatusUseCase
+import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateWatchlistStatusUseCase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
@@ -76,7 +72,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Provider
 import javax.inject.Singleton
 
 @Module
@@ -218,31 +213,23 @@ object AppModule {
     @Provides
     @Singleton
     fun provideMoviesUseCases(
-        getMoviesUseCase: GetMoviesUseCase,
         getUserMoviesUseCase: GetUserMoviesUseCase,
         getMovieByIdUseCase: GetMovieByIdUseCase,
         getPopularMoviesUseCase: GetPopularMoviesUseCase,
         searchMoviesUseCase: SearchMoviesUseCase,
-        addToWatchlistUseCase: AddToWatchlistUseCase,
         updateWatchlistStatusUseCase: UpdateWatchlistStatusUseCase,
-        markMovieAsSeenUseCase: MarkMovieAsSeenUseCase,
-        removeFromSeenUseCase: RemoveFromSeenUseCase,
-        rateMovieUseCase: RateMovieUseCase,
-        toggleFavoriteUseCase: ToggleFavoriteUseCase,
+        updateSeenStatusUseCase: UpdateSeenStatusUseCase,
+        updateRatingUseCase: UpdateRatingUseCase,
         updateFavoriteStatusUseCase: UpdateFavoriteStatusUseCase
     ): MoviesUseCases {
         return MoviesUseCases(
-            getMovies = getMoviesUseCase,
             getUserMovies = getUserMoviesUseCase,
             getMovieById = getMovieByIdUseCase,
             getPopularMovies = getPopularMoviesUseCase,
             searchMovies = searchMoviesUseCase,
-            addToWatchlist = addToWatchlistUseCase,
             updateWatchlistStatus = updateWatchlistStatusUseCase,
-            markMovieAsSeen = markMovieAsSeenUseCase,
-            removeFromSeen = removeFromSeenUseCase,
-            rateMovie = rateMovieUseCase,
-            toggleFavorite = toggleFavoriteUseCase,
+            updateSeenStatus = updateSeenStatusUseCase,
+            updateRating = updateRatingUseCase,
             updateFavoriteStatus = updateFavoriteStatusUseCase
         )
     }
