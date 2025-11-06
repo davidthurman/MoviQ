@@ -14,7 +14,9 @@ class ProcessPurchaseUseCase @Inject constructor(
             if (success) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to process purchase"))
+                val exception = Exception("Failed to process purchase")
+                errorLogger.logBillingError(0, exception)
+                Result.failure(exception)
             }
         } catch (e: Exception) {
             errorLogger.logBillingError(0, e)
