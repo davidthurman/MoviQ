@@ -26,12 +26,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
+import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieFilter
 import com.dthurman.moviesaver.feature_movies.domain.util.MovieOrder
 import com.dthurman.moviesaver.feature_movies.presentation.my_movies.components.EmptyState
@@ -79,6 +81,7 @@ fun SeenScreen(
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Box(modifier = Modifier) {
                     TextButton(
+                        modifier = Modifier.testTag(TestTags.MY_MOVIES_SORT_BUTTON),
                         onClick = { viewModel.onEvent(SeenEvent.ToggleSortMenu) }
                     ) {
                         Text(stringResource(R.string.sort_label, stringResource(state.sortOrder.displayNameRes)))
@@ -94,6 +97,7 @@ fun SeenScreen(
                     ) {
                         MovieOrder.entries.forEach { order ->
                             DropdownMenuItem(
+                                modifier = Modifier.testTag(TestTags.MY_MOVIES_SORT_DROPDOWN_SECTION),
                                 text = { Text(stringResource(order.displayNameRes)) },
                                 onClick = { viewModel.onEvent(SeenEvent.OrderChange(order)) }
                             )
@@ -101,6 +105,7 @@ fun SeenScreen(
                     }
                 }
                 FilterChip(
+                    modifier = Modifier.testTag(TestTags.TOGGLE_FAVORITE_BUTTON),
                     shape = CircleShape,
                     selected = state.showFavoritesOnly,
                     onClick = { viewModel.onEvent(SeenEvent.FavoritesToggled) },
