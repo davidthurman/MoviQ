@@ -7,7 +7,8 @@ import com.dthurman.moviesaver.core.data.local.MovieDao
 import com.dthurman.moviesaver.core.data.local.MovieDatabase
 import com.dthurman.moviesaver.core.data.remote.user.FirestoreUserDataSource
 import com.dthurman.moviesaver.core.data.remote.user.UserRemoteDataSource
-import com.dthurman.moviesaver.core.data.repository.CreditsRepositoryImpl
+import com.dthurman.moviesaver.core.data.repository.FakeCreditsRepository
+import com.dthurman.moviesaver.core.data.repository.FakeUserRepository
 import com.dthurman.moviesaver.core.data.repository.LocalDataManagerImpl
 import com.dthurman.moviesaver.core.data.repository.UserRepositoryImpl
 import com.dthurman.moviesaver.core.data.sync.MovieSyncService
@@ -17,8 +18,8 @@ import com.dthurman.moviesaver.core.domain.repository.LocalDataManager
 import com.dthurman.moviesaver.core.domain.repository.UserRepository
 import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.core.observability.ErrorLogger
-import com.dthurman.moviesaver.feature_ai_recs.data.repository.AiRepositoryImpl
-import com.dthurman.moviesaver.feature_ai_recs.data.repository.RecommendationRepositoryImpl
+import com.dthurman.moviesaver.feature_ai_recs.data.repository.FakeAiRepository
+import com.dthurman.moviesaver.feature_ai_recs.data.repository.FakeRecommendationRepository
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.AiRepository
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.RecommendationRepository
 import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.AcceptRecommendationAsSeenUseCase
@@ -281,6 +282,32 @@ object TestAppModule {
             resetPurchaseState = resetPurchaseStateUseCase
         )
     }
+    
+    @Provides
+    @Singleton
+    fun provideRecommendationRepository(): RecommendationRepository {
+        return FakeRecommendationRepository()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAiRepository(
+        recommendationRepository: RecommendationRepository
+    ): AiRepository {
+        return FakeAiRepository(recommendationRepository)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideUserRepository(): UserRepository {
+        return FakeUserRepository()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideCreditsRepository(): CreditsRepository {
+        return FakeCreditsRepository()
+    }
 }
 
 @Module
@@ -290,22 +317,6 @@ interface TestAppBindingModule {
     @Singleton
     @Binds
     fun bindMovieRepository(impl: MovieRepositoryImpl): MovieRepository
-
-    @Singleton
-    @Binds
-    fun bindAiRepository(impl: AiRepositoryImpl): AiRepository
-
-    @Singleton
-    @Binds
-    fun bindRecommendationRepository(impl: RecommendationRepositoryImpl): RecommendationRepository
-
-    @Singleton
-    @Binds
-    fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
-
-    @Singleton
-    @Binds
-    fun bindCreditsRepository(impl: CreditsRepositoryImpl): CreditsRepository
 
     @Singleton
     @Binds

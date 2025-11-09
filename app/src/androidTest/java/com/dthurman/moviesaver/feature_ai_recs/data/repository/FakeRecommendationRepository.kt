@@ -41,9 +41,5 @@ class FakeRecommendationRepository : RecommendationRepository {
     override suspend fun getNotInterestedMovies(): List<Movie> {
         return _notInterestedMovies.toList()
     }
-    
-    fun setSavedRecommendations(recommendations: List<Movie>) {
-        _savedRecommendations.value = recommendations
-    }
 }
 

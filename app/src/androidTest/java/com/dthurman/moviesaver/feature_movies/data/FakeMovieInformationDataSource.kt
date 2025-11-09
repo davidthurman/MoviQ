@@ -72,9 +72,5 @@ class FakeMovieInformationDataSource : MovieInformationDataSource {
             Result.failure(Exception("Failed to search movies"))
         }
     }
-    
-    fun reset() {
-        shouldSucceed = true
-    }
 }
 

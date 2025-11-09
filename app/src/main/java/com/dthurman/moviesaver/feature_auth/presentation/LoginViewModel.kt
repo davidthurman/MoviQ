@@ -1,6 +1,7 @@
 package com.dthurman.moviesaver.feature_auth.presentation
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.R
@@ -22,6 +23,10 @@ class LoginViewModel @Inject constructor(
     private val errorLogger: ErrorLogger
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "LoginViewModel"
+    }
+
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Initial)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
@@ -38,10 +43,12 @@ class LoginViewModel @Inject constructor(
             val result = authUseCases.signInWithGoogle(idToken)
             _uiState.value = if (result.isSuccess) {
                 val user = result.getOrNull()!!
+                Log.d(TAG, "Sign-in successful: ${user.email}")
                 LoginUiState.Success(user)
             } else {
                 val error = result.exceptionOrNull()?.message 
                     ?: context.getString(R.string.error_unknown_occurred)
+                Log.e(TAG, "Sign-in failed: $error")
                 LoginUiState.Error(error)
             }
         }
@@ -53,12 +60,15 @@ class LoginViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
+            Log.d(TAG, "User signed out")
             authUseCases.signOut()
             _uiState.value = LoginUiState.Initial
         }
     }
 
     suspend fun handleGoogleSignIn(context: Context, webClientId: String) {
+        Log.d(TAG, "Starting Google sign-in flow")
+        
         _uiState.value = LoginUiState.Loading
         
         val credentialResult = authUseCases.getGoogleCredential(context, webClientId)
@@ -69,6 +79,7 @@ class LoginViewModel @Inject constructor(
         } else {
             val exception = credentialResult.exceptionOrNull()!!
             val errorMessage = exception.message ?: context.getString(R.string.error_unknown_occurred)
+            Log.e(TAG, "Credential error: $errorMessage")
             errorLogger.logAuthError(exception)
             _uiState.value = LoginUiState.Error(errorMessage)
         }

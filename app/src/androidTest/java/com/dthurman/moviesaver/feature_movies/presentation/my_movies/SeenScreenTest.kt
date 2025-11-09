@@ -275,7 +275,7 @@ class SeenScreenTest {
     }
 
     @Test
-    fun withMultipleSortOptions_changesDisplayOrder() {
+    fun withMultipleMovies_changingSortOption_moviesStillDisplay() {
         runBlocking {
             val movieA = Movie(
                 id = 6,

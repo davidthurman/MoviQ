@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,10 +40,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
+import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.feature_movies.presentation.detail.components.FloatingFavoriteButton
 import com.dthurman.moviesaver.feature_movies.presentation.detail.components.PrimaryButton
-import com.dthurman.moviesaver.feature_movies.presentation.shared.RatingDialog
 import com.dthurman.moviesaver.feature_movies.presentation.detail.components.RemoveFromSeenDialog
+import com.dthurman.moviesaver.feature_movies.presentation.shared.RatingDialog
 import com.dthurman.moviesaver.feature_movies.presentation.shared.StarRatingDisplay
 
 @Composable
@@ -182,7 +184,10 @@ private fun DetailImage(
             model = movie.backdropUrl,
             contentDescription = movie.title,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .testTag(TestTags.MOVIE_DETAIL_IMAGE),
             loading = {
                 Box(
                     modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -218,7 +223,8 @@ private fun DetailImage(
             FloatingFavoriteButton(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(end = 8.dp, top = 8.dp),
+                    .padding(end = 8.dp, top = 8.dp)
+                    .testTag(TestTags.SET_MOVIE_AS_FAVORITE_BUTTON),
                 isFavorite = movie.isFavorite,
                 onClick = toggleFavorite,
             )
