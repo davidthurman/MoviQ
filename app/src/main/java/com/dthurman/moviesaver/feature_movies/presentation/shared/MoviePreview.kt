@@ -23,11 +23,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.core.util.TestTags
@@ -38,6 +40,7 @@ fun MoviePreview(
     modifier: Modifier = Modifier,
     onMovieClick: (Movie) -> Unit = {},
 ) {
+    val context = LocalContext.current
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -50,7 +53,10 @@ fun MoviePreview(
         Column(modifier) {
             Box {
                 SubcomposeAsyncImage(
-                    model = movie.posterUrl,
+                    model = ImageRequest.Builder(context)
+                        .data(movie.posterUrl)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = movie.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f),

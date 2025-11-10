@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,53 +26,46 @@ class DiscoverViewModel @Inject constructor(
     val uiState: StateFlow<DiscoverUiState> = _uiState
 
     init {
-        getMovies()
+        searchForMovies()
     }
 
-    fun getMovies() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            val result = moviesUseCases.getPopularMovies.invoke()
-            
-            _uiState.value = if (result.isSuccess) {
-                _uiState.value.copy(
-                    movies = result.getOrNull() ?: emptyList(),
-                    isLoading = false,
-                    error = null
-                )
-            } else {
-                _uiState.value.copy(
-                    isLoading = false,
-                    error = result.exceptionOrNull()?.message
-                )
+    fun onEvent(event: DiscoverEvent) {
+        when (event) {
+            is DiscoverEvent.SearchMovie -> {
+                searchForMovies(event.query)
             }
         }
     }
 
-    fun searchForMovies(title: String) {
-        if (title.isBlank()) {
-            getMovies()
-            return
-        }
-        
+    private fun searchForMovies(title: String? = null) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            val result = moviesUseCases.searchMovies.invoke(title)
-            
-            _uiState.value = if (result.isSuccess) {
-                _uiState.value.copy(
-                    movies = result.getOrNull() ?: emptyList(),
-                    searchHeader = context.getString(R.string.search_results_for, title),
-                    isLoading = false,
-                    error = null
-                )
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            val result = if (title.isNullOrEmpty()) {
+                moviesUseCases.getPopularMovies.invoke()
             } else {
-                _uiState.value.copy(
-                    isLoading = false,
-                    error = result.exceptionOrNull()?.message
-                )
+                moviesUseCases.searchMovies.invoke(title)
+            }
+            
+            _uiState.update {
+                if (result.isSuccess) {
+                    val header = if (title.isNullOrEmpty()) {
+                        context.getString(R.string.popular_movies)
+                    } else {
+                        context.getString(R.string.search_results_for, title)
+                    }
+                    it.copy(
+                        movies = result.getOrNull() ?: emptyList(),
+                        searchHeader = header,
+                        isLoading = false,
+                        error = null
+                    )
+                } else {
+                    it.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message
+                    )
+                }
             }
         }
     }
@@ -84,3 +78,7 @@ data class DiscoverUiState(
     val isLoading: Boolean = false,
     val error: String? = null
 )
+
+sealed class DiscoverEvent {
+    data class SearchMovie(val query: String): DiscoverEvent()
+}

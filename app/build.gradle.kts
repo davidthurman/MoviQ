@@ -16,18 +16,21 @@ android {
     namespace = "com.dthurman.moviesaver"
     compileSdk = 36
 
+    val properties = Properties()
+    val localPropertiesFile = project.rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { properties.load(it) }
+    }
+    val apiKey = properties.getProperty("MOVIES_API_KEY", "")
+    val storePass = properties.getProperty("STORE_PASSWORD", "")
+    val keyPass = properties.getProperty("KEY_PASSWORD", "")
+
     defaultConfig {
         applicationId = "com.dthurman.moviesaver"
         minSdk = 23
         targetSdk = 36
         versionCode = 11
         versionName = "0.6"
-        val properties = Properties()
-        val localPropertiesFile = project.rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localPropertiesFile.inputStream().use { properties.load(it) }
-        }
-        val apiKey = properties.getProperty("MOVIES_API_KEY", "")
         buildConfigField("String", "MOVIES_API_KEY", "\"$apiKey\"")
 
         testInstrumentationRunner = "com.dthurman.moviesaver.HiltTestRunner"
@@ -39,9 +42,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("../release.keystore")
-            storePassword = "moviesaver2024"
+            storePassword = "\"$storePass\""
             keyAlias = "movie-saver-key"
-            keyPassword = "moviesaver2024"
+            keyPassword = "\"$keyPass\""
         }
     }
 

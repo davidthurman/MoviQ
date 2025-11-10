@@ -15,7 +15,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,24 +43,7 @@ fun RecommendationsScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? ComponentActivity
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is RecommendationEvent.LaunchPurchaseFlow -> {
-                    activity?.let { viewModel.launchPurchaseFlow(it) }
-                }
-            }
-        }
-    }
-    
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val showRatingDialog by viewModel.showRatingDialog.collectAsStateWithLifecycle()
-    val showMinimumMoviesDialog by viewModel.showMinimumMoviesDialog.collectAsStateWithLifecycle()
-    val showNoCreditsDialog by viewModel.showNoCreditsDialog.collectAsStateWithLifecycle()
-    val showPurchaseSuccessDialog by viewModel.showPurchaseSuccessDialog.collectAsStateWithLifecycle()
-    val seenMoviesCount by viewModel.seenMoviesCount.collectAsStateWithLifecycle()
-    val userCredits by viewModel.userCredits.collectAsStateWithLifecycle()
 
     Column(modifier = modifier.fillMaxSize()) {
         TopBar(
@@ -82,7 +64,7 @@ fun RecommendationsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.available_credits, userCredits),
+                        text = stringResource(R.string.available_credits, uiState.userCredits),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -95,7 +77,7 @@ fun RecommendationsScreen(
                 uiState.error != null -> {
                     ErrorState(
                         error = uiState.error ?: stringResource(R.string.error_unknown),
-                        onRetry = { viewModel.generateAiRecommendations() },
+                        onRetry = { viewModel.onEvent(RecommendationsEvent.GenerateAiRecommendations) },
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -105,21 +87,23 @@ fun RecommendationsScreen(
                         MovieRecommendationCard(
                             movie = currentRec,
                             onMovieClick = onMovieClick,
-                            onSkip = { viewModel.skipToNext() },
-                            onAddToWatchlist = { viewModel.addToWatchlist() },
-                            onMarkAsSeen = { viewModel.showRatingDialog() },
+                            onSkip = { viewModel.onEvent(RecommendationsEvent.SkipToNext) },
+                            onAddToWatchlist = { viewModel.onEvent(RecommendationsEvent.AddToWatchlist) },
+                            onMarkAsSeen = { 
+                                viewModel.onEvent(RecommendationsEvent.ShowRatingDialog)
+                            },
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
                         AllDoneState(
-                            onGenerateMore = { viewModel.generateAiRecommendations() },
+                            onGenerateMore = { viewModel.onEvent(RecommendationsEvent.GenerateAiRecommendations) },
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
                 }
                 else -> {
                     InitialState(
-                        onGenerate = { viewModel.generateAiRecommendations() },
+                        onGenerate = { viewModel.onEvent(RecommendationsEvent.GenerateAiRecommendations) },
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -127,37 +111,39 @@ fun RecommendationsScreen(
         }
     }
 
-    if (showRatingDialog) {
+    if (uiState.showRatingDialog) {
         val currentRec = uiState.getCurrentRecommendation()
         if (currentRec != null) {
             RatingDialog(
                 movieTitle = currentRec.title,
                 currentRating = currentRec.rating,
-                onDismiss = { viewModel.dismissRatingDialog() },
+                onDismiss = { viewModel.onEvent(RecommendationsEvent.DismissRatingDialog) },
                 onRatingSelected = { rating ->
-                    viewModel.markAsSeenWithRating(rating)
+                    viewModel.onEvent(RecommendationsEvent.MarkAsSeenWithRating(rating))
                 }
             )
         }
     }
 
-    if (showMinimumMoviesDialog) {
+    if (uiState.showMinMoviesDialog) {
         MinimumMoviesDialog(
-            currentCount = seenMoviesCount,
-            onDismiss = { viewModel.dismissMinimumMoviesDialog() }
+            currentCount = uiState.seenMoviesCount,
+            onDismiss = { viewModel.onEvent(RecommendationsEvent.DismissMinMoviesDialog) }
         )
     }
     
-    if (showNoCreditsDialog) {
+    if (uiState.showNoCreditsDialog) {
         NoCreditsDialog(
-            onDismiss = { viewModel.dismissNoCreditsDialog() },
-            onPurchaseClick = { viewModel.purchaseCredits() }
+            onDismiss = { viewModel.onEvent(RecommendationsEvent.DismissNoCreditsDialog) },
+            onPurchaseClick = { 
+                activity?.let { viewModel.onEvent(RecommendationsEvent.LaunchPurchaseFlow(it)) }
+            }
         )
     }
     
-    if (showPurchaseSuccessDialog) {
+    if (uiState.showPurchaseSuccessDialog) {
         PurchaseSuccessDialog(
-            onDismiss = { viewModel.dismissPurchaseSuccessDialog() }
+            onDismiss = { viewModel.onEvent(RecommendationsEvent.DismissPurchaseSuccessDialog) }
         )
     }
 }

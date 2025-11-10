@@ -1,6 +1,6 @@
 package com.dthurman.moviesaver.feature_ai_recs.presentation
 
-import androidx.lifecycle.SavedStateHandle
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.core.domain.model.Movie
@@ -10,61 +10,37 @@ import com.dthurman.moviesaver.feature_ai_recs.domain.use_cases.InsufficientCred
 import com.dthurman.moviesaver.feature_billing.domain.PurchaseState
 import com.dthurman.moviesaver.feature_billing.domain.use_cases.BillingUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-private const val KEY_CURRENT_INDEX = "current_index"
-
-sealed class RecommendationEvent {
-    object LaunchPurchaseFlow : RecommendationEvent()
-}
 
 @HiltViewModel
 class RecommendationsViewModel @Inject constructor(
     private val aiRecsUseCases: AiRecsUseCases,
     private val billingUseCases: BillingUseCases,
-    private val getCreditsUseCase: GetCreditsUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val getCreditsUseCase: GetCreditsUseCase
 ): ViewModel() {
 
     private val _uiState = MutableStateFlow(RecommendationsUiState())
     val uiState: StateFlow<RecommendationsUiState> = _uiState
 
-    private val _showRatingDialog = MutableStateFlow(false)
-    val showRatingDialog: StateFlow<Boolean> = _showRatingDialog
-
-    private val _showMinimumMoviesDialog = MutableStateFlow(false)
-    val showMinimumMoviesDialog: StateFlow<Boolean> = _showMinimumMoviesDialog
-    
-    private val _showNoCreditsDialog = MutableStateFlow(false)
-    val showNoCreditsDialog: StateFlow<Boolean> = _showNoCreditsDialog
-
-    private val _seenMoviesCount = MutableStateFlow(0)
-    val seenMoviesCount: StateFlow<Int> = _seenMoviesCount
-    
-    private val _userCredits = MutableStateFlow(0)
-    val userCredits: StateFlow<Int> = _userCredits
-    
-    private val _showPurchaseSuccessDialog = MutableStateFlow(false)
-    val showPurchaseSuccessDialog: StateFlow<Boolean> = _showPurchaseSuccessDialog
-    
-    private val _events = MutableSharedFlow<RecommendationEvent>()
-    val events: SharedFlow<RecommendationEvent> = _events.asSharedFlow()
-
     init {
+        observePurchaseState()
+        observeSeenMoviesCount()
+        observeUserCredits()
+        observeSavedRecommendations()
+    }
+
+    private fun observePurchaseState() {
         viewModelScope.launch {
             billingUseCases.observePurchaseState().collect { state ->
                 when (state) {
                     is PurchaseState.Success -> {
                         val result = billingUseCases.processPurchase(state.purchase.purchaseToken)
                         if (result.isSuccess) {
-                            _showPurchaseSuccessDialog.value = true
+                            _uiState.update { it.copy(showPurchaseSuccessDialog = true) }
                         }
                         billingUseCases.resetPurchaseState()
                     }
@@ -78,59 +54,110 @@ class RecommendationsViewModel @Inject constructor(
                 }
             }
         }
-        
+    }
+
+    private fun observeSeenMoviesCount() {
         viewModelScope.launch {
             aiRecsUseCases.getSeenMoviesCount().collect { count ->
-                _seenMoviesCount.value = count
-            }
-        }
-        
-        viewModelScope.launch {
-            getCreditsUseCase().collect { credits ->
-                _userCredits.value = credits
-            }
-        }
-        
-        val savedIndex = savedStateHandle.get<Int>(KEY_CURRENT_INDEX) ?: 0
-        
-        viewModelScope.launch {
-            aiRecsUseCases.getSavedRecommendations().collect { savedRecommendations ->
-                _uiState.update { 
-                    it.copy(
-                        recommendations = savedRecommendations,
-                        currentIndex = if (savedRecommendations.isNotEmpty()) {
-                            savedIndex.coerceIn(0, savedRecommendations.size - 1)
-                        } else {
-                            0
-                        }
-                    )
-                }
+                _uiState.update { it.copy(seenMoviesCount = count) }
             }
         }
     }
 
-    fun generateAiRecommendations() {
-        if (_seenMoviesCount.value < 5) {
-            _showMinimumMoviesDialog.value = true
+    private fun observeUserCredits() {
+        viewModelScope.launch {
+            getCreditsUseCase().collect { credits ->
+                _uiState.update { it.copy(userCredits = credits) }
+            }
+        }
+    }
+
+    private fun observeSavedRecommendations() {
+        viewModelScope.launch {
+            aiRecsUseCases.getSavedRecommendations().collect { savedRecommendations ->
+                _uiState.update { it.copy(recommendations = savedRecommendations) }
+            }
+        }
+    }
+
+    fun onEvent(event: RecommendationsEvent) {
+        when (event) {
+            RecommendationsEvent.GenerateAiRecommendations -> generateAiRecommendations()
+            RecommendationsEvent.AddToWatchlist -> addToWatchlist()
+            RecommendationsEvent.SkipToNext -> skipToNext()
+            RecommendationsEvent.ShowRatingDialog -> {
+                _uiState.update { it.copy(showRatingDialog = true) }
+            }
+            RecommendationsEvent.DismissRatingDialog -> {
+                _uiState.update { it.copy(showRatingDialog = false) }
+            }
+            RecommendationsEvent.DismissNoCreditsDialog -> {
+                _uiState.update { it.copy(showNoCreditsDialog = false) }
+            }
+            RecommendationsEvent.DismissPurchaseSuccessDialog -> {
+                _uiState.update { it.copy(showPurchaseSuccessDialog = false) }
+            }
+            RecommendationsEvent.DismissMinMoviesDialog -> {
+                _uiState.update { it.copy(showMinMoviesDialog = false) }
+            }
+            is RecommendationsEvent.LaunchPurchaseFlow -> {
+                billingUseCases.launchPurchaseFlow(event.activity)
+                _uiState.update { it.copy(showNoCreditsDialog = false) }
+            }
+            is RecommendationsEvent.MarkAsSeenWithRating -> {
+                markAsSeenWithRating(event.rating)
+            }
+        }
+    }
+
+    private fun addToWatchlist() {
+        val currentRecommendation = _uiState.value.getCurrentRecommendation() ?: return
+        
+        viewModelScope.launch {
+            aiRecsUseCases.acceptToWatchlist(currentRecommendation)
+        }
+    }
+
+    private fun skipToNext() {
+        val currentRecommendation = _uiState.value.getCurrentRecommendation() ?: return
+        
+        viewModelScope.launch {
+            aiRecsUseCases.rejectRecommendation(currentRecommendation.id)
+        }
+    }
+
+    private fun markAsSeenWithRating(rating: Float?) {
+        val currentRecommendation = _uiState.value.getCurrentRecommendation() ?: return
+        
+        viewModelScope.launch {
+            aiRecsUseCases.acceptAsSeen(currentRecommendation, rating)
+            _uiState.update { it.copy(showRatingDialog = false) }
+        }
+    }
+
+    private fun generateAiRecommendations() {
+        val currentState = _uiState.value
+        
+        if (currentState.seenMoviesCount < 5) {
+            _uiState.update { it.copy(showMinMoviesDialog = true) }
             return
         }
-        
-        if (_userCredits.value <= 0) {
-            _showNoCreditsDialog.value = true
+
+        if (currentState.userCredits <= 0) {
+            _uiState.update { it.copy(showNoCreditsDialog = true) }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            
+
             val result = aiRecsUseCases.generateRecommendations()
-            
+
             if (result.isSuccess) {
                 val recommendations = result.getOrNull() ?: emptyList()
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         recommendations = recommendations,
-                        currentIndex = 0,
                         isLoading = false,
                         error = null
                     )
@@ -139,84 +166,21 @@ class RecommendationsViewModel @Inject constructor(
                 val exception = result.exceptionOrNull()
                 when (exception) {
                     is InsufficientCreditsException -> {
-                        _showNoCreditsDialog.value = true
+                        _uiState.update { 
+                            it.copy(
+                                isLoading = false,
+                                showNoCreditsDialog = true
+                            ) 
+                        }
                     }
                     else -> {
                         _uiState.update { 
                             it.copy(
                                 isLoading = false,
                                 error = exception?.message
-                            )
+                            ) 
                         }
                     }
-                }
-            }
-        }
-    }
-
-    fun dismissMinimumMoviesDialog() {
-        _showMinimumMoviesDialog.value = false
-    }
-    
-    fun dismissNoCreditsDialog() {
-        _showNoCreditsDialog.value = false
-    }
-    
-    fun purchaseCredits() {
-        viewModelScope.launch {
-            _events.emit(RecommendationEvent.LaunchPurchaseFlow)
-            dismissNoCreditsDialog()
-        }
-    }
-    
-    fun dismissPurchaseSuccessDialog() {
-        _showPurchaseSuccessDialog.value = false
-    }
-    
-    fun launchPurchaseFlow(activity: android.app.Activity) {
-        billingUseCases.launchPurchaseFlow(activity)
-    }
-
-    fun skipToNext() {
-        val currentRecommendation = _uiState.value.getCurrentRecommendation()
-        if (currentRecommendation != null) {
-            viewModelScope.launch {
-                aiRecsUseCases.rejectRecommendation(currentRecommendation.id)
-                _uiState.update { state ->
-                    state.copy(currentIndex = 0)
-                }
-            }
-        }
-    }
-
-    fun addToWatchlist() {
-        val currentRecommendation = _uiState.value.getCurrentRecommendation()
-        if (currentRecommendation != null) {
-            viewModelScope.launch {
-                aiRecsUseCases.acceptToWatchlist(currentRecommendation)
-                _uiState.update { state ->
-                    state.copy(currentIndex = 0)
-                }
-            }
-        }
-    }
-
-    fun showRatingDialog() {
-        _showRatingDialog.value = true
-    }
-
-    fun dismissRatingDialog() {
-        _showRatingDialog.value = false
-    }
-
-    fun markAsSeenWithRating(rating: Float?) {
-        val currentRecommendation = _uiState.value.getCurrentRecommendation()
-        if (currentRecommendation != null) {
-            viewModelScope.launch {
-                aiRecsUseCases.acceptAsSeen(currentRecommendation, rating)
-                dismissRatingDialog()
-                _uiState.update { state ->
-                    state.copy(currentIndex = 0)
                 }
             }
         }
@@ -225,13 +189,29 @@ class RecommendationsViewModel @Inject constructor(
 
 data class RecommendationsUiState(
     val recommendations: List<Movie> = emptyList(),
-    val currentIndex: Int = 0,
+    val seenMoviesCount: Int = 0,
+    val userCredits: Int = 0,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val showRatingDialog: Boolean = false,
+    val showNoCreditsDialog: Boolean = false,
+    val showPurchaseSuccessDialog: Boolean = false,
+    val showMinMoviesDialog: Boolean = false
 ) {
-    fun getCurrentRecommendation(): Movie? {
-        return recommendations.getOrNull(currentIndex)
-    }
+    fun getCurrentRecommendation(): Movie? = recommendations.firstOrNull()
     
     fun hasRecommendations(): Boolean = recommendations.isNotEmpty()
+}
+
+sealed class RecommendationsEvent {
+    data object GenerateAiRecommendations : RecommendationsEvent()
+    data object AddToWatchlist : RecommendationsEvent()
+    data object SkipToNext : RecommendationsEvent()
+    data object ShowRatingDialog : RecommendationsEvent()
+    data object DismissRatingDialog : RecommendationsEvent()
+    data object DismissNoCreditsDialog : RecommendationsEvent()
+    data object DismissPurchaseSuccessDialog : RecommendationsEvent()
+    data object DismissMinMoviesDialog : RecommendationsEvent()
+    data class LaunchPurchaseFlow(val activity: Activity) : RecommendationsEvent()
+    data class MarkAsSeenWithRating(val rating: Float?) : RecommendationsEvent()
 }

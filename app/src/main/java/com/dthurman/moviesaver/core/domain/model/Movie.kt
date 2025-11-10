@@ -4,6 +4,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.firebase.firestore.PropertyName
 
+// Normally I'd separate data classes and map them when using, but I'm
+// using a single data class for Movie Entity, domain, and DTO for simplicity
+// since they're essentially all the same and mapping logic made things needlessly complicated
 @Entity(tableName = "movie")
 data class Movie(
     @PrimaryKey 

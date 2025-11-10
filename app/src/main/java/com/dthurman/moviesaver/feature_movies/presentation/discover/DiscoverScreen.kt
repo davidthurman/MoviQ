@@ -35,7 +35,7 @@ fun DiscoverScreen(
         modifier = modifier,
         movies = uiState.movies,
         searchHeader = uiState.searchHeader,
-        onSearch = { title -> viewModel.searchForMovies(title) },
+        onSearch = { title -> viewModel.onEvent(DiscoverEvent.SearchMovie(title)) },
         onMovieClick = onMovieClick,
         onSettingsClick = onSettingsClick,
         isLoading = uiState.isLoading,

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -41,15 +42,17 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
             val result = authUseCases.signInWithGoogle(idToken)
-            _uiState.value = if (result.isSuccess) {
-                val user = result.getOrNull()!!
-                Log.d(TAG, "Sign-in successful: ${user.email}")
-                LoginUiState.Success(user)
-            } else {
-                val error = result.exceptionOrNull()?.message 
-                    ?: context.getString(R.string.error_unknown_occurred)
-                Log.e(TAG, "Sign-in failed: $error")
-                LoginUiState.Error(error)
+            _uiState.update {
+                if (result.isSuccess) {
+                    val user = result.getOrNull()!!
+                    Log.d(TAG, "Sign-in successful: ${user.email}")
+                    LoginUiState.Success(user)
+                } else {
+                    val error = result.exceptionOrNull()?.message 
+                        ?: context.getString(R.string.error_unknown_occurred)
+                    Log.e(TAG, "Sign-in failed: $error")
+                    LoginUiState.Error(error)
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,85 +17,92 @@ class DetailViewModel @Inject constructor(
     private val moviesUseCases: MoviesUseCases
 ): ViewModel() {
 
-    private val _movie = MutableStateFlow<Movie?>(null)
-    val movie: StateFlow<Movie?> = _movie.asStateFlow()
-
-    private val _showRatingDialog = MutableStateFlow(false)
-    val showRatingDialog: StateFlow<Boolean> = _showRatingDialog.asStateFlow()
-
-    private val _showUnseenConfirmDialog = MutableStateFlow(false)
-    val showUnseenConfirmDialog: StateFlow<Boolean> = _showUnseenConfirmDialog.asStateFlow()
-
+    private val _uiState = MutableStateFlow(DetailUiState())
+    val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
+    
     fun loadMovie(movie: Movie) {
         viewModelScope.launch {
             val result = moviesUseCases.getMovieById(movie.id)
-            _movie.value = result.getOrNull() ?: movie
+            _uiState.update { it.copy(movie = result.getOrNull() ?: movie) }
+        }
+    }
+    
+    fun onEvent(event: DetailEvent) {
+        val currentMovie = _uiState.value.movie ?: return
+        when (event) {
+            DetailEvent.ToggleFavorite -> {
+                val newFavoriteStatus = !currentMovie.isFavorite
+                viewModelScope.launch {
+                    moviesUseCases.updateFavoriteStatus(currentMovie, newFavoriteStatus)
+                    _uiState.update { it.copy(movie = currentMovie.copy(isFavorite = newFavoriteStatus)) }
+                }
+            }
+            DetailEvent.ToggleWatchlist -> {
+                val newWatchlistStatus = !currentMovie.isWatchlist
+                viewModelScope.launch {
+                    moviesUseCases.updateWatchlistStatus(currentMovie, newWatchlistStatus)
+                    _uiState.update { it.copy(movie = currentMovie.copy(isWatchlist = newWatchlistStatus)) }
+                }
+            }
+            DetailEvent.ToggleSeen -> {
+                if (!currentMovie.isSeen) {
+                    _uiState.update { it.copy(showRatingDialog = true) }
+                } else {
+                    _uiState.update { it.copy(showUnseenConfirmDialog = true) }
+                }
+            }
+            DetailEvent.OpenRatingDialog -> {
+                _uiState.update { it.copy(showRatingDialog = true) }
+            }
+            DetailEvent.DismissRatingDialog -> {
+                _uiState.update { it.copy(showRatingDialog = false) }
+            }
+            DetailEvent.DismissUnseenDialog -> {
+                _uiState.update { it.copy(showUnseenConfirmDialog = false) }
+            }
+            DetailEvent.ConfirmUnseen -> {
+                viewModelScope.launch {
+                    moviesUseCases.updateSeenStatus(currentMovie, false)
+                    moviesUseCases.updateFavoriteStatus(currentMovie, false)
+                    _uiState.update { it.copy(movie = currentMovie.copy(isSeen = false, rating = null, isFavorite = false)) }
+                }
+                _uiState.update { it.copy(showUnseenConfirmDialog = false) }
+            }
+            is DetailEvent.ConfirmSeenWithRating -> {
+                confirmSeenWithRating(currentMovie, event.rating)
+            }
         }
     }
 
-    fun toggleSeen() {
-        val currentMovie = _movie.value ?: return
-        val newSeenStatus = !currentMovie.isSeen
-        
-        if (newSeenStatus) {
-            _showRatingDialog.value = true
-        } else {
-            _showUnseenConfirmDialog.value = true
-        }
-    }
-
-    fun confirmUnseen() {
-        val currentMovie = _movie.value ?: return
-        viewModelScope.launch {
-            moviesUseCases.updateSeenStatus(currentMovie, false)
-            moviesUseCases.updateFavoriteStatus(currentMovie, false)
-            _movie.value = currentMovie.copy(isSeen = false, rating = null, isFavorite = false)
-        }
-        _showUnseenConfirmDialog.value = false
-    }
-
-    fun dismissUnseenDialog() {
-        _showUnseenConfirmDialog.value = false
-    }
-
-    fun confirmSeenWithRating(rating: Float?) {
-        val currentMovie = _movie.value ?: return
+    private fun confirmSeenWithRating(currentMovie: Movie, rating: Float?) {
         viewModelScope.launch {
             if (!currentMovie.isSeen) {
                 moviesUseCases.updateSeenStatus(currentMovie, true, rating)
-                _movie.value = currentMovie.copy(isSeen = true, isWatchlist = false, rating = rating)
+                _uiState.update { it.copy(movie = currentMovie.copy(isSeen = true, isWatchlist = false, rating = rating)) }
             } else if (rating != null) {
                 moviesUseCases.updateRating(currentMovie, rating)
-                _movie.value = currentMovie.copy(rating = rating)
+                _uiState.update { it.copy(movie = currentMovie.copy(rating = rating)) }
             }
         }
-        _showRatingDialog.value = false
+        _uiState.update { it.copy(showRatingDialog = false) }
     }
+}
 
-    fun dismissRatingDialog() {
-        _showRatingDialog.value = false
-    }
+data class DetailUiState(
+    val movie: Movie? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val showRatingDialog: Boolean = false,
+    val showUnseenConfirmDialog: Boolean = false
+)
 
-    fun openRatingDialog() {
-        _showRatingDialog.value = true
-    }
-
-    fun toggleWatchlist() {
-        val currentMovie = _movie.value ?: return
-        val newWatchlistStatus = !currentMovie.isWatchlist
-        viewModelScope.launch {
-            moviesUseCases.updateWatchlistStatus(currentMovie, newWatchlistStatus)
-            _movie.value = currentMovie.copy(isWatchlist = newWatchlistStatus)
-        }
-    }
-
-    fun toggleFavorite() {
-        val currentMovie = _movie.value ?: return
-        val newFavoriteStatus = !currentMovie.isFavorite
-        viewModelScope.launch {
-            moviesUseCases.updateFavoriteStatus(currentMovie, newFavoriteStatus)
-            _movie.value = currentMovie.copy(isFavorite = newFavoriteStatus)
-        }
-    }
-
+sealed class DetailEvent {
+    object ToggleFavorite: DetailEvent()       
+    object ToggleWatchlist: DetailEvent()
+    object ToggleSeen: DetailEvent()
+    object OpenRatingDialog: DetailEvent()
+    object DismissRatingDialog: DetailEvent()
+    object DismissUnseenDialog: DetailEvent()
+    object ConfirmUnseen: DetailEvent()
+    data class ConfirmSeenWithRating(val rating: Float?): DetailEvent()
 }

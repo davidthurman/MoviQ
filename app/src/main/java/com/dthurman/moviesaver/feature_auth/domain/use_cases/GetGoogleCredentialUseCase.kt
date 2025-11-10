@@ -12,7 +12,6 @@ import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 class GetGoogleCredentialUseCase @Inject constructor(
@@ -21,41 +20,20 @@ class GetGoogleCredentialUseCase @Inject constructor(
     
     companion object {
         private const val TAG = "GetGoogleCredential"
-        private const val MAX_RETRIES = 2
-        private const val INITIAL_RETRY_DELAY_MS = 500L
     }
     
     suspend operator fun invoke(context: Context, webClientId: String): Result<String> {
-        var lastException: Exception? = null
-        
-        repeat(MAX_RETRIES + 1) { attempt ->
-            if (attempt > 0) {
-                val delayMs = INITIAL_RETRY_DELAY_MS * (1 shl (attempt - 1))
-                Log.w(TAG, "Retry attempt $attempt after ${delayMs}ms delay")
-                delay(delayMs)
-            }
-            
-            val result = attemptGetCredential(context, webClientId, attempt + 1)
-            if (result.isSuccess) {
-                return result
-            }
-            
-            lastException = result.exceptionOrNull() as? Exception
-            
-            if (lastException is GetCredentialCancellationException) {
-                Log.d(TAG, "User cancelled - not retrying")
-                return result
-            }
+        val result = attemptGetCredential(context, webClientId)
+        return if (result.isSuccess) {
+            result
+        } else {
+            Result.failure(result.exceptionOrNull() ?: Exception("Failed to get credentials"))
         }
-        
-        Log.e(TAG, "All retry attempts exhausted")
-        return Result.failure(lastException ?: Exception("Failed to get credentials after $MAX_RETRIES retries"))
+
     }
     
-    private suspend fun attemptGetCredential(context: Context, webClientId: String, attemptNumber: Int): Result<String> {
+    private suspend fun attemptGetCredential(context: Context, webClientId: String): Result<String> {
         return try {
-            Log.d(TAG, "Attempt #$attemptNumber: Starting credential flow (context: ${context.javaClass.simpleName})")
-            
             val credentialManager = CredentialManager.create(context)
             
             val googleIdOption = GetGoogleIdOption.Builder()

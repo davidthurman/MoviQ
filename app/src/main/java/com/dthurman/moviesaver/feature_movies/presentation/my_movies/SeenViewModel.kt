@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,26 +29,21 @@ class SeenViewModel @Inject constructor(
     fun onEvent(event: SeenEvent) {
         when (event) {
             SeenEvent.ToggleSortMenu -> {
-                _state.value = _state.value.copy(showSortMenu = true)
+                _state.update { it.copy(showSortMenu = true) }
             }
             SeenEvent.DismissSortMenu -> {
-                _state.value = _state.value.copy(showSortMenu = false)
+                _state.update { it.copy(showSortMenu = false) }
             }
             SeenEvent.FavoritesToggled -> {
-                _state.value = _state.value.copy(
-                    showFavoritesOnly = !_state.value.showFavoritesOnly
-                )
+                _state.update { it.copy(showFavoritesOnly = !it.showFavoritesOnly) }
                 loadMovies()
             }
             is SeenEvent.FilterChange -> {
-                _state.value = _state.value.copy(selectedFilter = event.filter)
+                _state.update { it.copy(selectedFilter = event.filter) }
                 loadMovies()
             }
             is SeenEvent.OrderChange -> {
-                _state.value = _state.value.copy(
-                    sortOrder = event.order,
-                    showSortMenu = false
-                )
+                _state.update { it.copy(sortOrder = event.order, showSortMenu = false) }
                 loadMovies()
             }
         }
@@ -55,7 +51,7 @@ class SeenViewModel @Inject constructor(
 
     private fun loadMovies() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
+            _state.update { it.copy(isLoading = true) }
             
             val filter = when (_state.value.selectedFilter) {
                 is MovieFilter.SeenMovies -> MovieFilter.SeenMovies(_state.value.sortOrder)
@@ -70,10 +66,7 @@ class SeenViewModel @Inject constructor(
                     movies
                 }
                 
-                _state.value = _state.value.copy(
-                    movies = filteredMovies,
-                    isLoading = false
-                )
+                _state.update { it.copy(movies = filteredMovies, isLoading = false) }
             }
         }
     }

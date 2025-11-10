@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,13 +29,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.core.util.TestTags
@@ -55,34 +57,33 @@ fun DetailScreen(
     LaunchedEffect(movie.id) {
         viewModel.loadMovie(movie)
     }
-
-    val observedMovie by viewModel.movie.collectAsState()
-    val currentMovie = observedMovie ?: movie
-    val showRatingDialog by viewModel.showRatingDialog.collectAsState()
-    val showUnseenConfirmDialog by viewModel.showUnseenConfirmDialog.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
     DetailScreen(
-        movie = currentMovie,
-        toggleSeen = { viewModel.toggleSeen() },
-        toggleFavorite = { viewModel.toggleFavorite() },
-        toggleWatchlist = { viewModel.toggleWatchlist() },
-        onRatingClick = { viewModel.openRatingDialog() },
+        movie = uiState.movie ?: movie,
+        toggleSeen = { viewModel.onEvent(DetailEvent.ToggleSeen) },
+        toggleFavorite = { viewModel.onEvent(DetailEvent.ToggleFavorite) },
+        toggleWatchlist = { viewModel.onEvent(DetailEvent.ToggleWatchlist) },
+        onRatingClick = { viewModel.onEvent(DetailEvent.OpenRatingDialog) },
         modifier = modifier,
     )
 
-    if (showRatingDialog) {
-        RatingDialog(
-            movieTitle = currentMovie.title,
-            currentRating = currentMovie.rating,
-            onDismiss = { viewModel.dismissRatingDialog() },
-            onRatingSelected = { rating -> viewModel.confirmSeenWithRating(rating) }
-        )
+    if (uiState.showRatingDialog) {
+        uiState.movie?.let {
+            RatingDialog(
+                movieTitle = it.title,
+                currentRating = it.rating,
+                onDismiss = { viewModel.onEvent(DetailEvent.DismissRatingDialog) },
+                onRatingSelected = { rating -> viewModel.onEvent(DetailEvent.ConfirmSeenWithRating(rating)) }
+            )
+        }
+
     }
 
-    if (showUnseenConfirmDialog) {
+    if (uiState.showUnseenConfirmDialog) {
         RemoveFromSeenDialog(
-            onDismiss = { viewModel.dismissUnseenDialog() },
-            onConfirm = { viewModel.confirmUnseen() },
+            onDismiss = { viewModel.onEvent(DetailEvent.DismissUnseenDialog) },
+            onConfirm = { viewModel.onEvent(DetailEvent.ConfirmUnseen) },
             currentMovie = movie
         )
     }
@@ -177,13 +178,17 @@ private fun DetailImage(
     toggleFavorite: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
     ) {
         SubcomposeAsyncImage(
-            model = movie.backdropUrl,
+            model = ImageRequest.Builder(context)
+                .data(movie.backdropUrl)
+                .crossfade(true)
+                .build(),
             contentDescription = movie.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
