@@ -1,5 +1,4 @@
 package com.dthurman.moviesaver.feature_movies.presentation.detail
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -111,7 +110,8 @@ internal fun DetailScreen(
             text = movie.title,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.testTag(TestTags.DETAIL_MOVIE_TITLE)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -128,14 +128,15 @@ internal fun DetailScreen(
                     rating = movie.rating,
                     starSize = 20.dp,
                     spacing = 4.dp,
-                    onClick = { onRatingClick() }
+                    onClick = { onRatingClick() },
+                    modifier = Modifier.testTag(TestTags.DETAIL_RATING_DISPLAY)
                 )
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
             PrimaryButton(
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier.fillMaxWidth().weight(1f).testTag(TestTags.DETAIL_WATCHLIST_BUTTON),
                 text = stringResource(R.string.watchlist),
                 onClick = toggleWatchlist,
                 isFilled = movie.isWatchlist,
@@ -144,7 +145,7 @@ internal fun DetailScreen(
             )
             Spacer(Modifier.width(16.dp))
             PrimaryButton(
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier.fillMaxWidth().weight(1f).testTag(TestTags.DETAIL_SEEN_BUTTON),
                 text = stringResource(R.string.seen),
                 onClick = toggleSeen,
                 isFilled = movie.isSeen,
@@ -164,7 +165,8 @@ internal fun DetailScreen(
             text = movie.overview,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
+            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight,
+            modifier = Modifier.testTag(TestTags.DETAIL_MOVIE_OVERVIEW)
         )
     }
 }

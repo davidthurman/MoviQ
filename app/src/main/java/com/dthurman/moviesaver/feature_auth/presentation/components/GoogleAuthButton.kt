@@ -19,12 +19,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dthurman.moviesaver.R
+import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.ui.theme.extendedColors
 
 @Composable
@@ -43,7 +45,8 @@ fun GoogleAuthButton(
                 width = 1.dp,
                 color = MaterialTheme.extendedColors.googleButtonBorder,
                 shape = RoundedCornerShape(4.dp)
-            ),
+            )
+            .testTag(TestTags.LOGIN_GOOGLE_BUTTON),
         shape = RoundedCornerShape(4.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.extendedColors.googleButtonBackground,
@@ -55,7 +58,9 @@ fun GoogleAuthButton(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier
+                    .size(24.dp)
+                    .testTag(TestTags.LOGIN_LOADING_INDICATOR),
                 color = MaterialTheme.extendedColors.googleButtonText
             )
         } else {

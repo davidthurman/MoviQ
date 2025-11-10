@@ -29,12 +29,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.domain.model.User
+import com.dthurman.moviesaver.core.util.TestTags
 
 @Composable
 fun SettingsModal(
@@ -47,7 +49,8 @@ fun SettingsModal(
 ) {
     Surface(
         modifier = modifier
-            .fillMaxWidth(0.9f),
+            .fillMaxWidth(0.9f)
+            .testTag(TestTags.SETTINGS_MODAL),
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 6.dp
@@ -85,7 +88,8 @@ fun SettingsModal(
                 }
                 Switch(
                     checked = isDarkMode,
-                    onCheckedChange = onThemeToggle
+                    onCheckedChange = onThemeToggle,
+                    modifier = Modifier.testTag(TestTags.SETTINGS_THEME_SWITCH)
                 )
             }
             
@@ -124,13 +128,15 @@ fun SettingsModal(
                         Text(
                             text = currentUser.displayName ?: stringResource(R.string.user_default_name),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.testTag(TestTags.SETTINGS_USER_NAME)
                         )
                         if (currentUser.email != null) {
                             Text(
                                 text = currentUser.email,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.testTag(TestTags.SETTINGS_USER_EMAIL)
                             )
                         }
                     }
@@ -146,7 +152,8 @@ fun SettingsModal(
                             width = 1.dp,
                             color = MaterialTheme.colorScheme.error,
                             shape = RoundedCornerShape(8.dp)
-                        ),
+                        )
+                        .testTag(TestTags.SETTINGS_SIGN_OUT_BUTTON),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
                         contentColor = MaterialTheme.colorScheme.error
@@ -166,7 +173,10 @@ fun SettingsModal(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag(TestTags.SETTINGS_CLOSE_BUTTON)
+                ) {
                     Text(stringResource(R.string.close))
                 }
             }

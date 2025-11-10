@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
+import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.feature_auth.presentation.components.GoogleAuthButton
 import kotlinx.coroutines.launch
 
@@ -65,7 +67,9 @@ fun LoginScreen(
                 Image(
                     painter = painterResource(id = R.drawable.movie_icon),
                     contentDescription = stringResource(R.string.app_logo_content_description),
-                    modifier = Modifier.size(200.dp)
+                    modifier = Modifier
+                        .size(200.dp)
+                        .testTag(TestTags.APP_LOGO)
                 )
 
                 Text(
@@ -98,7 +102,8 @@ fun LoginScreen(
                     Text(
                         text = (uiState as LoginUiState.Error).message,
                         color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.testTag(TestTags.LOGIN_ERROR_MESSAGE)
                     )
                 }
             }

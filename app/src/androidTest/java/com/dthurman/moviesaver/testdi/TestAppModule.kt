@@ -186,24 +186,10 @@ object TestAppModule {
     @Provides
     @Singleton
     fun provideAuthRepository(
-        firebaseAuth: FirebaseAuth,
-        userRemoteDataSource: UserRemoteDataSource,
-        localDataManager: LocalDataManager,
-        movieSyncService: MovieSyncService,
-        userRepository: UserRepositoryImpl,
-        syncManager: SyncManager,
-        analytics: AnalyticsTracker,
-        errorLogger: ErrorLogger
+        userRepository: UserRepository
     ): AuthRepository {
-        return AuthRepositoryImpl(
-            firebaseAuth,
-            userRemoteDataSource,
-            localDataManager,
-            movieSyncService,
-            userRepository,
-            syncManager,
-            analytics,
-            errorLogger
+        return com.dthurman.moviesaver.feature_auth.data.repository.FakeAuthRepository(
+            userRepository as FakeUserRepository
         )
     }
 

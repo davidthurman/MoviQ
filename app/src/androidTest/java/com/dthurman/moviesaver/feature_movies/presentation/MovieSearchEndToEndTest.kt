@@ -29,7 +29,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @UninstallModules(AppModule::class, AppBindingModule::class)
-class DiscoverEndToEndTest {
+class MovieSearchEndToEndTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
