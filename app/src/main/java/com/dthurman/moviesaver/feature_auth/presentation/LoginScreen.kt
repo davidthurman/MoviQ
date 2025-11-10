@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +31,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.R
 import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.feature_auth.presentation.components.GoogleAuthButton
-import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -40,12 +38,11 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val webClientId = context.getString(R.string.default_web_client_id)
 
-    LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Success) {
-            viewModel.resetState()
+    LaunchedEffect(uiState.user) {
+        if (uiState.user != null) {
+            viewModel.onEvent(LoginEvent.ResetState)
         }
     }
 
@@ -90,17 +87,15 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(40.dp))
                 GoogleAuthButton(
                     onClick = {
-                        coroutineScope.launch {
-                            viewModel.handleGoogleSignIn(context, webClientId)
-                        }
+                        viewModel.onEvent(LoginEvent.SignInWithGoogle(context, webClientId))
                     },
-                    isLoading = uiState is LoginUiState.Loading
+                    isLoading = uiState.isLoading
                 )
 
-                if (uiState is LoginUiState.Error) {
+                if (uiState.error != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = (uiState as LoginUiState.Error).message,
+                        text = uiState.error ?: "",
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.testTag(TestTags.LOGIN_ERROR_MESSAGE)

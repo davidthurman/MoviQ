@@ -14,6 +14,7 @@ import androidx.core.content.edit
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dthurman.moviesaver.feature_auth.presentation.LoginEvent
 import com.dthurman.moviesaver.feature_auth.presentation.LoginScreen
 import com.dthurman.moviesaver.feature_auth.presentation.LoginViewModel
 import com.dthurman.moviesaver.ui.theme.AppTheme
@@ -56,7 +57,7 @@ class MainActivity : ComponentActivity() {
                             isDarkMode = newValue
                             sharedPreferences.edit { putBoolean("is_dark_mode", newValue) }
                         },
-                        onSignOut = { loginViewModel.signOut() }
+                        onSignOut = { loginViewModel.onEvent(LoginEvent.SignOut) }
                     )
                 }
             }

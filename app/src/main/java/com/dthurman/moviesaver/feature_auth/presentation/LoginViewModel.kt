@@ -1,7 +1,6 @@
 package com.dthurman.moviesaver.feature_auth.presentation
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dthurman.moviesaver.R
@@ -24,11 +23,7 @@ class LoginViewModel @Inject constructor(
     private val errorLogger: ErrorLogger
 ) : ViewModel() {
 
-    companion object {
-        private const val TAG = "LoginViewModel"
-    }
-
-    private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Initial)
+    private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     val currentUser: StateFlow<User?> = authUseCases.observeCurrentUser()
@@ -38,61 +33,65 @@ class LoginViewModel @Inject constructor(
             initialValue = null
         )
 
-    fun signInWithGoogle(idToken: String, context: Context) {
-        viewModelScope.launch {
-            _uiState.value = LoginUiState.Loading
-            val result = authUseCases.signInWithGoogle(idToken)
-            _uiState.update {
-                if (result.isSuccess) {
-                    val user = result.getOrNull()!!
-                    Log.d(TAG, "Sign-in successful: ${user.email}")
-                    LoginUiState.Success(user)
-                } else {
-                    val error = result.exceptionOrNull()?.message 
-                        ?: context.getString(R.string.error_unknown_occurred)
-                    Log.e(TAG, "Sign-in failed: $error")
-                    LoginUiState.Error(error)
+    fun onEvent(event: LoginEvent) {
+        when (event) {
+            is LoginEvent.SignInWithGoogle -> handleGoogleSignIn(event.context, event.webClientId)
+            LoginEvent.ResetState -> {
+                _uiState.update { it.copy(user = null, error = null) }
+            }
+            LoginEvent.SignOut -> {
+                viewModelScope.launch {
+                    authUseCases.signOut()
+                    _uiState.update { it.copy(user = null, error = null) }
                 }
             }
         }
     }
 
-    fun resetState() {
-        _uiState.value = LoginUiState.Initial
-    }
-
-    fun signOut() {
+    private fun handleGoogleSignIn(context: Context, webClientId: String) {
         viewModelScope.launch {
-            Log.d(TAG, "User signed out")
-            authUseCases.signOut()
-            _uiState.value = LoginUiState.Initial
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            
+            val credentialResult = authUseCases.getGoogleCredential(context, webClientId)
+            
+            if (credentialResult.isSuccess) {
+                val idToken = credentialResult.getOrNull()!!
+                signInWithGoogle(idToken, context)
+            } else {
+                val exception = credentialResult.exceptionOrNull()!!
+                val errorMessage = exception.message ?: context.getString(R.string.error_unknown_occurred)
+                errorLogger.logAuthError(exception)
+                _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+            }
         }
     }
 
-    suspend fun handleGoogleSignIn(context: Context, webClientId: String) {
-        Log.d(TAG, "Starting Google sign-in flow")
-        
-        _uiState.value = LoginUiState.Loading
-        
-        val credentialResult = authUseCases.getGoogleCredential(context, webClientId)
-        
-        if (credentialResult.isSuccess) {
-            val idToken = credentialResult.getOrNull()!!
-            signInWithGoogle(idToken, context)
-        } else {
-            val exception = credentialResult.exceptionOrNull()!!
-            val errorMessage = exception.message ?: context.getString(R.string.error_unknown_occurred)
-            Log.e(TAG, "Credential error: $errorMessage")
-            errorLogger.logAuthError(exception)
-            _uiState.value = LoginUiState.Error(errorMessage)
+    private fun signInWithGoogle(idToken: String, context: Context) {
+        viewModelScope.launch {
+            val result = authUseCases.signInWithGoogle(idToken)
+            _uiState.update {
+                if (result.isSuccess) {
+                    val user = result.getOrNull()!!
+                    it.copy(isLoading = false, user = user, error = null)
+                } else {
+                    val error = result.exceptionOrNull()?.message 
+                        ?: context.getString(R.string.error_unknown_occurred)
+                    it.copy(isLoading = false, error = error)
+                }
+            }
         }
     }
 }
 
-sealed class LoginUiState {
-    data object Initial : LoginUiState()
-    data object Loading : LoginUiState()
-    data class Success(val user: User) : LoginUiState()
-    data class Error(val message: String) : LoginUiState()
+data class LoginUiState(
+    val user: User? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+sealed class LoginEvent {
+    data class SignInWithGoogle(val context: Context, val webClientId: String) : LoginEvent()
+    data object ResetState : LoginEvent()
+    data object SignOut : LoginEvent()
 }
 
