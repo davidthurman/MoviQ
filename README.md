@@ -1,293 +1,254 @@
 # MoviQ
-
-<img width="1231" height="679" alt="MoviQ cover image" src="https://github.com/user-attachments/assets/8ba41ce2-9383-409c-8416-3fcd75f58aae" />
-
+![MoviQGithubBanner](https://github.com/user-attachments/assets/f0f8d20b-8e80-4f29-9968-b472ae38aa51)
 [![Android](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple.svg)](https://kotlinlang.org/)
 [![Min SDK](https://img.shields.io/badge/Min%20SDK-23-blue.svg)](https://developer.android.com/about/versions/marshmallow)
 [![Target SDK](https://img.shields.io/badge/Target%20SDK-36-blue.svg)](https://developer.android.com/)
 
-## 📖 About
-
-I've always found that there aren't a lot of **great** examples of modern Android apps for new developers to refer to. And of the ones out there, few are built with best practices and designed to scale, like you would find in real major tech companies.
-
-So with that in mind, I wanted to build an app using the latest Android tech stack in order to refresh myself and to allow other devs to reference. MoviQ is designed as an open source Android app using modern best practices for other Android developers (and my future self 😊) to reference.
+> **Track your movies. Get AI-powered recommendations. Built with modern Android best practices.**
 
 ## 🎬 What is MoviQ?
+MoviQ helps you manage your movie watchlist and discover new films using AI. Mark movies as seen, rate your favorites, and let Gemini 2.0 suggest what to watch next based on your taste.
 
-MoviQ is a smart way to track and discover new movies using AI-powered recommendations.
+> **Why this repo exists:** I built MoviQ as a reference for Android developers looking for real-world examples of apps using scalable Clean Architecture, Jetpack Compose, Firebase integration, and comprehensive testing. It's the kind of codebase I wish I had when learning modern Android development.
 
-### Core Features
 
-- **🔍 Discover Movies** - Search and browse popular movies from The Movie Database (TMDB)
-- **📋 Watchlist Management** - Save movies you want to watch later
-- **✅ Track Watched Movies** - Mark movies as seen and rate them (1-5 stars)
-- **⭐ Favorites** - Mark your favorite movies for quick access
-- **🤖 AI-Powered Recommendations** - Get personalized movie suggestions based on your watch history and ratings using Firebase Vertex AI (Gemini 2.0)
-- **☁️ Cloud Sync** - Your movie data syncs across devices via Firebase Firestore
-- **🔐 Google Authentication** - Secure sign-in with Google
-- **💳 In-App Purchases** - Purchase AI recommendation credits via Google Play Billing
-- **🌙 Dark Mode** - Full dark mode support with Material 3 theming
-- **📊 Analytics & Crash Reporting** - Firebase Analytics and Crashlytics integration
+| 🎬 Track Movies You Watch | ❤️ Rate & Mark Your Favorites | ✨ Get AI Recs on What to Watch | 🔎 Find New Films Tailored to You |
+| - | - | - | - |
+| <img width="1947" height="3632" alt="Screenshot_20251102_161458-portrait" src="https://github.com/user-attachments/assets/3fdd979a-e00c-48ce-b2c0-3d423073944c" /> | <img width="1947" height="3632" alt="Screenshot_20251102_165001-portrait" src="https://github.com/user-attachments/assets/fc70356e-f632-49e3-a844-3e8443fe00fe" /> | <img width="1947" height="3632" alt="Screenshot_20251102_162345-portrait" src="https://github.com/user-attachments/assets/771b07ee-9efa-4060-b673-3850f50849d2" /> | <img width="1947" height="3632" alt="Screenshot_20251102_162452-portrait" src="https://github.com/user-attachments/assets/cc4cf772-0ca8-4fd4-a335-f660bc107c2d" /> |
+
+
+---
 
 ## 🏗️ Architecture
 
-The app follows **Clean Architecture** principles and Google's recommended architecture guidelines, organized into clear layers:
+Built with **Clean Architecture** + **MVI Pattern** following [Google's recommended architecture](https://developer.android.com/topic/architecture).
 
-<img width="1725" height="1005" alt="Clean Architecture Diagram" src="https://github.com/user-attachments/assets/010f6840-dfd3-480e-88f5-82c1a5506c5d" />
+```mermaid
+graph LR
+    subgraph Presentation["🎨 Presentation Layer"]
+        UI[Jetpack Compose UI]
+        VM[ViewModels + MVI]
+    end
+    
+    subgraph Domain["⚙️ Domain Layer"]
+        UC[Use Cases]
+        RI[Repository Interfaces]
+    end
+    
+    subgraph Data["💾 Data Layer"]
+        REPO[Repository Implementations]
+        LOCAL[(Room Database)]
+        REMOTE[(Firestore)]
+        API[TMDB API]
+    end
+    
+    UI --> VM
+    VM --> UC
+    UC --> RI
+    RI --> REPO
+    REPO --> LOCAL
+    REPO --> REMOTE
+    REPO --> API
+    
+    style Presentation fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#000
+    style Domain fill:#fff3e0,stroke:#ef6c00,stroke-width:3px,color:#000
+    style Data fill:#f3e5f5,stroke:#6a1b9a,stroke-width:3px,color:#000
+    style UI fill:#bbdefb,stroke:#1565c0,stroke-width:2px,color:#000
+    style VM fill:#bbdefb,stroke:#1565c0,stroke-width:2px,color:#000
+    style UC fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px,color:#000
+    style RI fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px,color:#000
+    style REPO fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style LOCAL fill:#c5e1a5,stroke:#558b2f,stroke-width:2px,color:#000
+    style REMOTE fill:#c5e1a5,stroke:#558b2f,stroke-width:2px,color:#000
+    style API fill:#c5e1a5,stroke:#558b2f,stroke-width:2px,color:#000
+```
 
-### Layer Breakdown
+| Layer | Responsibilities | Key Technologies |
+|-------|------------------|------------------|
+| **Presentation** | UI components, ViewModels, state management | Jetpack Compose, Material 3, MVI |
+| **Domain** | Business logic, use cases, repository contracts | Kotlin, Coroutines, Flow |
+| **Data** | Data sources, repositories, sync logic | Room, Firestore, Retrofit, WorkManager |
 
-#### **Presentation Layer** (UI + ViewModels)
-- Built with **Jetpack Compose** and **Material 3**
-- Follows **MVI (Model-View-Intent)** pattern
-- ViewModels manage UI state using `StateFlow`
-- Unidirectional data flow with sealed classes for events
-- Hilt for dependency injection
+<details open>
+<summary><b>📋 Key Architectural Patterns</b></summary>
 
-#### **Domain Layer** (Business Logic)
-- Contains use cases that encapsulate business logic
-- Repository interfaces define data contracts
-- Domain models (entities) are framework-agnostic
-- Single Responsibility Principle - each use case does one thing
+- **Offline-First:** Room as single source of truth with cloud sync
+- **Unidirectional Data Flow:** MVI pattern with sealed classes
+- **Dependency Injection:** Hilt for compile-time DI
+- **Background Sync:** WorkManager with conflict resolution
+- **Repository Pattern:** Abstract data sources from business logic
+- **Use Case Pattern:** Single responsibility for each business operation
 
-#### **Data Layer** (Data Sources)
-- Repository implementations coordinate between data sources
-- **Local**: Room database for offline-first architecture
-- **Remote**: Firebase Firestore for cloud sync, Retrofit for TMDB API
-- Data sync with conflict resolution based on timestamps
-- Background sync using WorkManager
+</details>
 
-### Key Architectural Patterns
-
-- **Clean Architecture** - Separation of concerns with clear dependencies
-- **MVI Pattern** - Predictable state management in presentation layer
-- **Repository Pattern** - Abstract data sources from business logic
-- **Use Case Pattern** - Encapsulate business logic in reusable components
-- **Dependency Injection** - Hilt for compile-time DI
-- **Offline-First** - Room as source of truth, sync to cloud when available
+---
 
 ## 🛠️ Tech Stack
 
-### UI & Design
-- **Jetpack Compose** - Modern declarative UI toolkit
-- **Material 3** - Latest Material Design components and theming
-- **Coil** - Image loading with memory/disk caching
-- **Splash Screen API** - Native splash screen implementation with animation
+<details open>
+<summary><b>Core Android</b></summary>
 
-### Data & Persistence
-- **Room** - Local SQLite database with coroutines support
-- **Firebase Firestore** - Cloud NoSQL database for sync
-- **DataStore** - Type-safe data storage for preferences
-- **WorkManager** - Background sync with constraints (network, battery)
+- **Jetpack Compose** - UI
+- **Material 3** - Google's Current Design System
+- **Hilt** - Dependency injection
+- **Navigation Compose** - Type-safe navigation
+- **Lifecycle & ViewModel** - State management
 
-### Networking
-- **Retrofit** - Type-safe HTTP client
-- **Gson** - JSON serialization/deserialization
-- **OkHttp** - HTTP client (via Retrofit)
+- **Additional Features:** Cloud sync across devices • Google Sign-In • In-app purchases • Dark mode • Offline-first
 
-### AI & Machine Learning
-- **Firebase Vertex AI** - Gemini 2.0 Flash for personalized recommendations
-- Custom prompt engineering for movie suggestions
+</details>
 
-### Authentication & Billing
-- **Firebase Authentication** - Google Sign-In integration
-- **Google Play Billing** - In-app purchases for AI credits
-- **Credential Manager** - Modern credential handling
+<details>
+<summary><b>Data & Networking</b></summary>
 
-### Dependency Injection
-- **Hilt** - Compile-time DI built on Dagger
-- **Hilt ViewModel** - ViewModel injection
-- **Hilt Worker** - WorkManager integration
+- **Room** - Local database (SQLite)
+- **Retrofit** - REST API client
+- **Coil** - Image loading & caching
+- **DataStore** - Preferences storage
+- **WorkManager** - Background tasks
 
-### Observability
-- **Firebase Crashlytics** - Crash reporting and analysis
-- **Firebase Analytics** - User behavior tracking
-- Custom error logging abstraction
+</details>
 
-### Testing
-- **JUnit 4** - Unit testing framework
-- **Truth** - Fluent assertions library
-- **Espresso** - UI testing framework
-- **Compose UI Test** - Compose-specific UI testing
-- **Hilt Testing** - DI for tests
-- **Coroutines Test** - Testing coroutines and flows
-- **Fake Repositories** - Test doubles for isolation
-- **End-to-End Tests** - Complete user flow testing
+<details>
+<summary><b>Firebase Services</b></summary>
 
-### Build & Tooling
-- **Gradle Version Catalogs** - Centralized dependency management
-- **KSP** - Kotlin Symbol Processing (faster than kapt)
-- **ProGuard** - Code shrinking and obfuscation for release builds
-- **Kotlin 2.1.0** - Latest Kotlin with compiler improvements
+- **Authentication** - Google Sign-In
+- **Firestore** - Cloud database
+- **Vertex AI** - Gemini 2.0 for recommendations
+- **Crashlytics** - Error tracking
+- **Analytics** - User insights
+
+</details>
+
+<details>
+<summary><b>Testing</b></summary>
+
+- **JUnit 4** - Unit testing
+- **Truth** - Assertions
+- **Espresso** - UI testing
+- **Compose Test** - Compose UI tests
+- **Hilt Testing** - DI in tests
+
+</details>
+
+---
 
 ## 📁 Project Structure
 
+Feature-based modularization with clear separation of concerns:
+
 ```
 app/src/main/java/com/dthurman/moviesaver/
-├── core/                           # Core shared functionality
-│   ├── app/                        # App-level components (MainActivity, Navigation, Scaffold)
-│   ├── data/                       # Core data implementations
-│   │   ├── local/                  # Room database (MovieDao, MovieDatabase)
-│   │   ├── remote/                 # Firestore data sources
-│   │   ├── repository/             # Core repository implementations
-│   │   └── sync/                   # Sync logic (MovieSyncService, SyncManager)
-│   ├── domain/                     # Core domain models and contracts
-│   │   ├── model/                  # Domain entities (Movie, User, SyncState)
-│   │   ├── repository/             # Repository interfaces
-│   │   └── use_cases/              # Core use cases
-│   ├── observability/              # Analytics and error logging
-│   └── util/                       # Utilities and test tags
 │
-├── di/                             # Dependency injection modules
-│   ├── AppModule.kt                # Main DI module (300+ lines of providers)
-│   └── ObservabilityModule.kt     # Analytics/logging DI
+├── 🎯 core/                    # Shared functionality
+│   ├── app/                    # MainActivity, Navigation, Scaffold
+│   ├── data/                   # Room DB, sync logic
+│   ├── domain/                 # Core models (Movie, User)
+│   └── observability/          # Analytics & error logging
 │
-├── feature_movies/                 # Movie management feature
-│   ├── data/
-│   │   ├── remote/
-│   │   │   ├── data_source/        # Firestore movie data source
-│   │   │   ├── movie_information/  # TMDB API integration
-│   │   │   └── themoviedb/         # TMDB DTOs and API interface
-│   │   ├── repository/             # Movie repository implementation
-│   │   └── sync/                   # Background sync worker
-│   ├── domain/
-│   │   ├── repository/             # Movie repository interface
-│   │   └── use_cases/              # 8 movie-related use cases
-│   └── presentation/
-│       ├── discover/               # Search and discover movies
-│       ├── detail/                 # Movie detail bottom sheet
-│       ├── my_movies/              # User's movie lists (seen, watchlist)
-│       └── shared/                 # Shared UI components
+├── 🎬 feature_movies/          # Movie management
+│   ├── data/                   # TMDB API, Firestore sync
+│   ├── domain/                 # 8 use cases (search, rate, etc.)
+│   └── presentation/           # Discover, Detail, My Movies screens
 │
-├── feature_ai_recs/                # AI recommendations feature
-│   ├── data/
-│   │   └── repository/             # AI service and repository
-│   ├── domain/
-│   │   ├── repository/             # AI repository interface
-│   │   └── use_cases/              # 7 AI-related use cases
-│   └── presentation/               # Recommendations screen and components
+├── 🤖 feature_ai_recs/         # AI recommendations
+│   ├── data/                   # Vertex AI integration
+│   ├── domain/                 # 7 use cases
+│   └── presentation/           # Recommendations screen
 │
-├── feature_auth/                   # Authentication feature
-│   ├── data/
-│   │   └── repository/             # Auth repository implementation
-│   ├── domain/
-│   │   ├── AuthRepository.kt       # Auth repository interface
-│   │   └── use_cases/              # 4 auth use cases
-│   └── presentation/               # Login screen and Google auth button
-│
-├── feature_billing/                # In-app billing feature
-│   ├── data/
-│   │   └── repository/             # Billing repository implementation
-│   ├── domain/
-│   │   ├── BillingManager.kt       # Google Play Billing wrapper
-│   │   ├── repository/             # Billing repository interface
-│   │   └── use_cases/              # 4 billing use cases
-│
-└── ui/                             # Shared UI components and theme
-    ├── components/                 # Settings modal, top bar
-    └── theme/                      # Material 3 theme, colors, typography
+├── 🔐 feature_auth/            # Authentication
+├── 💳 feature_billing/         # In-app purchases
+└── 🎨 ui/                      # Shared components & theme
 ```
 
-## 🔄 Data Flow & Sync Strategy
+---
 
-### Offline-First Architecture
+## 🔄 Offline-First Sync Strategy
 
-1. **Room is the Single Source of Truth**
-   - All UI reads from Room database
-   - Immediate UI updates on user actions
-   - Works fully offline
-
-2. **Optimistic Updates with Sync States**
-   ```kotlin
-   enum class SyncState {
-       SYNCED,           // In sync with cloud
-       PENDING_CREATE,   // New item, needs upload
-       PENDING_UPDATE,   // Modified item, needs upload
-       PENDING_DELETE,   // Deleted item, needs cloud deletion
-       FAILED            // Sync failed, will retry
-   }
-   ```
-
-3. **Background Sync with WorkManager**
-   - Periodic sync every 6 hours
-   - Immediate sync on user actions
-   - Constraints: network required, battery not low
-   - Automatic retry with exponential backoff (up to 3 attempts)
-
-4. **Conflict Resolution**
-   - Timestamp-based: most recent change wins
-   - `lastModified` field tracks changes
-   - Prevents overwriting newer data
-
-### Sync Flow Example
-
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant Room
+    participant WorkManager
+    participant Firestore
+    
+    User->>UI: Mark movie as seen
+    UI->>Room: Update with PENDING_UPDATE
+    Room-->>UI: ✅ Instant feedback
+    UI->>WorkManager: Trigger sync
+    
+    Note over WorkManager: Background sync
+    WorkManager->>Room: Get pending changes
+    Room-->>WorkManager: Movies to sync
+    WorkManager->>Firestore: Upload changes
+    Firestore-->>WorkManager: ✅ Success
+    WorkManager->>Room: Update to SYNCED
 ```
-User marks movie as seen
-    ↓
-Update Room with PENDING_UPDATE
-    ↓
-UI updates immediately
-    ↓
-Trigger WorkManager sync
-    ↓
-Upload to Firestore
-    ↓
-Update Room with SYNCED
+**How it works:**
+1. User action updates Room immediately (instant UI feedback)
+2. Item marked with sync state
+3. WorkManager syncs to Firestore in background
+4. Conflict resolution uses timestamps (most recent wins)
+5. Periodic sync every 6 hours + on-demand triggers
+
+---
+
+## 🤖 AI-Powered Recommendations
+
+Uses **Firebase Vertex AI (Gemini 2.0 Flash)** to analyze your movie history and generate personalized suggestions.
+
+```mermaid
+flowchart LR
+    A[User's Seen Movies] --> B[Vertex AI<br/>Gemini 2.0]
+    A1[Ratings] --> B
+    A2[Watchlist] --> B
+    B --> C[AI Recommendations<br/>with Reasoning]
+    C --> D[TMDB API<br/>Validation]
+    D --> E{Match Found?}
+    E -->|Yes| F[Add to<br/>Recommendations]
+    E -->|No| G[Skip]
+    F --> H[Display to User]
+    
+    style B fill:#4285f4,color:#fff
+    style F fill:#34a853,color:#fff
+    style G fill:#ea4335,color:#fff
 ```
 
-## 🤖 AI Recommendations
+**Process:**
+1. Analyzes your seen movies + ratings
+2. Sends structured prompt to Gemini 2.0
+3. AI returns 5 movie suggestions with reasoning
+4. Validates against TMDB API
+5. Filters duplicates and already-seen movies
 
-The AI recommendation system uses Firebase Vertex AI (Gemini 2.0 Flash) to generate personalized movie suggestions.
+**Requirements:** Minimum 5 seen movies • 1 credit per generation
 
-### How It Works
+---
 
-1. **Data Collection**
-   - Analyzes user's seen movies and ratings
-   - Considers watchlist preferences
-   - Excludes previously rejected recommendations
+## 🧪 Testing
 
-2. **AI Prompt Engineering**
-   - Sends structured data to Gemini 2.0
-   - Requests 5 personalized recommendations
-   - Includes reasoning for each suggestion
+Comprehensive test coverage with **50+ tests** across unit, integration, and E2E.
 
-3. **Movie Matching**
-   - Searches TMDB API for each AI suggestion
-   - Validates year and title matches
-   - Filters out duplicates and already-seen movies
+| Test Type | Framework | Count | Coverage |
+|-----------|-----------|-------|----------|
+| **Unit Tests** | JUnit + Truth | 30+ | Use cases, ViewModels |
+| **UI Tests** | Compose Test + Espresso | 15+ | Screen interactions |
+| **E2E Tests** | Hilt Testing | 5+ | Complete user flows |
 
-4. **Credit System**
-   - Each recommendation generation costs 1 credit
-   - Users can purchase credits via Google Play Billing
-   - Minimum 5 seen movies required for quality recommendations
+**Testing Strategy:**
+- [x] Fake repositories for isolation
+- [x] Hilt test modules for DI
+- [x] Coroutines test for async operations
+- [x] Custom `HiltTestRunner` for instrumented tests
 
-## 🧪 Testing Strategy
-
-### Unit Tests (`/test`)
-- **Use Case Tests** - Business logic validation
-- **Fake Repositories** - Test doubles for isolation
-- **Coroutines Test** - Testing async operations
-- **Truth Assertions** - Readable test assertions
-
-### Instrumented Tests (`/androidTest`)
-- **UI Tests** - Compose UI testing with semantics
-- **End-to-End Tests** - Complete user flows
-- **Hilt Testing** - DI in test environment
-- **Espresso** - View interactions and assertions
-
-### Test Coverage
-- ✅ 30+ unit tests across all features
-- ✅ 20+ instrumented tests for UI and E2E flows
-- ✅ Custom `HiltTestRunner` for DI in tests
-- ✅ `TestAppModule` for test-specific dependencies
-- ✅ Mock data factories for consistent test data
-
-### Example Test Structure
+<details>
+<summary><b>Example Test</b></summary>
 
 ```kotlin
 @HiltAndroidTest
-@UninstallModules(AppModule::class, AppBindingModule::class)
+@UninstallModules(AppModule::class)
 class MoviesEndToEndTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -297,101 +258,95 @@ class MoviesEndToEndTest {
     
     @Test
     fun userCanSearchAndAddMovieToWatchlist() {
-        // Test implementation
+        // Complete user flow test
     }
 }
 ```
 
+</details>
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Android Studio Ladybug | 2024.2.1 or newer
+- Android Studio Ladybug | 2024.2.1+
 - JDK 21
-- Android SDK 36
-- Gradle 8.13+
+- TMDB API Key ([Get one here](https://www.themoviedb.org/settings/api))
+- Firebase Project ([Create here](https://console.firebase.google.com/))
 
-### Setup
+### Quick Setup
 
-1. **Clone the repository**
+1. **Clone & Configure**
    ```bash
    git clone https://github.com/yourusername/movie-saver.git
    cd movie-saver
    ```
 
-2. **Get API Keys**
-   - [TMDB API Key](https://www.themoviedb.org/settings/api) - For movie data
-   - [Firebase Project](https://console.firebase.google.com/) - For auth, Firestore, Vertex AI
-
-3. **Configure Firebase**
-   - Download `google-services.json` from Firebase Console
-   - Place it in `app/` directory
-
-4. **Create `local.properties`**
+2. **Add `local.properties`**
    ```properties
-   sdk.dir=/path/to/android/sdk
-   MOVIES_API_KEY=your_tmdb_api_key_here
-   STORE_PASSWORD=your_keystore_password
-   KEY_PASSWORD=your_key_password
+   MOVIES_API_KEY=your_tmdb_api_key
    ```
 
-5. **Build and Run**
+3. **Add Firebase**
+   - Download `google-services.json` from Firebase Console
+   - Place in `app/` directory
+   - Enable: Authentication (Google), Firestore, Vertex AI, Crashlytics
+
+4. **Build**
    ```bash
    ./gradlew assembleDebug
    ```
-   Or use Android Studio's Run button
 
-### Firebase Setup
+<details>
+<summary><b>Detailed Firebase Setup</b></summary>
 
-1. Enable **Authentication** → Google Sign-In
-2. Enable **Firestore Database** → Start in production mode
-3. Enable **Vertex AI** → Gemini API
-4. Enable **Crashlytics** and **Analytics**
-5. Add SHA-1 fingerprint for Google Sign-In:
-   ```bash
-   ./gradlew signingReport
-   ```
+- [ ] Create Firebase project
+- [ ] Add Android app with package name: `com.dthurman.moviesaver`
+- [ ] Enable services:
+  - [ ] **Authentication** → Google Sign-In provider
+  - [ ] **Firestore Database** → Production mode
+  - [ ] **Vertex AI** → Enable Gemini API
+  - [ ] **Crashlytics** & **Analytics**
+- [ ] Add SHA-1 fingerprint:
+  ```bash
+  ./gradlew signingReport
+  ```
+- [ ] Download and add `google-services.json`
 
-## 📱 App Screenshots
+</details>
 
-*Coming soon - Add screenshots of key screens*
+---
 
-## 🔐 Security & Privacy
+## 💡 Key Highlights
 
-- **No hardcoded secrets** - API keys in `local.properties` (gitignored)
-- **ProGuard** - Code obfuscation in release builds
-- **Secure authentication** - Firebase Auth with Google Sign-In
-- **Data encryption** - Firestore encryption at rest and in transit
-- **Minimal permissions** - Only Internet and Network State
+### For Developers
+- [x] Production-ready architecture
+- [x] 100% Kotlin & Compose
+- [x] Comprehensive testing examples
+- [x] Modern Android best practices
+- [x] Real-world Firebase integration
+- [x] Clean code with SOLID principles
 
-## 📦 Building for Release
-
-```bash
-./gradlew assembleRelease
-```
-
-The release APK/AAB will be signed with your release keystore and optimized with ProGuard.
+### Technical Achievements
+- [x] Offline-first with sync
+- [x] AI integration (Vertex AI)
+- [x] In-app billing implementation
+- [x] Background processing
+- [x] Type-safe navigation
+- [x] Material 3 theming
 
 ## 🤝 Contributing
 
-This is primarily a reference project, but contributions are welcome! Please feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-- Ask questions in Issues
+This is a reference project, but contributions are welcome! Feel free to open issues or submit PRs.
+
 
 ## 📝 License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+**Built by David Thurman**
 
-- [The Movie Database (TMDB)](https://www.themoviedb.org/) - Movie data and images
-- [Firebase](https://firebase.google.com/) - Backend services
-- [Google](https://developer.android.com/) - Android platform and libraries
-- [Android Community](https://developer.android.com/community) - Inspiration and best practices
+[GitHub](https://github.com/davidthurman) • [LinkedIn](https://linkedin.com/in/david-thurman)
 
-## 📧 Contact
-
-David Thurman - [GitHub](https://github.com/yourusername)
-
----
+⭐ Star this repo if you find it helpful!
