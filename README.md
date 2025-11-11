@@ -10,7 +10,7 @@
 ## 🎬 What is MoviQ?
 MoviQ helps you manage your movie watchlist and discover new films using AI. Mark movies as seen, rate your favorites, and let Gemini 2.0 suggest what to watch next based on your taste.
 
-**Why this repo exists:** I built MoviQ as a reference for Android developers looking for real-world examples of Clean Architecture, Jetpack Compose, Firebase integration, and comprehensive testing. It's the kind of codebase I wish I had when learning modern Android development.
+> **Why this repo exists:** I built MoviQ as a reference for Android developers looking for real-world examples of apps using scalable Clean Architecture, Jetpack Compose, Firebase integration, and comprehensive testing. It's the kind of codebase I wish I had when learning modern Android development.
 
 
 | 🎬 Track Movies You Watch | ❤️ Rate & Mark Your Favorites | ✨ Get AI Recs on What to Watch | 🔎 Find New Films Tailored to You |
