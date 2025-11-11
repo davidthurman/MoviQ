@@ -31,6 +31,7 @@ class RecommendationsViewModel @Inject constructor(
         observeSeenMoviesCount()
         observeUserCredits()
         observeSavedRecommendations()
+        print("Test")
     }
 
     private fun observePurchaseState() {
