@@ -20,6 +20,8 @@ import com.dthurman.moviesaver.core.data.sync.SyncManager
 import com.dthurman.moviesaver.core.domain.repository.CreditsRepository
 import com.dthurman.moviesaver.core.domain.repository.LocalDataManager
 import com.dthurman.moviesaver.core.domain.repository.UserRepository
+import com.dthurman.moviesaver.core.data.observability.FakeAnalyticsTracker
+import com.dthurman.moviesaver.core.data.observability.FakeErrorLogger
 import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_ai_recs.data.repository.FakeAiRepository
@@ -319,6 +321,18 @@ object TestAppModule {
     @Singleton
     fun provideCreditsRepository(): CreditsRepository {
         return FakeCreditsRepository()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAnalyticsTracker(): AnalyticsTracker {
+        return FakeAnalyticsTracker()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideErrorLogger(): ErrorLogger {
+        return FakeErrorLogger()
     }
 }
 
