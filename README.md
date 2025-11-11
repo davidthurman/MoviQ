@@ -14,18 +14,6 @@
 | <img width="1947" height="3632" alt="Screenshot_20251102_161458-portrait" src="https://github.com/user-attachments/assets/3fdd979a-e00c-48ce-b2c0-3d423073944c" /> | <img width="1947" height="3632" alt="Screenshot_20251102_165001-portrait" src="https://github.com/user-attachments/assets/fc70356e-f632-49e3-a844-3e8443fe00fe" /> | <img width="1947" height="3632" alt="Screenshot_20251102_162345-portrait" src="https://github.com/user-attachments/assets/771b07ee-9efa-4060-b673-3850f50849d2" /> | <img width="1947" height="3632" alt="Screenshot_20251102_162452-portrait" src="https://github.com/user-attachments/assets/cc4cf772-0ca8-4fd4-a335-f660bc107c2d" /> |
 
 
-
-
-Track your movie watchlist and get **AI-powered recommendations** based on your viewing history.
-
-
-
-| 🔍 Discover | 📊 Track | 🤖 AI Recommendations |
-|-------------|----------|----------------------|
-| Search movies, browse popular titles, and explore new releases | Manage watchlist, mark as seen, rate movies, and favorite your picks | Get personalized suggestions using Firebase Vertex AI (Gemini 2.0) |
-
-**Additional Features:** Cloud sync across devices • Google Sign-In • In-app purchases • Dark mode • Offline-first
-
 ---
 
 ## 🏗️ Architecture
@@ -33,7 +21,7 @@ Track your movie watchlist and get **AI-powered recommendations** based on your 
 Built with **Clean Architecture** + **MVI Pattern** following [Google's recommended architecture](https://developer.android.com/topic/architecture).
 
 ```mermaid
-graph TB
+graph LR
     subgraph Presentation["🎨 Presentation Layer"]
         UI[Jetpack Compose UI]
         VM[ViewModels + MVI]
@@ -59,9 +47,17 @@ graph TB
     REPO --> REMOTE
     REPO --> API
     
-    style Presentation fill:#e1f5ff
-    style Domain fill:#fff3e0
-    style Data fill:#f3e5f5
+    style Presentation fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#000
+    style Domain fill:#fff3e0,stroke:#ef6c00,stroke-width:3px,color:#000
+    style Data fill:#f3e5f5,stroke:#6a1b9a,stroke-width:3px,color:#000
+    style UI fill:#bbdefb,stroke:#1565c0,stroke-width:2px,color:#000
+    style VM fill:#bbdefb,stroke:#1565c0,stroke-width:2px,color:#000
+    style UC fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px,color:#000
+    style RI fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px,color:#000
+    style REPO fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style LOCAL fill:#c5e1a5,stroke:#558b2f,stroke-width:2px,color:#000
+    style REMOTE fill:#c5e1a5,stroke:#558b2f,stroke-width:2px,color:#000
+    style API fill:#c5e1a5,stroke:#558b2f,stroke-width:2px,color:#000
 ```
 
 | Layer | Responsibilities | Key Technologies |
@@ -70,7 +66,7 @@ graph TB
 | **Domain** | Business logic, use cases, repository contracts | Kotlin, Coroutines, Flow |
 | **Data** | Data sources, repositories, sync logic | Room, Firestore, Retrofit, WorkManager |
 
-<details>
+<details open>
 <summary><b>📋 Key Architectural Patterns</b></summary>
 
 - **Offline-First:** Room as single source of truth with cloud sync
@@ -89,11 +85,13 @@ graph TB
 <details open>
 <summary><b>Core Android</b></summary>
 
-- **Jetpack Compose** - Declarative UI
-- **Material 3** - Modern design system
+- **Jetpack Compose** - UI
+- **Material 3** - Google's Current Design System
 - **Hilt** - Dependency injection
 - **Navigation Compose** - Type-safe navigation
 - **Lifecycle & ViewModel** - State management
+
+- **Additional Features:** Cloud sync across devices • Google Sign-In • In-app purchases • Dark mode • Offline-first
 
 </details>
 
@@ -184,15 +182,6 @@ sequenceDiagram
     Firestore-->>WorkManager: ✅ Success
     WorkManager->>Room: Update to SYNCED
 ```
-
-| Sync State | Description | Action |
-|------------|-------------|--------|
-| `SYNCED` | ✅ In sync with cloud | No action needed |
-| `PENDING_CREATE` | 🆕 New item | Upload to Firestore |
-| `PENDING_UPDATE` | ✏️ Modified item | Update in Firestore |
-| `PENDING_DELETE` | 🗑️ Deleted item | Remove from Firestore |
-| `FAILED` | ⚠️ Sync failed | Retry (up to 3x) |
-
 **How it works:**
 1. User action updates Room immediately (instant UI feedback)
 2. Item marked with sync state
@@ -325,12 +314,6 @@ class MoviesEndToEndTest {
 
 ---
 
-## 📸 Screenshots
-
-[INSERT SCREENSHOTS GRID HERE - 4-6 key screens]
-
----
-
 ## 💡 Key Highlights
 
 ### For Developers
@@ -349,44 +332,17 @@ class MoviesEndToEndTest {
 - [x] Type-safe navigation
 - [x] Material 3 theming
 
----
-
-## 📊 Stats
-
-[INSERT REPO STATS GRAPHIC HERE]
-
-```
-Lines of Code: ~8,000+
-Kotlin Files: 111
-Test Files: 50+
-Features: 5 (Movies, AI, Auth, Billing, Core)
-Use Cases: 25+
-```
-
----
-
 ## 🤝 Contributing
 
 This is a reference project, but contributions are welcome! Feel free to open issues or submit PRs.
+
 
 ## 📝 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+**Built by David Thurman**
 
-- [TMDB](https://www.themoviedb.org/) for movie data
-- [Firebase](https://firebase.google.com/) for backend services
-- Android community for inspiration
-
----
-
-<div align="center">
-
-**Built with ❤️ by David Thurman**
-
-[GitHub](https://github.com/yourusername) • [LinkedIn](https://linkedin.com/in/yourprofile)
+[GitHub](https://github.com/davidthurman) • [LinkedIn](https://linkedin.com/in/david-thurman)
 
 ⭐ Star this repo if you find it helpful!
-
-</div>
