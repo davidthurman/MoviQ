@@ -45,7 +45,7 @@
     <string name="ai_prompt_json_instructions">Return ONLY a valid JSON array with exactly %d movie recommendations. Each object must have:\n- "title": The exact movie title (string)\n- "year": The release year (integer)\n- "reason": Why they\'ll enjoy it based on their history (1-2 sentences, string)\n\nIMPORTANT: Do NOT recommend any movies from their watched list, watchlist, or movies they\'re not interested in!\n\nExample format:\n[\n  {\n    "title": "The Shawshank Redemption",\n    "year": 1994,\n    "reason": "Given your love for character-driven dramas like The Green Mile, this redemptive story will resonate with you."\n  }\n]\n\nReturn ONLY the JSON array, no other text or markdown formatting.</string>
     <string name="ai_prompt_new_user">The user hasn\'t watched any movies yet. Recommend %d popular, highly-rated movies across different genres.\n\nReturn ONLY a valid JSON array with exactly %d movie recommendations. Each object must have:\n- "title": The exact movie title (string)\n- "year": The release year (integer)\n- "reason": Why it\'s worth watching (1-2 sentences, string)\n\nExample format:\n[\n  {\n    "title": "The Shawshank Redemption",\n    "year": 1994,\n    "reason": "A timeless tale of hope and friendship that consistently ranks as one of the greatest films ever made."\n  }\n]\n\nReturn ONLY the JSON array, no other text or markdown formatting.</string>
     <string name="ai_movie_item_format">- %1$s (%2$s)</string>
-    <string name="ai_movie_item_with_rating">- %1$s (%2$s) - User Rating: %3$s/5</string>
+    <string name="ai_movie_item_with_rating">- %1$s (%2$s) - User Rating: %3$.0f/5</string>
     <string name="ai_movie_favorite_marker">⭐ FAVORITE</string>
     
     <!-- Credits Dialog -->
