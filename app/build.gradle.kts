@@ -34,8 +34,8 @@ android {
         applicationId = "com.dthurman.moviesaver"
         minSdk = 23
         targetSdk = 36
-        versionCode = 11
-        versionName = "0.6"
+        versionCode = 12
+        versionName = "0.7"
         buildConfigField("String", "MOVIES_API_KEY", "\"$apiKey\"")
 
         testInstrumentationRunner = "com.dthurman.moviesaver.HiltTestRunner"

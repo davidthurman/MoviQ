@@ -160,7 +160,7 @@ class DetailScreenTest {
         composeRule.waitForIdle()
         
         val inSeenDescription = context.getString(R.string.in_seen)
-        composeRule.onNodeWithContentDescription(inSeenDescription).assertExists()
+        composeRule.onNodeWithContentDescription(inSeenDescription, useUnmergedTree = true).assertExists()
     }
 
     @Test

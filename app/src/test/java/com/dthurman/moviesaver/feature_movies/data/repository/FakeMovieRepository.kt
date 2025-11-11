@@ -34,12 +34,14 @@ class FakeMovieRepository: MovieRepository {
         if (index != -1) {
             movies[index] = movies[index].copy(
                 isSeen = isSeen,
+                aiReason = null,
                 lastModified = System.currentTimeMillis()
             )
         } else {
             movies.add(
                 movie.copy(
                     isSeen = isSeen,
+                    aiReason = null,
                     lastModified = System.currentTimeMillis()
                 )
             )
@@ -54,12 +56,14 @@ class FakeMovieRepository: MovieRepository {
         if (index != -1) {
             movies[index] = movies[index].copy(
                 isWatchlist = isWatchlist,
+                aiReason = null,
                 lastModified = System.currentTimeMillis()
             )
         } else {
             movies.add(
                 movie.copy(
                     isWatchlist = isWatchlist,
+                    aiReason = null,
                     lastModified = System.currentTimeMillis()
                 )
             )

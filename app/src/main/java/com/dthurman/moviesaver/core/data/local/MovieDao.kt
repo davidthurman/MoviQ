@@ -28,10 +28,10 @@ interface MovieDao {
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertOrUpdateMovie(movie: Movie)
 
-    @Query("UPDATE movie SET isSeen = :isSeen, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
+    @Query("UPDATE movie SET isSeen = :isSeen, aiReason = NULL, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
     suspend fun updateSeenStatus(movieId: Int, isSeen: Boolean, timestamp: Long = System.currentTimeMillis())
 
-    @Query("UPDATE movie SET isWatchlist = :isWatchlist, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
+    @Query("UPDATE movie SET isWatchlist = :isWatchlist, aiReason = NULL, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
     suspend fun updateWatchlistStatus(movieId: Int, isWatchlist: Boolean, timestamp: Long = System.currentTimeMillis())
 
     @Query("UPDATE movie SET isFavorite = :isFavorite, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
@@ -45,9 +45,6 @@ interface MovieDao {
 
     @Query("SELECT * FROM movie WHERE aiReason IS NOT NULL ORDER BY addedAt DESC")
     fun getRecommendations(): Flow<List<Movie>>
-
-    @Query("UPDATE movie SET aiReason = NULL, lastModified = :timestamp, syncState = 'PENDING_UPDATE' WHERE id = :movieId")
-    suspend fun clearAiReason(movieId: Int, timestamp: Long = System.currentTimeMillis())
 
     @Query("SELECT * FROM movie WHERE notInterested = 1")
     suspend fun getNotInterestedMovies(): List<Movie>

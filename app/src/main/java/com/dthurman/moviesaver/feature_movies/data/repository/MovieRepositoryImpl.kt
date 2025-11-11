@@ -40,7 +40,7 @@ class MovieRepositoryImpl @Inject constructor(
             movieDao.updateSeenStatus(movie.id, isSeen)
         } else {
             movieDao.insertOrUpdateMovie(
-                movie.copy(isSeen = isSeen, syncState = SyncState.PENDING_CREATE)
+                movie.copy(isSeen = isSeen, aiReason = null, syncState = SyncState.PENDING_CREATE)
             )
         }
         triggerSync()
@@ -52,7 +52,7 @@ class MovieRepositoryImpl @Inject constructor(
             movieDao.updateWatchlistStatus(movie.id, isWatchlist)
         } else {
             movieDao.insertOrUpdateMovie(
-                movie.copy(isWatchlist = isWatchlist, syncState = SyncState.PENDING_CREATE)
+                movie.copy(isWatchlist = isWatchlist, aiReason = null, syncState = SyncState.PENDING_CREATE)
             )
         }
         triggerSync()

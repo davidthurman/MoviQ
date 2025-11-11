@@ -3,6 +3,10 @@ package com.dthurman.moviesaver.testdi
 import android.content.Context
 import androidx.room.Room
 import androidx.work.WorkManager
+import coil.ImageLoader
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import coil.request.CachePolicy
 import com.dthurman.moviesaver.core.data.local.MovieDao
 import com.dthurman.moviesaver.core.data.local.MovieDatabase
 import com.dthurman.moviesaver.core.data.remote.user.FirestoreUserDataSource
@@ -171,6 +175,28 @@ object TestAppModule {
     @Singleton
     fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
         return WorkManager.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
+        return ImageLoader.Builder(context)
+            .memoryCache {
+                MemoryCache.Builder(context)
+                    .maxSizePercent(0.25)
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(context.cacheDir.resolve("image_cache"))
+                    .maxSizeBytes(50 * 1024 * 1024)
+                    .build()
+            }
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .networkCachePolicy(CachePolicy.ENABLED)
+            .respectCacheHeaders(false)
+            .build()
     }
 
     @Provides
