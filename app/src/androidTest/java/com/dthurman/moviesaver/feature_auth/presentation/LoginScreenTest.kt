@@ -14,6 +14,7 @@ import com.dthurman.moviesaver.core.domain.repository.UserRepository
 import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.di.AppBindingModule
 import com.dthurman.moviesaver.di.AppModule
+import com.dthurman.moviesaver.di.ObservabilityModule
 import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -25,7 +26,7 @@ import org.junit.Test
 import javax.inject.Inject
 
 @HiltAndroidTest
-@UninstallModules(AppModule::class, AppBindingModule::class)
+@UninstallModules(AppModule::class, AppBindingModule::class, ObservabilityModule::class)
 class LoginScreenTest {
 
     @get:Rule(order = 0)

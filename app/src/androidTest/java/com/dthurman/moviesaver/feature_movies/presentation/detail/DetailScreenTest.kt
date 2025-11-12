@@ -25,6 +25,7 @@ import com.dthurman.moviesaver.core.domain.model.Movie
 import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.di.AppBindingModule
 import com.dthurman.moviesaver.di.AppModule
+import com.dthurman.moviesaver.di.ObservabilityModule
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -36,7 +37,7 @@ import org.junit.Test
 import javax.inject.Inject
 
 @HiltAndroidTest
-@UninstallModules(AppModule::class, AppBindingModule::class)
+@UninstallModules(AppModule::class, AppBindingModule::class, ObservabilityModule::class)
 class DetailScreenTest {
 
     @get:Rule(order = 0)
@@ -160,7 +161,7 @@ class DetailScreenTest {
         composeRule.waitForIdle()
         
         val inSeenDescription = context.getString(R.string.in_seen)
-        composeRule.onNodeWithContentDescription(inSeenDescription).assertExists()
+        composeRule.onNodeWithContentDescription(inSeenDescription, useUnmergedTree = true).assertExists()
     }
 
     @Test

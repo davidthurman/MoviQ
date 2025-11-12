@@ -8,8 +8,13 @@ plugins {
     alias(libs.plugins.hilt.gradle)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
+}
+
+if (file("google-services.json").exists()) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
 }
 
 android {
@@ -29,8 +34,8 @@ android {
         applicationId = "com.dthurman.moviesaver"
         minSdk = 23
         targetSdk = 36
-        versionCode = 11
-        versionName = "0.6"
+        versionCode = 13
+        versionName = "0.8"
         buildConfigField("String", "MOVIES_API_KEY", "\"$apiKey\"")
 
         testInstrumentationRunner = "com.dthurman.moviesaver.HiltTestRunner"

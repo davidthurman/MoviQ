@@ -24,6 +24,7 @@ import com.dthurman.moviesaver.core.domain.repository.UserRepository
 import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.di.AppBindingModule
 import com.dthurman.moviesaver.di.AppModule
+import com.dthurman.moviesaver.di.ObservabilityModule
 import com.dthurman.moviesaver.feature_ai_recs.data.repository.FakeAiRepository
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.AiRepository
 import com.dthurman.moviesaver.feature_ai_recs.domain.repository.RecommendationRepository
@@ -38,7 +39,7 @@ import org.junit.Test
 import javax.inject.Inject
 
 @HiltAndroidTest
-@UninstallModules(AppModule::class, AppBindingModule::class)
+@UninstallModules(AppModule::class, AppBindingModule::class, ObservabilityModule::class)
 class RecommendationsScreenTest {
 
     @get:Rule(order = 0)

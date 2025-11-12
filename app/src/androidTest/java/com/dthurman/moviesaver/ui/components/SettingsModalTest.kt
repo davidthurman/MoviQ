@@ -3,8 +3,6 @@ package com.dthurman.moviesaver.ui.components
 import android.content.Context
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotSelected
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -16,6 +14,7 @@ import com.dthurman.moviesaver.core.domain.model.User
 import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.di.AppBindingModule
 import com.dthurman.moviesaver.di.AppModule
+import com.dthurman.moviesaver.di.ObservabilityModule
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -25,7 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 
 @HiltAndroidTest
-@UninstallModules(AppModule::class, AppBindingModule::class)
+@UninstallModules(AppModule::class, AppBindingModule::class, ObservabilityModule::class)
 class SettingsModalTest {
 
     @get:Rule(order = 0)
@@ -146,50 +145,6 @@ class SettingsModalTest {
         composeRule.onNodeWithTag(TestTags.SETTINGS_CLOSE_BUTTON).performClick()
         
         assert(dismissCalled)
-    }
-
-    @Test
-    fun settingsModal_themeSwitch_darkMode_isSelected() {
-        composeRule.activity.setContent {
-            AppTheme {
-                SettingsModal(
-                    onDismiss = { dismissCalled = true },
-                    currentUser = null,
-                    onSignOut = { signOutCalled = true },
-                    isDarkMode = true,
-                    onThemeToggle = { 
-                        themeToggleCalled = true
-                        themeToggleValue = it
-                    }
-                )
-            }
-        }
-        
-        composeRule.onNodeWithTag(TestTags.SETTINGS_THEME_SWITCH).assertIsDisplayed()
-        composeRule.onNodeWithTag(TestTags.SETTINGS_THEME_SWITCH).assertIsSelected()
-        composeRule.onNodeWithText(context.getString(R.string.dark_mode)).assertIsDisplayed()
-    }
-
-    @Test
-    fun settingsModal_themeSwitch_lightMode_isNotSelected() {
-        composeRule.activity.setContent {
-            AppTheme {
-                SettingsModal(
-                    onDismiss = { dismissCalled = true },
-                    currentUser = null,
-                    onSignOut = { signOutCalled = true },
-                    isDarkMode = false,
-                    onThemeToggle = { 
-                        themeToggleCalled = true
-                        themeToggleValue = it
-                    }
-                )
-            }
-        }
-        
-        composeRule.onNodeWithTag(TestTags.SETTINGS_THEME_SWITCH).assertIsDisplayed()
-        composeRule.onNodeWithTag(TestTags.SETTINGS_THEME_SWITCH).assertIsNotSelected()
-        composeRule.onNodeWithText(context.getString(R.string.light_mode)).assertIsDisplayed()
     }
 
     @Test

@@ -17,6 +17,7 @@ import com.dthurman.moviesaver.core.app.MainActivity
 import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.di.AppBindingModule
 import com.dthurman.moviesaver.di.AppModule
+import com.dthurman.moviesaver.di.ObservabilityModule
 import com.dthurman.moviesaver.feature_movies.data.remote.movie_information.MovieInformationDataSource
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -28,7 +29,7 @@ import org.junit.Test
 import javax.inject.Inject
 
 @HiltAndroidTest
-@UninstallModules(AppModule::class, AppBindingModule::class)
+@UninstallModules(AppModule::class, AppBindingModule::class, ObservabilityModule::class)
 class DiscoverEndToEndTest {
 
     @get:Rule(order = 0)

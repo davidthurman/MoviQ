@@ -29,7 +29,6 @@ jobs:
         run: |
           chmod +x gradlew
           echo "MOVIES_API_KEY=dummy_key_for_ci" > local.properties
-          echo '{"project_info":{"project_number":"123","project_id":"dummy"}}' > app/google-services.json
 
       - name: Run unit tests
         run: ./gradlew test --stacktrace
@@ -67,7 +66,6 @@ jobs:
         run: |
           chmod +x gradlew
           echo "MOVIES_API_KEY=dummy_key_for_ci" > local.properties
-          echo '{"project_info":{"project_number":"123","project_id":"dummy"}}' > app/google-services.json
 
       - name: Enable KVM
         run: |
@@ -113,4 +111,3 @@ jobs:
         with:
           name: ui-test-results
           path: app/build/reports/androidTests/
-

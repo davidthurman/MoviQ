@@ -18,6 +18,7 @@ import com.dthurman.moviesaver.core.domain.repository.UserRepository
 import com.dthurman.moviesaver.core.util.TestTags
 import com.dthurman.moviesaver.di.AppBindingModule
 import com.dthurman.moviesaver.di.AppModule
+import com.dthurman.moviesaver.di.ObservabilityModule
 import com.dthurman.moviesaver.feature_auth.data.repository.FakeAuthRepository
 import com.dthurman.moviesaver.feature_auth.domain.AuthRepository
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -30,7 +31,7 @@ import org.junit.Test
 import javax.inject.Inject
 
 @HiltAndroidTest
-@UninstallModules(AppModule::class, AppBindingModule::class)
+@UninstallModules(AppModule::class, AppBindingModule::class, ObservabilityModule::class)
 class AuthEndToEndTest {
 
     @get:Rule(order = 0)

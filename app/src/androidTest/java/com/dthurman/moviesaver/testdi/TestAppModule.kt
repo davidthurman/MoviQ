@@ -3,6 +3,10 @@ package com.dthurman.moviesaver.testdi
 import android.content.Context
 import androidx.room.Room
 import androidx.work.WorkManager
+import coil.ImageLoader
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import coil.request.CachePolicy
 import com.dthurman.moviesaver.core.data.local.MovieDao
 import com.dthurman.moviesaver.core.data.local.MovieDatabase
 import com.dthurman.moviesaver.core.data.remote.user.FirestoreUserDataSource
@@ -16,6 +20,8 @@ import com.dthurman.moviesaver.core.data.sync.SyncManager
 import com.dthurman.moviesaver.core.domain.repository.CreditsRepository
 import com.dthurman.moviesaver.core.domain.repository.LocalDataManager
 import com.dthurman.moviesaver.core.domain.repository.UserRepository
+import com.dthurman.moviesaver.core.data.observability.FakeAnalyticsTracker
+import com.dthurman.moviesaver.core.data.observability.FakeErrorLogger
 import com.dthurman.moviesaver.core.observability.AnalyticsTracker
 import com.dthurman.moviesaver.core.observability.ErrorLogger
 import com.dthurman.moviesaver.feature_ai_recs.data.repository.FakeAiRepository
@@ -175,6 +181,28 @@ object TestAppModule {
 
     @Provides
     @Singleton
+    fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
+        return ImageLoader.Builder(context)
+            .memoryCache {
+                MemoryCache.Builder(context)
+                    .maxSizePercent(0.25)
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(context.cacheDir.resolve("image_cache"))
+                    .maxSizeBytes(50 * 1024 * 1024)
+                    .build()
+            }
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .networkCachePolicy(CachePolicy.ENABLED)
+            .respectCacheHeaders(false)
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideUserRepositoryImpl(
         firebaseAuth: FirebaseAuth,
         userRemoteDataSource: UserRemoteDataSource,
@@ -293,6 +321,18 @@ object TestAppModule {
     @Singleton
     fun provideCreditsRepository(): CreditsRepository {
         return FakeCreditsRepository()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAnalyticsTracker(): AnalyticsTracker {
+        return FakeAnalyticsTracker()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideErrorLogger(): ErrorLogger {
+        return FakeErrorLogger()
     }
 }
 
