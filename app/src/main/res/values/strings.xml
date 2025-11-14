@@ -145,4 +145,17 @@
     
     <!-- General Errors -->
     <string name="error_failed_to_generate_recommendations">Failed to generate recommendations</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_home_title">Welcome to MoviQ!</string>
+    <string name="onboarding_search_title">Track What You Watch</string>
+    <string name="onboarding_rate_title">Rate What You Like</string>
+    <string name="onboarding_ai_title">Get Personalized Recs</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_home_image_description">Home</string>
+    <string name="onboarding_search_image_description">Search</string>
+    <string name="onboarding_rate_image_description">Rate</string>
+    <string name="onboarding_ai_image_description">AI</string>
 </resources>

@@ -63,6 +63,11 @@ import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateFavoriteSta
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateRatingUseCase
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateSeenStatusUseCase
 import com.dthurman.moviesaver.feature_movies.domain.use_cases.UpdateWatchlistStatusUseCase
+import com.dthurman.moviesaver.feature_onboarding.data.repository.OnboardingRepositoryImpl
+import com.dthurman.moviesaver.feature_onboarding.domain.repository.OnboardingRepository
+import com.dthurman.moviesaver.feature_onboarding.domain.use_cases.CompleteOnboardingUseCase
+import com.dthurman.moviesaver.feature_onboarding.domain.use_cases.HasCompletedOnboardingUseCase
+import com.dthurman.moviesaver.feature_onboarding.domain.use_cases.OnboardingUseCases
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
@@ -312,6 +317,18 @@ object AppModule {
             resetPurchaseState = resetPurchaseStateUseCase
         )
     }
+
+    @Provides
+    @Singleton
+    fun provideOnboardingUseCases(
+        hasCompletedOnboardingUseCase: HasCompletedOnboardingUseCase,
+        completeOnboardingUseCase: CompleteOnboardingUseCase
+    ): OnboardingUseCases {
+        return OnboardingUseCases(
+            hasCompletedOnboarding = hasCompletedOnboardingUseCase,
+            completeOnboarding = completeOnboardingUseCase
+        )
+    }
 }
 
 @Module
@@ -345,4 +362,8 @@ interface AppBindingModule {
     @Singleton
     @Binds
     fun bindLocalDataManager(impl: LocalDataManagerImpl): LocalDataManager
+
+    @Singleton
+    @Binds
+    fun bindOnboardingRepository(impl: OnboardingRepositoryImpl): OnboardingRepository
 }
