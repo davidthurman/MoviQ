@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dthurman.moviesaver.feature_auth.presentation.LoginEvent
 import com.dthurman.moviesaver.feature_auth.presentation.LoginScreen
 import com.dthurman.moviesaver.feature_auth.presentation.LoginViewModel
+import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingDialog
+import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingEvent
+import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingViewModel
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -24,6 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val loginViewModel: LoginViewModel by viewModels()
+    private val onboardingViewModel: OnboardingViewModel by viewModels()
     
     private val sharedPreferences by lazy {
         getSharedPreferences("app_preferences", MODE_PRIVATE)
@@ -35,8 +40,22 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val currentUser by loginViewModel.currentUser.collectAsStateWithLifecycle()
+            val onboardingUiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
             var isDarkMode by rememberSaveable { 
                 mutableStateOf(sharedPreferences.getBoolean("is_dark_mode", true))
+            }
+            var showOnboarding by rememberSaveable { mutableStateOf(false) }
+
+            LaunchedEffect(currentUser) {
+                if (currentUser != null) {
+                    showOnboarding = onboardingViewModel.shouldShowOnboarding()
+                }
+            }
+            
+            LaunchedEffect(onboardingUiState.isCompleted) {
+                if (onboardingUiState.isCompleted) {
+                    showOnboarding = false
+                }
             }
 
             AppTheme(darkTheme = isDarkMode, dynamicColor = false) {
@@ -59,6 +78,10 @@ class MainActivity : ComponentActivity() {
                         },
                         onSignOut = { loginViewModel.onEvent(LoginEvent.SignOut) }
                     )
+
+                    if (showOnboarding) {
+                        OnboardingDialog()
+                    }
                 }
             }
         }
