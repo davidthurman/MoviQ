@@ -39,19 +39,15 @@ class OnboardingScreenTest {
     lateinit var onboardingRepository: OnboardingRepository
 
     lateinit var context: Context
-    private var onCompleteCalled = false
 
     @Before
     fun setUp() {
         hiltRule.inject()
         context = ApplicationProvider.getApplicationContext()
-        onCompleteCalled = false
         
         composeRule.activity.setContent {
             AppTheme {
-                OnboardingDialog(
-                    onComplete = { onCompleteCalled = true }
-                )
+                OnboardingDialog()
             }
         }
     }
