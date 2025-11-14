@@ -19,6 +19,7 @@ import com.dthurman.moviesaver.feature_auth.presentation.LoginEvent
 import com.dthurman.moviesaver.feature_auth.presentation.LoginScreen
 import com.dthurman.moviesaver.feature_auth.presentation.LoginViewModel
 import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingDialog
+import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingEvent
 import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingViewModel
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,15 +40,21 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val currentUser by loginViewModel.currentUser.collectAsStateWithLifecycle()
+            val onboardingUiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
             var isDarkMode by rememberSaveable { 
                 mutableStateOf(sharedPreferences.getBoolean("is_dark_mode", true))
             }
-            var showOnboarding by rememberSaveable { mutableStateOf(true) }
+            var showOnboarding by rememberSaveable { mutableStateOf(false) }
 
             LaunchedEffect(currentUser) {
                 if (currentUser != null) {
-                    val hasCompleted = sharedPreferences.getBoolean("onboarding_completed", false)
-                    showOnboarding = !hasCompleted
+                    showOnboarding = onboardingViewModel.shouldShowOnboarding()
+                }
+            }
+            
+            LaunchedEffect(onboardingUiState.isCompleted) {
+                if (onboardingUiState.isCompleted) {
+                    showOnboarding = false
                 }
             }
 
@@ -73,12 +80,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     if (showOnboarding) {
-                        OnboardingDialog(
-                            onComplete = {
-                                showOnboarding = false
-                                sharedPreferences.edit { putBoolean("onboarding_completed", true) }
-                            }
-                        )
+                        OnboardingDialog()
                     }
                 }
             }

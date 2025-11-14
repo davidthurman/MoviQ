@@ -154,8 +154,8 @@
     <string name="onboarding_next">Next</string>
     <string name="onboarding_back">Back</string>
     <string name="onboarding_get_started">Get Started</string>
-    <string name="onboarding_home_image_description">Home</string>
-    <string name="onboarding_search_image_description">Search</string>
-    <string name="onboarding_rate_image_description">Rate</string>
-    <string name="onboarding_ai_image_description">AI</string>
+    <string name="onboarding_home_image_description">MoviQ logo and welcome screen</string>
+    <string name="onboarding_search_image_description">Screenshot showing movie search and tracking features</string>
+    <string name="onboarding_rate_image_description">Screenshot showing movie rating interface</string>
+    <string name="onboarding_ai_image_description">Screenshot showing AI-powered recommendation features</string>
 </resources>

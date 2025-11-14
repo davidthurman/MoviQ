@@ -19,6 +19,10 @@ class OnboardingViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(OnboardingUiState())
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
+    suspend fun shouldShowOnboarding(): Boolean {
+        return !onboardingUseCases.hasCompletedOnboarding()
+    }
+
     fun onEvent(event: OnboardingEvent) {
         when (event) {
             OnboardingEvent.NextPage -> {
