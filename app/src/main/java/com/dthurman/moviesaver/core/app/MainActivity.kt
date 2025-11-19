@@ -19,7 +19,6 @@ import com.dthurman.moviesaver.feature_auth.presentation.LoginEvent
 import com.dthurman.moviesaver.feature_auth.presentation.LoginScreen
 import com.dthurman.moviesaver.feature_auth.presentation.LoginViewModel
 import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingDialog
-import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingEvent
 import com.dthurman.moviesaver.feature_onboarding.presentation.OnboardingViewModel
 import com.dthurman.moviesaver.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint

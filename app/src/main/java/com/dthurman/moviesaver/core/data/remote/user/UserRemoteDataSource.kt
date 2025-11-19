@@ -8,6 +8,3 @@ interface UserRemoteDataSource {
     suspend fun updateUserProfile(user: User): Result<Unit>
     suspend fun updateUserCredits(userId: String, credits: Int): Result<Unit>
 }
-
-
-
